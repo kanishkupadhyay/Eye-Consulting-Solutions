@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Input from "../Input/Input";
 import EmailInput from "../EmailInput/EmailInput";
 import loginUser from "@/services/frontend/login";
 import { useRouter } from "next/navigation";
 import Button from "../Button/Button";
+import PasswordInput from "../PasswordInput/PasswordInput";
 
 export default function LoginForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -23,7 +23,7 @@ export default function LoginForm() {
     setEnableErrors(true);
 
     const isValid = validateForm();
-    if (!isValid) return; // ⛔ stop here if invalid
+    if (!isValid) return;
 
     setIsLoading(true);
 
@@ -42,6 +42,11 @@ export default function LoginForm() {
     }
   };
   const validateForm = () => {
+    setFormData((prev) => ({
+      ...prev,
+      email: prev.email.trim(),
+      password: prev.password.trim(),
+    }));
     const errors: { email?: string; password?: string } = {};
 
     if (!formData.email) {
@@ -52,7 +57,7 @@ export default function LoginForm() {
       errors.password = "Password is required";
     }
 
-    if (formData.password.length < 8) {
+    if (!errors.password?.length && formData.password.length < 8) {
       errors.password = "Password length must be at least 8 characters";
     }
 
@@ -68,15 +73,13 @@ export default function LoginForm() {
         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         required
       />
-
-      <Input
-        type="password"
+      <PasswordInput
+        value={formData.password}
+        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
         errorMessage={
           enableErrors && errorConfig.password ? errorConfig.password : ""
         }
         placeholder="Enter your password"
-        value={formData.password}
-        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
         className="w-full p-3 border rounded-lg"
       />
       <Button loading={isLoading}>Sign In →</Button>
