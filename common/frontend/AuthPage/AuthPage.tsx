@@ -53,8 +53,7 @@ export default function AuthPage() {
   return (
     <div className="flex min-h-screen font-sans">
       {/* Left panel */}
-      <div className="hidden md:flex relative w-1/2 items-center px-20 overflow-hidden">
-
+      <div className="hidden md:flex relative w-1/2 items-center px-20 overflow-hidden h-screen">
         {/* 🎥 Background Video */}
         <video
           autoPlay
@@ -126,7 +125,7 @@ export default function AuthPage() {
       </div>
 
       {/* Right panel */}
-      <div className="relative flex flex-1 items-center justify-center bg-[#fff] px-6">
+      <div className="relative flex-1 bg-white px-6 overflow-y-auto h-screen">
         {/* ✅ Logo */}
         <Image
           src="/logo.png"
@@ -136,7 +135,8 @@ export default function AuthPage() {
           className="absolute top-6 right-6 object-contain"
         />
 
-        <div className="w-full max-w-md">
+        {/* Centered form container */}
+        <div className="w-full max-w-md mx-auto flex flex-col justify-start mt-24 mb-12">
           {/* Heading */}
           <AnimatePresence mode="wait">
             <motion.div
