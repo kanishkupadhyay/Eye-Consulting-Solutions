@@ -5,6 +5,7 @@ import Input from "../Input/Input";
 import Button from "../Button/Button";
 import createUser from "@/services/frontend/register";
 import PasswordInput from "../PasswordInput/PasswordInput";
+import PhoneInput from "../PhoneInput/PhoneInput";
 
 export default function RegisterForm({
   isRegisteredSuccessfully,
@@ -80,6 +81,17 @@ export default function RegisterForm({
       errors.confirmPassword = "Please confirm your password";
     }
 
+    if (!errors.password?.length && formData.password.length < 8) {
+      errors.password = "Password length must be at least 8 characters";
+    }
+
+    if (
+      !errors.confirmPassword?.length &&
+      formData.confirmPassword.length < 8
+    ) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
     if (
       formData.password &&
       formData.confirmPassword &&
@@ -90,6 +102,10 @@ export default function RegisterForm({
 
     if (!formData.phone) {
       errors.phone = "Phone number is required";
+    }
+
+    if (formData.phone.length && formData.phone.length < 10) {
+      errors.phone = "Phone number must be at least 10 digits";
     }
 
     setErrorConfig(errors);
@@ -165,19 +181,10 @@ export default function RegisterForm({
         className="w-full p-3 border rounded-lg"
       />
 
-      <Input
-        type="text"
-        placeholder="Enter your phone number"
-        label="Phone Number"
+      <PhoneInput
         value={formData.phone}
-        errorMessage={
-          enableErrors && errorConfig.phone ? errorConfig.phone : ""
-        }
-        onChange={(e) => {
-          setFormData({ ...formData, phone: e.target.value });
-          setErrorConfig((prev) => ({ ...prev, phone: "" }));
-        }}
-        className="w-full p-3 border rounded-lg"
+        onChange={(value) => setFormData({ ...formData, phone: value })}
+        error={enableErrors ? errorConfig.phone : ""}
       />
 
       <Button loading={isLoading}>Create Account 🚀</Button>

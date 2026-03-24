@@ -9,6 +9,7 @@ import {
   IUserLoginRequest,
   IUserRegisterRequest,
 } from "@/common/backend/user.interfaces";
+import UserFactory from "@/factories/user.factory";
 
 class UserService {
   private userRepository = new UserRepository();
@@ -39,12 +40,24 @@ class UserService {
   public loginUser = async (data: IUserLoginRequest) => {
     try {
       const { email, password } = data;
+      const trimmedEmail = email?.trim() || "";
+      const trimmedPassword = password?.trim() || "";
 
-      if (!email) throw new Error(ResultErrorCodes.EmailIsRequired);
-      if (!password) throw new Error(ResultErrorCodes.PasswordIsRequired);
+      if (!trimmedEmail) throw new Error(ResultErrorCodes.EmailIsRequired);
+
+      const isEmailValid = checkIsValidEmail(trimmedEmail);
+
+      if (!isEmailValid) throw new Error(ResultErrorCodes.EmailIsNotValid);
+
+      if (!trimmedPassword)
+        throw new Error(ResultErrorCodes.PasswordIsRequired);
+
+      if (trimmedPassword.length < 8) {
+        throw new Error(ResultErrorCodes.PasswordMustBeAtLeast8Characters);
+      }
 
       // 🔹 fetch user from DB
-      const user = await this.userRepository.findOne("email", email);
+      const user = await this.userRepository.findOne("email", trimmedEmail);
 
       // 🔹 safe check for missing password
       if (!user || !user.password) {
@@ -52,7 +65,10 @@ class UserService {
       }
 
       // 🔹 compare password
-      const isPasswordMatch = await bcrypt.compare(password, user.password);
+      const isPasswordMatch = await bcrypt.compare(
+        trimmedPassword,
+        user.password,
+      );
       if (!isPasswordMatch) {
         throw new Error(ResultErrorCodes.InvalidCredentials);
       }
@@ -69,7 +85,10 @@ class UserService {
 
       // 🔹 success response
       return new Response(
-        JSON.stringify({ success: true, data: { user, token } }),
+        JSON.stringify({
+          success: true,
+          data: { user: UserFactory.transformUserResponse(user), token },
+        }),
         {
           status: StatusCodes.OK,
           headers: { "Content-Type": "application/json" },
@@ -143,15 +162,22 @@ class UserService {
       },
       { field: data?.email, errorMsg: ResultErrorCodes.EmailIsRequired },
       { field: data?.password, errorMsg: ResultErrorCodes.PasswordIsRequired },
-      // {
-      //   field: data?.countryCode,
-      //   errorMsg: ResultErrorCodes.CountryCodeIsRequired,
-      // },
       { field: data?.phone, errorMsg: ResultErrorCodes.PhoneNumberIsRequired },
     ];
 
     for (const item of fieldMapping) {
       if (!item.field) throw new Error(item.errorMsg);
+    }
+
+    if (data?.password && data.password.length < 8) {
+      throw new Error(ResultErrorCodes.PasswordMustBeAtLeast8Characters);
+    }
+
+    if (
+      data?.phone &&
+      (!/^\d{10}$/.test(data.phone) || data?.phone?.length !== 10)
+    ) {
+      throw new Error(ResultErrorCodes.PhoneNumberIsInvalid);
     }
 
     if (!checkIsValidEmail(data.email))
@@ -164,15 +190,13 @@ class UserService {
     if (userAlreadyExists)
       throw new Error(ResultErrorCodes.UserAlreadyExistsWithThisEmail);
 
-    // const countryExists = await this.countryRepository.findByFieldName(
-    //   "dialCode",
-    //   data.countryCode,
-    // );
-    // if (!countryExists)
-    //   throw new Error(ResultErrorCodes.CountryCodeDoesNotExist);
-
-    if (data.phone.length !== 10)
-      throw new Error(ResultErrorCodes.PhoneNumberIsInvalid);
+    const phoneNumberAlreadyInUse = await this.userRepository.findByFieldName(
+      "phone",
+      data.phone,
+    );
+    if (phoneNumberAlreadyInUse) {
+      throw new Error(ResultErrorCodes.PhoneNumberAlreadyInUse);
+    }
   };
 
   public getUsers = async (body: any) => {
