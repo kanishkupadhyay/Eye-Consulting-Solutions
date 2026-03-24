@@ -10,6 +10,7 @@ import {
   IUserRegisterRequest,
 } from "@/common/backend/user.interfaces";
 import UserFactory from "@/factories/user.factory";
+import ResultSuccessMessages from "@/common/backend/success.messsage";
 
 class UserService {
   private userRepository = new UserRepository();
@@ -108,36 +109,18 @@ class UserService {
 
   public deleteUser = async (req: Request, id: string) => {
     try {
-      if (!id) throw new Error("User id is required");
-
-      // 🔐 Extract token from Authorization header
-      const token = req.headers.get("authorization")?.split(" ")[1];
-      if (!token) throw new Error("Unauthorized");
-
-      const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-      const loggedInUser = await this.userRepository.findById(decoded.userId);
-      if (!loggedInUser) throw new Error("User not found");
+      if (!id) throw new Error(ResultErrorCodes.UserIdIsRequired);
 
       const user = await this.userRepository.findById(id);
-      if (!user) throw new Error("Target user not found");
-
-      // 👑 ADMIN → can delete only non-admin users
-      if (loggedInUser.isAdmin) {
-        if (user.isAdmin) {
-          throw new Error("Admins cannot delete other admins");
-        }
-      }
-      // 👤 NON-ADMIN → can delete only self
-      else {
-        if (loggedInUser._id.toString() !== id) {
-          throw new Error("Not allowed");
-        }
-      }
+      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
 
       await this.userRepository.deleteById(id);
 
       return new Response(
-        JSON.stringify({ success: true, message: "User deleted successfully" }),
+        JSON.stringify({
+          success: true,
+          message: ResultSuccessMessages.UserDeletedSuccessfully,
+        }),
         {
           status: StatusCodes.OK,
           headers: { "Content-Type": "application/json" },
@@ -249,14 +232,14 @@ class UserService {
 
   public getUserById = async (id: string) => {
     try {
-      if (!id) throw new Error("User id is required");
+      if (!id) throw new Error(ResultErrorCodes.UserIdIsRequired);
 
       const user = await this.userRepository.findById(id);
 
-      if (!user) throw new Error("User not found");
+      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
 
       if (user.isAdmin) {
-        throw new Error("Access denied");
+        throw new Error(ResultErrorCodes.AccessDenied);
       }
 
       return new Response(JSON.stringify({ success: true, data: user }), {
@@ -276,45 +259,38 @@ class UserService {
 
   public updateUser = async (req: Request, id: string) => {
     try {
-      if (!id) throw new Error("User id is required");
-
-      // 🔐 token extract
-      const token = req.headers.get("authorization")?.split(" ")[1];
-      if (!token) throw new Error("Unauthorized");
-
-      const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-      const loggedInUser = await this.userRepository.findById(decoded.userId);
-      if (!loggedInUser) throw new Error("User not found");
+      if (!id) throw new Error(ResultErrorCodes.UserIdIsRequired);
 
       const user = await this.userRepository.findById(id);
-      if (!user) throw new Error("Target user not found");
+      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
 
       const body = await req.json();
       const { firstName, lastName, phone, password } = body;
 
-      // 👑 ADMIN → can update only non-admin users
-      if (loggedInUser.isAdmin) {
-        if (user.isAdmin) {
-          throw new Error("Admins cannot update other admins");
-        }
-      }
-      // 👤 NON-ADMIN → can update only self
-      else {
-        if (loggedInUser._id.toString() !== id) {
-          throw new Error("Not allowed");
-        }
-      }
-
       // 🔹 update allowed fields
-      if (firstName !== undefined) user.firstName = firstName;
-      if (lastName !== undefined) user.lastName = lastName;
-      if (phone !== undefined) user.phone = phone;
-      if (password) user.password = await bcrypt.hash(password, 10);
+      if (firstName !== undefined) user.firstName = firstName.trim();
+      if (lastName !== undefined) user.lastName = lastName.trim();
+      if (phone !== undefined) {
+        if (phone && (!/^\d{10}$/.test(phone) || phone?.length !== 10)) {
+          throw new Error(ResultErrorCodes.PhoneNumberIsInvalid);
+        }
+        user.phone = phone;
+      }
+      if (password) {
+        const trimmedPassword = password.trim();
+        if (trimmedPassword.length < 8) {
+          throw new Error(ResultErrorCodes.PasswordMustBeAtLeast8Characters);
+        }
+        user.password = await bcrypt.hash(trimmedPassword, 10);
+      }
 
       await user.save();
 
       return new Response(
-        JSON.stringify({ success: true, message: "User updated successfully" }),
+        JSON.stringify({
+          success: true,
+          message: ResultSuccessMessages.UserCreatedSuccessfully,
+        }),
         {
           status: StatusCodes.OK,
           headers: { "Content-Type": "application/json" },

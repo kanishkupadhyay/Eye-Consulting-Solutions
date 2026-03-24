@@ -2,23 +2,15 @@ import React from "react";
 import { IInputProps } from "./Input.Model";
 
 const Input = ({ label, value, onChange, onBlur, ...props }: IInputProps) => {
-  // Regex to remove emojis using Unicode property escapes
   const emojiRegex = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const sanitizedValue = e.target.value.replace(emojiRegex, "");
-
-    if (onChange) {
-      onChange({
-        ...e,
-        target: { ...e.target, value: sanitizedValue },
-      } as React.ChangeEvent<HTMLInputElement>);
-    }
+    if (onChange) onChange(e);
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const trimmedValue = e.target.value.trim();
-
+    // Sanitize only on blur
+    const trimmedValue = e.target.value.trim().replace(emojiRegex, "");
     if (onChange) {
       onChange({
         ...e,
@@ -33,7 +25,9 @@ const Input = ({ label, value, onChange, onBlur, ...props }: IInputProps) => {
 
   return (
     <div>
-      {label && <label className="block text-sm text-gray-500 mb-1">{label}</label>}
+      {label && (
+        <label className="block text-sm text-gray-500 mb-1">{label}</label>
+      )}
 
       <input
         {...props}
@@ -43,9 +37,9 @@ const Input = ({ label, value, onChange, onBlur, ...props }: IInputProps) => {
         className={`${
           props.errorMessage ? "border-red-500" : ""
         } w-full bg-white border border-gray-200 rounded-lg p-4 text-sm
-          focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm ${
-            props.className || ""
-          }`}
+        focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm ${
+          props.className || ""
+        }`}
       />
 
       {props.errorMessage && (

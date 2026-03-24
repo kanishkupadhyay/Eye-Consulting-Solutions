@@ -9,6 +9,7 @@ import Dialog from "../Dialog/Dialog";
 import updateUser from "@/services/frontend/update-users";
 import deleteUser from "@/services/frontend/delete-user";
 import { formatDateNumeric } from "../utils";
+import getUserById from "@/services/frontend/get-user";
 
 type User = {
   firstName: string;
@@ -72,9 +73,31 @@ const UserDetailPage = () => {
   };
 
   useEffect(() => {
-    if (id) fetchUser();
-  }, [id]);
+    if (!id) return;
 
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const data = await getUserById(id as string);
+        if (data.success) {
+          setForm({
+            firstName: data.data.firstName || "",
+            lastName: data.data.lastName || "",
+            email: data.data.email || "",
+            phone: data.data.phone || "",
+            password: "",
+            lastLogin: data.data.lastLogin,
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };

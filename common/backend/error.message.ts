@@ -11,6 +11,11 @@ class ResultErrorCodes {
   public static readonly CountryCodeDoesNotExist = "Country code does not exist";
   public static readonly InvalidCredentials = "Invalid credentials";
   public static readonly PhoneNumberAlreadyInUse = "Phone number already in use";
+  public static readonly YouAreNotAuthorized = "You are not authorized";
+  public static readonly YouDontHavePermissionToPerformThisAction = "You don't have permission to perform this action";
+  public static readonly UserIdIsRequired = "User ID is required";
+  public static readonly UserNotFound = "User not found";
+  public static readonly AccessDenied = "Access denied";
 }
 
 export default ResultErrorCodes;
