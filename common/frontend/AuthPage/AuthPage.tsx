@@ -54,34 +54,45 @@ export default function AuthPage() {
     <div className="flex min-h-screen font-sans">
       {/* Left panel */}
       <div className="hidden md:flex relative w-1/2 items-center px-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[#1979a0]" />
+
+        {/* 🎥 Background Video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover scale-105"
+        >
+          <source src="/videos/bg.mp4" type="video/mp4" />
+        </video>
+
+        {/* 🌑 Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-blue-900/60 backdrop-blur-[2px]" />
 
         {/* ✅ Top Left Branding */}
         <div className="absolute top-6 left-10 z-20 flex items-center gap-3">
-          {/* Icon */}
-          <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-md">
+          <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-md">
             <span className="text-white font-bold text-lg">⚡</span>
           </div>
 
-          {/* Text */}
           <h2 className="text-white text-2xl font-bold tracking-wide">
-            Talent<span className="text-orange-500">Flow</span>
+            Talent<span className="text-blue-400">Flow</span>
           </h2>
         </div>
 
-        <div className="relative z-10 max-w-lg">
+        <div className="relative z-20 max-w-lg">
           {/* ✅ TYPEWRITER HEADING */}
           <h1 className="text-[70px] leading-[1.05] font-extrabold tracking-tight text-white">
             <div>
               {displayed[0].replace("faster.", "")}
-              <span className="text-orange-500">
+              <span className="text-blue-500">
                 {displayed[0].includes("faster.") ? "faster." : ""}
               </span>
             </div>
 
             <div>
               {displayed[1].replace("better", "")}
-              <span className="text-orange-500">
+              <span className="text-blue-500">
                 {displayed[1].includes("better") ? "better" : ""}
               </span>
             </div>
@@ -99,7 +110,7 @@ export default function AuthPage() {
         </div>
 
         {/* ✅ Moving Bottom Text */}
-        <div className="absolute bottom-6 left-0 w-full overflow-hidden z-10">
+        <div className="absolute bottom-6 left-0 w-full overflow-hidden z-20">
           <motion.div
             className="whitespace-nowrap text-white text-lg font-semibold"
             animate={{ x: ["100%", "-100%"] }}
