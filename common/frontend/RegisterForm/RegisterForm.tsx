@@ -4,6 +4,7 @@ import { useState } from "react";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
 import createUser from "@/services/frontend/register";
+import PasswordInput from "../PasswordInput/PasswordInput";
 
 export default function RegisterForm({
   isRegisteredSuccessfully,
@@ -100,12 +101,11 @@ export default function RegisterForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       <Input
         type="text"
-        placeholder="First Name"
+        label="First Name"
+        placeholder="Enter first name"
         value={formData.firstName}
         errorMessage={
-          enableErrors && errorConfig.firstName
-            ? errorConfig.firstName
-            : ""
+          enableErrors && errorConfig.firstName ? errorConfig.firstName : ""
         }
         onChange={(e) => {
           setFormData({ ...formData, firstName: e.target.value });
@@ -116,17 +116,17 @@ export default function RegisterForm({
 
       <Input
         type="text"
-        placeholder="Last Name"
+        label="Last Name"
+        placeholder="Enter last name"
         value={formData.lastName}
-        onChange={(e) =>
-          setFormData({ ...formData, lastName: e.target.value })
-        }
+        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
         className="w-full p-3 border rounded-lg"
       />
 
       <Input
         type="email"
-        placeholder="Email"
+        label="Email"
+        placeholder="Enter your email"
         value={formData.email}
         errorMessage={
           enableErrors && errorConfig.email ? errorConfig.email : ""
@@ -137,42 +137,38 @@ export default function RegisterForm({
         }}
         className="w-full p-3 border rounded-lg"
       />
-
-      <Input
-        type="password"
-        placeholder="Password"
+      <PasswordInput
         value={formData.password}
-        errorMessage={
-          enableErrors && errorConfig.password
-            ? errorConfig.password
-            : ""
-        }
         onChange={(e) => {
           setFormData({ ...formData, password: e.target.value });
           setErrorConfig((prev) => ({ ...prev, password: "" }));
         }}
+        errorMessage={
+          enableErrors && errorConfig.password ? errorConfig.password : ""
+        }
+        placeholder="Enter your password"
         className="w-full p-3 border rounded-lg"
       />
-
-      <Input
-        type="password"
-        placeholder="Confirm Password"
+      <PasswordInput
         value={formData.confirmPassword}
+        label="Confirm Password"
+        onChange={(e) => {
+          setFormData({ ...formData, confirmPassword: e.target.value });
+          setErrorConfig((prev) => ({ ...prev, confirmPassword: "" }));
+        }}
         errorMessage={
           enableErrors && errorConfig.confirmPassword
             ? errorConfig.confirmPassword
             : ""
         }
-        onChange={(e) => {
-          setFormData({ ...formData, confirmPassword: e.target.value });
-          setErrorConfig((prev) => ({ ...prev, confirmPassword: "" }));
-        }}
+        placeholder="Confirm your password"
         className="w-full p-3 border rounded-lg"
       />
 
       <Input
         type="text"
-        placeholder="Phone Number"
+        placeholder="Enter your phone number"
+        label="Phone Number"
         value={formData.phone}
         errorMessage={
           enableErrors && errorConfig.phone ? errorConfig.phone : ""
