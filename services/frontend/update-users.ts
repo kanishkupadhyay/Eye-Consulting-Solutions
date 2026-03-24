@@ -1,4 +1,5 @@
 import { Notification } from "@/common/frontend/notification";
+import { getTokenFromLocalStorage } from "@/common/frontend/utils";
 
 export interface IUpdateUserParams {
   id: string;
@@ -6,16 +7,17 @@ export interface IUpdateUserParams {
   lastName?: string;
   phone?: string;
   password?: string;
-};
+}
 
 export default async function updateUser(params: IUpdateUserParams) {
+  const token = getTokenFromLocalStorage();
   const { id, ...payload } = params;
 
   const res = await fetch(`/api/users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });

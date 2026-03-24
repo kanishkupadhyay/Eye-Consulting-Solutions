@@ -1,17 +1,30 @@
 import userController from "@/controllers/user.controller";
+import { withAdminAuth } from "@/lib/withAdmin";
 import { withDB } from "@/lib/withDb";
 
-export const GET = withDB(async (_req: Request, context: any) => {
-  const { id } = context.params;
-  return userController.getUserById(id);
-});
+export const GET = withDB(
+  withAdminAuth(async (req: Request) => {
+    const url = new URL(req.url);
+    const id = url.pathname.split("/").pop() as string;
 
-export const PUT = withDB(async (req: Request, context: any) => {
-  const { id } = context.params;
-  return userController.updateUser(req, id);
-});
+    return userController.getUserById(id);
+  }),
+);
 
-export const DELETE = withDB(async (req: Request, context: any) => {
-  const { id } = context.params;
-  return userController.deleteUser(req, id);
-});
+export const PUT = withDB(
+  withAdminAuth(async (req: Request) => {
+    const url = new URL(req.url);
+    const id = url.pathname.split("/").pop() as string;
+
+    return userController.updateUser(req, id);
+  }),
+);
+
+export const DELETE = withDB(
+  withAdminAuth(async (req: Request) => {
+    const url = new URL(req.url);
+    const id = url.pathname.split("/").pop() as string;
+
+    return userController.deleteUser(req, id);
+  }),
+);

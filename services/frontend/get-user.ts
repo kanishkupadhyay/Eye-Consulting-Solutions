@@ -1,24 +1,18 @@
 import { Notification } from "@/common/frontend/notification";
 import { getTokenFromLocalStorage } from "@/common/frontend/utils";
 
-type GetUsersParams = {
-  page?: number;
-  limit?: number;
-  search?: string;
-};
-
-export default async function getUsers(params: GetUsersParams) {
+export default async function getUserById(id: string) {
   const token = getTokenFromLocalStorage();
+  if (!token) throw new Error("Authorization token not found");
 
-  const url = "/api/users";
+  const url = `/api/users/${id}`;
 
   const res = await fetch(url, {
-    method: "POST",
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(params),
   });
 
   if (!res.ok) {
@@ -28,6 +22,5 @@ export default async function getUsers(params: GetUsersParams) {
   }
 
   const data = await res.json();
-
   return data;
 }

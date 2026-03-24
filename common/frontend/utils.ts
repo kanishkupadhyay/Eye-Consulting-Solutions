@@ -1,3 +1,5 @@
+import { Notification } from "./notification";
+
 export function formatDateNumeric(isoString: string) {
   if (!isoString) {
     return;
@@ -13,3 +15,13 @@ export function formatDateNumeric(isoString: string) {
 
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
+
+export const getTokenFromLocalStorage = (): string => {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    Notification.error("You are not authenticated");
+    throw new Error("No auth token found");
+  }
+  return token;
+};
