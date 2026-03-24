@@ -1,0 +1,256 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Input from "@/common/frontend/Input/Input";
+import Button from "../Button/Button";
+import { ArrowLeft, UserX } from "lucide-react";
+import Dialog from "../Dialog/Dialog";
+import updateUser from "@/services/frontend/update-users";
+import deleteUser from "@/services/frontend/delete-user";
+import { formatDateNumeric } from "../utils";
+
+type User = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password?: string;
+  lastLogin?: string;
+};
+
+const UserDetailPage = () => {
+  const { id } = useParams();
+  const router = useRouter();
+
+  const [form, setForm] = useState<User>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    lastLogin: "",
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // modal state
+
+  const [enableErrors, setEnableErrors] = useState(false);
+  const [errorConfig, setErrorConfig] = useState<{
+    firstName?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+  }>({});
+
+  const getError = (field: keyof typeof errorConfig) => {
+    if (!enableErrors) return "";
+    return errorConfig[field] || "";
+  };
+
+  const fetchUser = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/users/${id}`);
+      const data = await res.json();
+      if (data.success) {
+        setForm({
+          firstName: data.data.firstName || "",
+          lastName: data.data.lastName || "",
+          email: data.data.email || "",
+          phone: data.data.phone || "",
+          password: "",
+          lastLogin: data?.data?.lastLogin,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) fetchUser();
+  }, [id]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const validateForm = () => {
+    const errors: {
+      firstName?: string;
+      email?: string;
+      phone?: string;
+      password?: string;
+    } = {};
+    if (!form.firstName) errors.firstName = "First name is required";
+    if (!form.email) errors.email = "Email is required";
+    if (!form.phone) errors.phone = "Phone is required";
+    if (form.password && form.password.length < 8)
+      errors.password = "Password must be at least 8 characters";
+    setErrorConfig(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleUpdate = async () => {
+    setEnableErrors(true);
+    if (!validateForm()) return;
+
+    try {
+      setUpdating(true);
+      await updateUser({
+        id: id! as string,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phone: form.phone,
+        password: form.password,
+      });
+      router.push("/dashboard");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setUpdating(true);
+      if (!id) throw new Error("Invalid user id");
+      await deleteUser(id as string);
+      setShowDeleteModal(false);
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="bg-white rounded-2xl p-6 space-y-4 animate-pulse">
+          <div className="h-6 w-40 bg-gray-200 rounded" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-200 rounded-lg" />
+            ))}
+          </div>
+          <div className="h-10 w-32 bg-gray-200 rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <button
+            className="flex items-center justify-center gap-[2px]"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <h1 className="text-xl font-semibold text-gray-800">Edit User</h1>
+          <span className="text-xs text-gray-400">User ID: {id}</span>
+        </div>
+
+        {/* Form */}
+        <div className="p-6 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Input
+              label="First Name"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              errorMessage={getError("firstName")}
+            />
+            <Input
+              label="Last Name"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+            />
+            <Input
+              label="Email"
+              name="email"
+              value={form.email}
+              disabled
+              className="bg-gray-100 cursor-not-allowed"
+              errorMessage={getError("email")}
+            />
+            {/* LAST LOGIN DISPLAY */}
+            <div className="flex flex-col justify-center">
+              <label className="text-sm font-medium text-gray-700">
+                Last Login
+              </label>
+              <p className="mt-1 text-[#156eb7]">
+                {form?.lastLogin ? formatDateNumeric(form.lastLogin) : "Never"}
+              </p>
+            </div>
+            <Input
+              label="Phone"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              errorMessage={getError("phone")}
+            />
+            <Input
+              label="New Password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Leave blank to keep unchanged"
+              errorMessage={getError("password")}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end pt-4 border-t border-gray-100 gap-[4px]">
+            <Button
+              onClick={() => setShowDeleteModal(true)}
+              disabled={updating}
+              loading={updating}
+              className="bg-red-500 hover:bg-red-600 !w-auto text-white px-6 py-2.5 rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <UserX className="w-4 h-4" /> Delete
+            </Button>
+            <Button
+              onClick={handleUpdate}
+              disabled={updating}
+              loading={updating}
+              className="bg-orange-500 hover:bg-orange-600 !w-auto text-white px-6 py-2.5 rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Update User
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        isOpen={showDeleteModal}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Delete User"
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={updating}
+      >
+        <p className="text-gray-600">
+          Are you sure you want to delete this user? This action cannot be
+          undone.
+        </p>
+      </Dialog>
+    </div>
+  );
+};
+
+export default UserDetailPage;
