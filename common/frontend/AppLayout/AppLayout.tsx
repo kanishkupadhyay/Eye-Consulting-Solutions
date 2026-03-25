@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/common/frontend/Sidebar/Sidebar";
 import Header from "../Header/Header";
 import { HeaderSearch } from "../HeaderSearch/HeaderSearch";
+import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const getUserInfo = () => {
@@ -51,6 +54,54 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const pathname = usePathname();
+
+  const getTitleFromPath = () => {
+    if (!pathname) return "Dashboard";
+
+    const segments = pathname.split("/").filter(Boolean);
+
+    const mainRoute = segments[0];
+
+    if (!mainRoute) return "Dashboard";
+
+    // Capitalize first letter
+    return mainRoute.charAt(0).toUpperCase() + mainRoute.slice(1);
+  };
+
+  const dynamicTitle = getTitleFromPath();
+
+  const segments = pathname.split("/").filter(Boolean);
+  const mainRoute = segments[0];
+
+  const getHeaderAction = () => {
+    switch (mainRoute) {
+      case "candidates":
+        return {
+          label: "+ Post Candidates",
+          value: "upload-candidates",
+        };
+      case "jobs":
+        return {
+          label: "+ Post Job",
+          value: "jobs",
+        };
+      default:
+        return {
+          label: "+ Post Job",
+          value: "jobs",
+        };
+    }
+  };
+
+  const headerAction = getHeaderAction();
+
+  const handleActionButtonClick = (value: string): void => {
+    if(value === 'upload-candidates') {
+      router.push('/candidates/upload')
+    }
+  }
+
   return (
     <div className="min-h-screen">
       {isLoggedIn && <Sidebar />}
@@ -62,12 +113,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {isLoggedIn && (
           <div className="sticky top-0 z-40 bg-white border-gray-300">
             <Header
-              title="Dashboard"
+              title={dynamicTitle}
               rightContent={
                 <>
                   <HeaderSearch onSearch={(val) => console.log(val)} />
-                  <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-                    + Post Job
+                  <button
+                    onClick={() => handleActionButtonClick(headerAction.value)}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                  >
+                    {headerAction.label}
                   </button>
                 </>
               }
@@ -76,7 +130,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
         {isLoggedIn ? (
           <h1 className="bg-[#f4f1eb] px-6 pt-6 pb-2 text-2xl font-semibold text-gray-800">
-            Welcome,
+            Welcome,{" "}
             <span className="text-gray-900">{userInfo?.firstName}</span> 👋
           </h1>
         ) : null}
