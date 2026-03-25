@@ -2,7 +2,7 @@ import ResultErrorCodes from "@/common/backend/error.message";
 import { checkIsValidEmail } from "@/common/backend/utils";
 import CountryRepository from "@/repositories/country.repository";
 import UserRepository from "@/repositories/user.repository";
-import bcrypt from "bcrypt";
+import bcrypt from 'bcryptjs';
 import jwt from "jsonwebtoken";
 import StatusCodes from "@/common/backend/status-codes";
 import {
