@@ -1,6 +1,11 @@
 "use client";
 
-import CandidatesPage from "@/common/frontend/CandidatesPage/CandidatesPage";
+import dynamic from "next/dynamic";
+
+const CandidatesPage = dynamic(
+  () => import("@/common/frontend/CandidatesPage/CandidatesPage"),
+  { ssr: false },
+);
 
 export default async function page() {
   return <CandidatesPage />;

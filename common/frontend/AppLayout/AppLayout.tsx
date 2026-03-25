@@ -78,18 +78,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     switch (mainRoute) {
       case "candidates":
         return {
-          label: "+ Post Candidates",
+          label: "+ Add Candidates",
           value: "upload-candidates",
-        };
-      case "jobs":
-        return {
-          label: "+ Post Job",
-          value: "jobs",
-        };
-      default:
-        return {
-          label: "+ Post Job",
-          value: "jobs",
         };
     }
   };
@@ -97,10 +87,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const headerAction = getHeaderAction();
 
   const handleActionButtonClick = (value: string): void => {
-    if(value === 'upload-candidates') {
-      router.push('/candidates/upload')
+    if (value === "upload-candidates") {
+      router.push("/candidates/upload");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen">
@@ -116,13 +106,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               title={dynamicTitle}
               rightContent={
                 <>
-                  <HeaderSearch onSearch={(val) => console.log(val)} />
-                  <button
-                    onClick={() => handleActionButtonClick(headerAction.value)}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-                  >
-                    {headerAction.label}
-                  </button>
+                  {headerAction && (
+                    <>
+                      <HeaderSearch onSearch={(val) => console.log(val)} />
+                      <button
+                        onClick={() =>
+                          handleActionButtonClick(headerAction.value)
+                        }
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                      >
+                        {headerAction.label}
+                      </button>
+                    </>
+                  )}
                 </>
               }
             />
@@ -131,7 +127,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {isLoggedIn ? (
           <h1 className="bg-[#f4f1eb] px-6 pt-6 pb-2 text-2xl font-semibold text-gray-800">
             Welcome,{" "}
-            <span className="text-gray-900">{userInfo?.firstName}</span> 👋
+            <span className="text-gray-900">{userInfo?.firstName}</span>{" "}
+            <span
+              className="inline-block origin-[70%_70%] animate-[wave_1.5s_ease-in-out_infinite]"
+              style={{
+                display: "inline-block",
+                transformOrigin: "70% 70%",
+                animationName: "wave",
+              }}
+            >
+              👋
+            </span>
+            <style>
+              {`
+      @keyframes wave {
+        0% { transform: rotate(0deg); }
+        15% { transform: rotate(14deg); }
+        30% { transform: rotate(-8deg); }
+        40% { transform: rotate(14deg); }
+        50% { transform: rotate(-4deg); }
+        60% { transform: rotate(10deg); }
+        70% { transform: rotate(0deg); }
+        100% { transform: rotate(0deg); }
+      }
+    `}
+            </style>
           </h1>
         ) : null}
         <main
