@@ -7,6 +7,28 @@ import { HeaderSearch } from "../HeaderSearch/HeaderSearch";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userInfo, setUserInfo] = useState<any>(null);
+
+  useEffect(() => {
+    const getUserInfo = () => {
+      const data = localStorage.getItem("userInfo");
+      setUserInfo(data ? JSON.parse(data) : null);
+    };
+
+    // initial load
+    getUserInfo();
+
+    // Listen for cross-tab storage changes
+    window.addEventListener("storage", getUserInfo);
+
+    // Listen for same-tab login/logout events
+    window.addEventListener("authChange", getUserInfo);
+
+    return () => {
+      window.removeEventListener("storage", getUserInfo);
+      window.removeEventListener("authChange", getUserInfo);
+    };
+  }, []);
 
   useEffect(() => {
     const checkToken = () => {
@@ -33,7 +55,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen">
       {isLoggedIn && <Sidebar />}
 
-      <div className={`${isLoggedIn ? "ml-64" : ""} flex flex-col min-h-screen`}>
+      <div
+        className={`${isLoggedIn ? "md:ml-64" : ""} flex flex-col min-h-screen`}
+      >
         {/* Header */}
         {isLoggedIn && (
           <div className="sticky top-0 z-40 bg-white border-gray-300">
@@ -50,7 +74,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             />
           </div>
         )}
-
+        {isLoggedIn ? (
+          <h1 className="bg-[#f4f1eb] px-6 pt-6 pb-2 text-2xl font-semibold text-gray-800">
+            Welcome,
+            <span className="text-gray-900">{userInfo?.firstName}</span> 👋
+          </h1>
+        ) : null}
         <main
           className={`flex-1 overflow-y-auto ${
             isLoggedIn ? "bg-[#f4f1eb]" : "bg-gray-100"
