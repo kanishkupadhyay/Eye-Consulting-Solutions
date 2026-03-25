@@ -1,5 +1,10 @@
-import DashboardPage from "@/common/frontend/DashboardPage/DashboardPage";
+import dynamic from "next/dynamic";
+
+const DashboardPage = dynamic(
+  () => import("@/common/frontend/DashboardPage/DashboardPage"),
+  { ssr: false },
+);
 
 export default async function page() {
-    return <DashboardPage/>
+  return <DashboardPage />;
 }

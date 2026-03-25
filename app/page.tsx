@@ -11,6 +11,8 @@ export default function Page() {
     const isAdmin = JSON.parse(localStorage.getItem("userInfo") ?? "")?.isAdmin;
     if (isAdmin) {
       redirect("/dashboard");
+    } else {
+      redirect("/candidates");
     }
   }, []);
 

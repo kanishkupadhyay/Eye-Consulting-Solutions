@@ -13,6 +13,7 @@ type DataTableProps<T> = {
   totalPages: number;
   onPageChange: (page: number) => void;
   loading?: boolean;
+  total: number;
 };
 
 export default function DataTable<T>({
@@ -22,8 +23,12 @@ export default function DataTable<T>({
   totalPages,
   onPageChange,
   loading,
+  total,
 }: DataTableProps<T>) {
   const skeletonRows = 5;
+
+  const start = total === 0 ? 0 : (page - 1) * data.length + 1;
+  const end = Math.min(page * data.length, total);
 
   return (
     <div className="bg-white rounded-xl border border-gray-100">
@@ -87,6 +92,10 @@ export default function DataTable<T>({
 
       {/* Pagination */}
       <div className="flex items-center justify-between px-6 py-4">
+        {/* ✅ Showing range + total */}
+        <p className="text-sm text-gray-500">
+          {total > 0 ? `Showing ${start} to ${end} of ${total}` : "No records"}
+        </p>
         <p className="text-sm text-gray-500">
           Page {page} of {totalPages}
         </p>
@@ -95,7 +104,7 @@ export default function DataTable<T>({
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page === 1}
-             className={`px-3 py-1.5 border rounded-md text-sm disabled:opacity-40 ${page === 1 ? "!cursor-not-allowed" : ""}`}
+            className={`px-3 py-1.5 border rounded-md text-sm disabled:opacity-40 ${page === 1 ? "!cursor-not-allowed" : ""}`}
           >
             Prev
           </button>
@@ -103,7 +112,7 @@ export default function DataTable<T>({
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page === totalPages}
-             className={`px-3 py-1.5 border rounded-md text-sm disabled:opacity-40 ${page === 1 ? "!cursor-not-allowed" : ""}`}
+            className={`px-3 py-1.5 border rounded-md text-sm disabled:opacity-40 ${page === 1 ? "!cursor-not-allowed" : ""}`}
           >
             Next
           </button>

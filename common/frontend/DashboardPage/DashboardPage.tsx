@@ -63,6 +63,7 @@ const DashboardPage = () => {
   const [data, setData] = useState<any[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
   const fetchUsers = async (pageNumber: number) => {
     try {
@@ -79,6 +80,7 @@ const DashboardPage = () => {
         })) || [],
       );
       setTotalPages(res.totalPages || 1);
+      setTotalCount(res.total);
     } catch (err) {
       console.error(err);
     } finally {
@@ -140,6 +142,7 @@ const DashboardPage = () => {
         totalPages={totalPages}
         onPageChange={setPage}
         loading={loading}
+        total={totalCount}
       />
     </div>
   );
