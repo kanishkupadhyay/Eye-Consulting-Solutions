@@ -35,6 +35,10 @@ class UserController {
   public sendOtp = (email: string) => {
     return this.userService.sendOtp(email);
   };
+
+  public validateOtp = (email: string, otp: string) => {
+    return this.userService.validateOtp(email, otp);
+  };
 }
 
 const userController = new UserController();

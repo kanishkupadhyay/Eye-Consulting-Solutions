@@ -16,6 +16,8 @@ class ResultErrorCodes {
   public static readonly UserIdIsRequired = "User ID is required";
   public static readonly UserNotFound = "User not found";
   public static readonly AccessDenied = "Access denied";
+  public static readonly OtpIsRequired = 'OTP is required';
+  public static readonly InvalidOrExpiredToken = 'Invalid or expired token';
 }
 
 export default ResultErrorCodes;
