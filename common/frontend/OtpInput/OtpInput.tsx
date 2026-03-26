@@ -99,7 +99,7 @@ export default function CustomOtpInput({
             w-[50px] h-14 border border-gray-300 rounded-lg text-center text-lg
             outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition
           "
-          ref={(el) => (inputsRef.current[i] = el)}
+          ref={(el) => { inputsRef.current[i] = el; }}
           value={otp[i]}
           onChange={(e) => handleChange(e, i)}
           onKeyDown={(e) => handleKeyDown(e, i)}
