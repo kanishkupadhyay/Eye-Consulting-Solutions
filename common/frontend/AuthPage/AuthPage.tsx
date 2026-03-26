@@ -75,8 +75,25 @@ export default function AuthPage() {
             <span className="text-white font-bold text-lg">⚡</span>
           </div>
 
-          <h2 className="text-white text-2xl font-bold tracking-wide">
-            Talent<span className="text-blue-400">Flow</span>
+          <h2 className="text-2xl font-bold tracking-wide flex items-center relative">
+            <span className="text-red-500">X</span>
+            <span className="text-green-500">perthi</span>
+            <span className="text-blue-500">repro</span>
+
+            {/* Wave underline */}
+            <svg
+              className="absolute -bottom-2 left-0 w-24 h-4"
+              viewBox="0 0 100 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M0 10 Q15 0 30 10 T60 10 T100 10"
+                stroke="#0284c7" /* blue-500 */
+                strokeWidth="3"
+                fill="transparent"
+              />
+            </svg>
           </h2>
         </div>
 
@@ -151,16 +168,16 @@ export default function AuthPage() {
                 {view === "login"
                   ? "Welcome back"
                   : view === "register"
-                  ? "Create account"
-                  : "Forgot Password"}
+                    ? "Create account"
+                    : "Forgot Password"}
               </h2>
 
               <p className="mb-8 text-gray-500 text-sm">
                 {view === "login"
                   ? "Sign in to your TalentFlow workspace"
                   : view === "register"
-                  ? "Start hiring smarter today"
-                  : "Enter your email to reset password"}
+                    ? "Start hiring smarter today"
+                    : "Enter your email to reset password"}
               </p>
             </motion.div>
           </AnimatePresence>
@@ -186,9 +203,7 @@ export default function AuthPage() {
                 : "Already have an account?"}
 
               <span
-                onClick={() =>
-                  setView(view === "login" ? "register" : "login")
-                }
+                onClick={() => setView(view === "login" ? "register" : "login")}
                 className="ml-2 text-orange-500 font-semibold cursor-pointer hover:underline"
               >
                 {view === "login" ? "Register" : "Login"}
