@@ -31,6 +31,10 @@ class UserController {
   public deleteUser = (req: Request, id: string) => {
     return this.userService.deleteUser(req, id);
   };
+
+  public sendOtp = (email: string) => {
+    return this.userService.sendOtp(email);
+  };
 }
 
 const userController = new UserController();

@@ -7,7 +7,11 @@ import { useRouter } from "next/navigation";
 import Button from "../Button/Button";
 import PasswordInput from "../PasswordInput/PasswordInput";
 
-export default function LoginForm() {
+type LoginFormProps = {
+  onForgotPassword: () => void;
+};
+
+export default function LoginForm({ onForgotPassword }: LoginFormProps) {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [enableErrors, setEnableErrors] = useState<boolean>(false);
   const [errorConfig, setErrorConfig] = useState<{
@@ -41,12 +45,14 @@ export default function LoginForm() {
       setIsLoading(false);
     }
   };
+
   const validateForm = () => {
     setFormData((prev) => ({
       ...prev,
       email: prev.email.trim(),
       password: prev.password.trim(),
     }));
+
     const errors: { email?: string; password?: string } = {};
 
     if (!formData.email) {
@@ -73,15 +79,29 @@ export default function LoginForm() {
         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         required
       />
-      <PasswordInput
-        value={formData.password}
-        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-        errorMessage={
-          enableErrors && errorConfig.password ? errorConfig.password : ""
-        }
-        placeholder="Enter your password"
-        className="w-full p-3 border rounded-lg"
-      />
+
+      <div>
+        <PasswordInput
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          errorMessage={
+            enableErrors && errorConfig.password ? errorConfig.password : ""
+          }
+          placeholder="Enter your password"
+          className="w-full p-3 border rounded-lg"
+        />
+
+        <div className="text-right mt-2">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-sm text-blue-600 hover:underline hover:text-blue-700 transition-colors"
+          >
+            Forgot Password?
+          </button>
+        </div>
+      </div>
+
       <Button loading={isLoading}>Sign In →</Button>
     </form>
   );
