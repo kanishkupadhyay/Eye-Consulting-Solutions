@@ -12,14 +12,6 @@ const otpSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    token: {
-      type: String,
-      required: true,
-    },
-    verified: {
-      type: Boolean,
-      default: false,
-    },
     expiresAt: {
       type: Date,
       required: true,
@@ -28,7 +20,7 @@ const otpSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-//Index to automatically remove expired OTPs
+// TTL index to automatically remove expired OTPs
 otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export const Otp = mongoose.models.Otp || mongoose.model("Otp", otpSchema);

@@ -1,4 +1,4 @@
-import ResultErrorCodes from "@/common/backend/error.message";
+import ResultErrorMessage from "@/common/backend/error.message";
 import StatusCodes from "@/common/backend/status-codes";
 import UserRepository from "@/repositories/user.repository";
 import jwt from "jsonwebtoken";
@@ -14,7 +14,7 @@ export const withAdminAuth = (
         return new Response(
           JSON.stringify({
             success: false,
-            message: ResultErrorCodes.YouAreNotAuthorized,
+            message: ResultErrorMessage.YouAreNotAuthorized,
           }),
           {
             status: StatusCodes.UNAUTHORIZED,
@@ -26,7 +26,7 @@ export const withAdminAuth = (
       const token = authHeader.split(" ")[1];
 
       // 🔹 Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      const decoded = jwt.verify(token, process.env.JWT_AUTH_SECRET!) as {
         userId: string;
         isAdmin?: boolean;
       };
@@ -38,7 +38,7 @@ export const withAdminAuth = (
         return new Response(
           JSON.stringify({
             success: false,
-            message: ResultErrorCodes.YouDontHavePermissionToPerformThisAction,
+            message: ResultErrorMessage.YouDontHavePermissionToPerformThisAction,
           }),
           {
             status: StatusCodes.FORBIDDEN,
