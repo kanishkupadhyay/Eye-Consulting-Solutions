@@ -12,7 +12,6 @@ import {
 import UserFactory from "@/factories/user.factory";
 import ResultSuccessMessages from "@/common/backend/success.messsage";
 import { EmailService } from "@/common/backend/email.service";
-import crypto from "crypto";
 import { User } from "@/models/user.model";
 import OtpService from "./otp.service";
 
@@ -46,29 +45,18 @@ class UserService {
 
   public resetPassword = async (req: Request) => {
     try {
-      // 🔹 Get token from headers
-      const authHeader = req.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: ResultErrorMessage.YouAreNotAuthorized,
-          }),
-          {
-            status: StatusCodes.UNAUTHORIZED,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
-      }
       const body = await req.json();
-      const { newPassword } = body;
-  
+      const { newPassword, resetToken } = body;
+
+      if (!resetToken) {
+        throw new Error(ResultErrorMessage.ResetTokenIsRequired);
+      }
+
       if (!newPassword) {
         throw new Error(ResultErrorMessage.NewPasswordIsRequired);
       }
-      const token = authHeader.split(" ")[1];
       const decoded: any = jwt.verify(
-        token,
+        resetToken,
         process.env.JWT_RESET_SECRET as string,
       );
       const user = await User.findOne({ email: decoded?.email });
@@ -206,8 +194,14 @@ class UserService {
         errorMsg: ResultErrorMessage.FirstNameIsRequired,
       },
       { field: data?.email, errorMsg: ResultErrorMessage.EmailIsRequired },
-      { field: data?.password, errorMsg: ResultErrorMessage.PasswordIsRequired },
-      { field: data?.phone, errorMsg: ResultErrorMessage.PhoneNumberIsRequired },
+      {
+        field: data?.password,
+        errorMsg: ResultErrorMessage.PasswordIsRequired,
+      },
+      {
+        field: data?.phone,
+        errorMsg: ResultErrorMessage.PhoneNumberIsRequired,
+      },
     ];
 
     for (const item of fieldMapping) {
@@ -387,7 +381,7 @@ class UserService {
       await this.otpService.createOtp(email, otp, 5);
 
       // Send OTP email
-      // await this.emailService.sendOtpMail(email, otp);
+      await this.emailService.sendOtpMail(email, otp);
 
       // Return structured Response including the token
       return new Response(
