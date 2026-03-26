@@ -60,10 +60,29 @@ export default function Sidebar() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-5 border-b border-gray-800">
             <div className="flex items-center gap-2">
-              <div className="bg-orange-500 w-8 h-8 rounded-md flex items-center justify-center">
+              <div className="bg-blue-500 w-8 h-8 rounded-md flex items-center justify-center">
                 ⚡
               </div>
-              <h1 className="text-lg font-semibold">TalentFlow</h1>
+              <h2 className="text-2xl font-bold tracking-wide flex items-center relative">
+                <span className="text-red-500">X</span>
+                <span className="text-green-500">perthi</span>
+                <span className="text-blue-500">repro</span>
+
+                {/* Wave underline */}
+                <svg
+                  className="absolute -bottom-2 left-0 w-24 h-4"
+                  viewBox="0 0 100 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M0 10 Q15 0 30 10 T60 10 T100 10"
+                    stroke="#0284c7" /* blue-500 */
+                    strokeWidth="3"
+                    fill="transparent"
+                  />
+                </svg>
+              </h2>
             </div>
 
             <button onClick={() => setIsOpen(false)} className="md:hidden">
