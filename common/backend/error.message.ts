@@ -1,4 +1,4 @@
-class ResultErrorCodes {
+class ResultErrorMessage {
   public static readonly PhoneNumberIsInvalid = "Phone number is invalid";
   public static readonly EmailIsRequired = "Email is required";
   public static readonly PasswordIsRequired = "Password is required"
@@ -18,6 +18,7 @@ class ResultErrorCodes {
   public static readonly AccessDenied = "Access denied";
   public static readonly OtpIsRequired = 'OTP is required';
   public static readonly InvalidOrExpiredToken = 'Invalid or expired token';
+  public static readonly NewPasswordIsRequired = 'New password is required';
 }
 
-export default ResultErrorCodes;
+export default ResultErrorMessage;

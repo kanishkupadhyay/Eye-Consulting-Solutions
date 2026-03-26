@@ -11,7 +11,6 @@ class OtpRepository extends BaseRepository<any> {
   public async createOtp(data: {
     email: string;
     otp: string;
-    token: string;
     expiresAt: Date;
   }) {
     const otpEntry = new this.model(data);

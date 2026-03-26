@@ -1,4 +1,4 @@
-import ResultErrorCodes from "@/common/backend/error.message";
+import ResultErrorMessage from "@/common/backend/error.message";
 import { checkIsValidEmail } from "@/common/backend/utils";
 import CountryRepository from "@/repositories/country.repository";
 import UserRepository from "@/repositories/user.repository";
@@ -44,23 +44,79 @@ class UserService {
     }
   };
 
+  public resetPassword = async (req: Request) => {
+    try {
+      // 🔹 Get token from headers
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: ResultErrorMessage.YouAreNotAuthorized,
+          }),
+          {
+            status: StatusCodes.UNAUTHORIZED,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+      const body = await req.json();
+      const { newPassword } = body;
+  
+      if (!newPassword) {
+        throw new Error(ResultErrorMessage.NewPasswordIsRequired);
+      }
+      const token = authHeader.split(" ")[1];
+      const decoded: any = jwt.verify(
+        token,
+        process.env.JWT_RESET_SECRET as string,
+      );
+      const user = await User.findOne({ email: decoded?.email });
+
+      if (!user) {
+        throw new Error(ResultErrorMessage.UserNotFound);
+      }
+
+      user.password = newPassword;
+      await user.save();
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: ResultSuccessMessages.PasswordResetSuccessfully,
+        }),
+        {
+          status: StatusCodes.OK,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ success: false, message: error.message }),
+        {
+          status: StatusCodes.BAD_REQUEST,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+  };
+
   public loginUser = async (data: IUserLoginRequest) => {
     try {
       const { email, password } = data;
       const trimmedEmail = email?.trim() || "";
       const trimmedPassword = password?.trim() || "";
 
-      if (!trimmedEmail) throw new Error(ResultErrorCodes.EmailIsRequired);
+      if (!trimmedEmail) throw new Error(ResultErrorMessage.EmailIsRequired);
 
       const isEmailValid = checkIsValidEmail(trimmedEmail);
 
-      if (!isEmailValid) throw new Error(ResultErrorCodes.EmailIsNotValid);
+      if (!isEmailValid) throw new Error(ResultErrorMessage.EmailIsNotValid);
 
       if (!trimmedPassword)
-        throw new Error(ResultErrorCodes.PasswordIsRequired);
+        throw new Error(ResultErrorMessage.PasswordIsRequired);
 
       if (trimmedPassword.length < 8) {
-        throw new Error(ResultErrorCodes.PasswordMustBeAtLeast8Characters);
+        throw new Error(ResultErrorMessage.PasswordMustBeAtLeast8Characters);
       }
 
       // 🔹 fetch user from DB
@@ -68,7 +124,7 @@ class UserService {
 
       // 🔹 safe check for missing password
       if (!user || !user.password) {
-        throw new Error(ResultErrorCodes.InvalidCredentials);
+        throw new Error(ResultErrorMessage.InvalidCredentials);
       }
 
       // 🔹 compare password
@@ -77,7 +133,7 @@ class UserService {
         user.password,
       );
       if (!isPasswordMatch) {
-        throw new Error(ResultErrorCodes.InvalidCredentials);
+        throw new Error(ResultErrorMessage.InvalidCredentials);
       }
 
       // update lastLogin timestamp
@@ -86,7 +142,7 @@ class UserService {
       // 🔹 generate JWT
       const token = jwt.sign(
         { userId: user._id, email: user.email },
-        process.env.JWT_SECRET!,
+        process.env.JWT_AUTH_SECRET!,
         { expiresIn: "1d" },
       );
 
@@ -115,10 +171,10 @@ class UserService {
 
   public deleteUser = async (req: Request, id: string) => {
     try {
-      if (!id) throw new Error(ResultErrorCodes.UserIdIsRequired);
+      if (!id) throw new Error(ResultErrorMessage.UserIdIsRequired);
 
       const user = await this.userRepository.findById(id);
-      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
+      if (!user) throw new Error(ResultErrorMessage.UserNotFound);
 
       await this.userRepository.deleteById(id);
 
@@ -147,11 +203,11 @@ class UserService {
     const fieldMapping = [
       {
         field: data?.firstName,
-        errorMsg: ResultErrorCodes.FirstNameIsRequired,
+        errorMsg: ResultErrorMessage.FirstNameIsRequired,
       },
-      { field: data?.email, errorMsg: ResultErrorCodes.EmailIsRequired },
-      { field: data?.password, errorMsg: ResultErrorCodes.PasswordIsRequired },
-      { field: data?.phone, errorMsg: ResultErrorCodes.PhoneNumberIsRequired },
+      { field: data?.email, errorMsg: ResultErrorMessage.EmailIsRequired },
+      { field: data?.password, errorMsg: ResultErrorMessage.PasswordIsRequired },
+      { field: data?.phone, errorMsg: ResultErrorMessage.PhoneNumberIsRequired },
     ];
 
     for (const item of fieldMapping) {
@@ -159,32 +215,32 @@ class UserService {
     }
 
     if (data?.password && data.password.length < 8) {
-      throw new Error(ResultErrorCodes.PasswordMustBeAtLeast8Characters);
+      throw new Error(ResultErrorMessage.PasswordMustBeAtLeast8Characters);
     }
 
     if (
       data?.phone &&
       (!/^\d{10}$/.test(data.phone) || data?.phone?.length !== 10)
     ) {
-      throw new Error(ResultErrorCodes.PhoneNumberIsInvalid);
+      throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
     }
 
     if (!checkIsValidEmail(data.email))
-      throw new Error(ResultErrorCodes.EmailIsNotValid);
+      throw new Error(ResultErrorMessage.EmailIsNotValid);
 
     const userAlreadyExists = await this.userRepository.findByFieldName(
       "email",
       data.email,
     );
     if (userAlreadyExists)
-      throw new Error(ResultErrorCodes.UserAlreadyExistsWithThisEmail);
+      throw new Error(ResultErrorMessage.UserAlreadyExistsWithThisEmail);
 
     const phoneNumberAlreadyInUse = await this.userRepository.findByFieldName(
       "phone",
       data.phone,
     );
     if (phoneNumberAlreadyInUse) {
-      throw new Error(ResultErrorCodes.PhoneNumberAlreadyInUse);
+      throw new Error(ResultErrorMessage.PhoneNumberAlreadyInUse);
     }
   };
 
@@ -238,14 +294,14 @@ class UserService {
 
   public getUserById = async (id: string) => {
     try {
-      if (!id) throw new Error(ResultErrorCodes.UserIdIsRequired);
+      if (!id) throw new Error(ResultErrorMessage.UserIdIsRequired);
 
       const user = await this.userRepository.findById(id);
 
-      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
+      if (!user) throw new Error(ResultErrorMessage.UserNotFound);
 
       if (user.isAdmin) {
-        throw new Error(ResultErrorCodes.AccessDenied);
+        throw new Error(ResultErrorMessage.AccessDenied);
       }
 
       return new Response(JSON.stringify({ success: true, data: user }), {
@@ -265,10 +321,10 @@ class UserService {
 
   public updateUser = async (req: Request, id: string) => {
     try {
-      if (!id) throw new Error(ResultErrorCodes.UserIdIsRequired);
+      if (!id) throw new Error(ResultErrorMessage.UserIdIsRequired);
 
       const user = await this.userRepository.findById(id);
-      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
+      if (!user) throw new Error(ResultErrorMessage.UserNotFound);
 
       const body = await req.json();
       const { firstName, lastName, phone, password } = body;
@@ -278,14 +334,14 @@ class UserService {
       if (lastName !== undefined) user.lastName = lastName.trim();
       if (phone !== undefined) {
         if (phone && (!/^\d{10}$/.test(phone) || phone?.length !== 10)) {
-          throw new Error(ResultErrorCodes.PhoneNumberIsInvalid);
+          throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
         }
         user.phone = phone;
       }
       if (password) {
         const trimmedPassword = password.trim();
         if (trimmedPassword.length < 8) {
-          throw new Error(ResultErrorCodes.PasswordMustBeAtLeast8Characters);
+          throw new Error(ResultErrorMessage.PasswordMustBeAtLeast8Characters);
         }
         user.password = await bcrypt.hash(trimmedPassword, 10);
       }
@@ -315,26 +371,27 @@ class UserService {
 
   public sendOtp = async (email: string) => {
     try {
-      if (!email) throw new Error(ResultErrorCodes.EmailIsRequired);
+      if (!email) throw new Error(ResultErrorMessage.EmailIsRequired);
+
+      if (!checkIsValidEmail(email)) {
+        throw new Error(ResultErrorMessage.EmailIsNotValid);
+      }
 
       const user = await User.findOne({ email: email.toLowerCase().trim() });
-      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
+      if (!user) throw new Error(ResultErrorMessage.UserNotFound);
 
       // Generate 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-      // Generate temporary token for page protection
-      const token = crypto.randomBytes(32).toString("hex");
-
-      // Save OTP in DB using OtpService and pass the token
-      await this.otpService.createOtp(email, otp, 5, token); // pass token
+      // Save OTP in DB using OtpService
+      await this.otpService.createOtp(email, otp, 5);
 
       // Send OTP email
-      await this.emailService.sendOtpMail(email, otp);
+      // await this.emailService.sendOtpMail(email, otp);
 
       // Return structured Response including the token
       return new Response(
-        JSON.stringify({ success: true, message: "OTP sent", token }),
+        JSON.stringify({ success: true, message: "OTP sent" }),
         {
           status: StatusCodes.OK,
           headers: { "Content-Type": "application/json" },
@@ -356,13 +413,6 @@ class UserService {
 
   public validateOtp = async (email: string, otp: string) => {
     try {
-      if (!email) {
-        throw new Error(ResultErrorCodes.EmailIsRequired);
-      }
-      if (!otp) {
-        throw new Error(ResultErrorCodes.OtpIsRequired);
-      }
-
       // Delegate OTP validation to otpService
       const response = await this.otpService.validateOtp(email, otp);
       return response;

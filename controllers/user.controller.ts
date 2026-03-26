@@ -39,6 +39,11 @@ class UserController {
   public validateOtp = (email: string, otp: string) => {
     return this.userService.validateOtp(email, otp);
   };
+
+  public resetPassword = (req: Request) => {
+    return this.userService.resetPassword(req);
+  };
+
 }
 
 const userController = new UserController();

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import ResultErrorCodes from "@/common/backend/error.message";
+import ResultErrorMessage from "@/common/backend/error.message";
 import { createHashPassword } from "@/common/backend/utils";
 
 const userSchema = new mongoose.Schema(
@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      minlength: [10, ResultErrorCodes.PhoneNumberIsInvalid],
+      minlength: [10, ResultErrorMessage.PhoneNumberIsInvalid],
     },
     isAdmin: {
       type: Boolean,
