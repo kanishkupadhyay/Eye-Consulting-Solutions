@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 
 export default function PasswordInput({
   value,
+  name,
   onChange,
   placeholder = "Enter your password",
   errorMessage,
@@ -34,6 +35,7 @@ export default function PasswordInput({
           type={showPassword ? "text" : "password"}
           value={value}
           onChange={onChange}
+          name={name}
           label={label}
           placeholder={placeholder}
           className={`w-full p-3 border rounded-lg pr-10 ${

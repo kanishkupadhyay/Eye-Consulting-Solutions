@@ -5,4 +5,5 @@ export interface IPasswordInputProps {
   errorMessage?: string;
   className?: string;
   label?: string;
+  name?: string;
 }

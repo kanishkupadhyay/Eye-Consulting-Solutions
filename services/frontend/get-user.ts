@@ -15,10 +15,13 @@ export default async function getUserById(id: string) {
     },
   });
 
+  if (res.status === 404) {
+    return res;
+  }
+
   if (!res.ok) {
     const errorText: { message: string } = await res.json();
     Notification.error(errorText.message);
-    throw new Error(errorText.message);
   }
 
   const data = await res.json();

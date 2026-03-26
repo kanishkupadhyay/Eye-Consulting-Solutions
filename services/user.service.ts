@@ -14,6 +14,7 @@ import ResultSuccessMessages from "@/common/backend/success.messsage";
 import { EmailService } from "@/common/backend/email.service";
 import { User } from "@/models/user.model";
 import OtpService from "./otp.service";
+import { NextResponse } from "next/server";
 
 class UserService {
   private userRepository = new UserRepository();
@@ -292,16 +293,24 @@ class UserService {
 
       const user = await this.userRepository.findById(id);
 
-      if (!user) throw new Error(ResultErrorMessage.UserNotFound);
-
-      if (user.isAdmin) {
-        throw new Error(ResultErrorMessage.AccessDenied);
+      if (!user) {
+        return NextResponse.json(
+          { message: ResultErrorMessage.UserNotFound, success: false },
+          { status: StatusCodes.NOT_FOUND },
+        );
       }
 
-      return new Response(JSON.stringify({ success: true, data: user }), {
-        status: StatusCodes.OK,
-        headers: { "Content-Type": "application/json" },
-      });
+      if (user.isAdmin) {
+        return NextResponse.json(
+          { message: ResultErrorMessage.AccessDenied, success: false },
+          { status: StatusCodes.FORBIDDEN },
+        );
+      }
+
+      return NextResponse.json(
+        { success: true, data: user },
+        { status: StatusCodes.OK },
+      );
     } catch (error: any) {
       return new Response(
         JSON.stringify({ success: false, message: error.message }),
@@ -337,7 +346,7 @@ class UserService {
         if (trimmedPassword.length < 8) {
           throw new Error(ResultErrorMessage.PasswordMustBeAtLeast8Characters);
         }
-        user.password = await bcrypt.hash(trimmedPassword, 10);
+        user.password = trimmedPassword;
       }
 
       await user.save();

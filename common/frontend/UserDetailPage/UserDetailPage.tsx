@@ -10,6 +10,7 @@ import updateUser from "@/services/frontend/update-users";
 import deleteUser from "@/services/frontend/delete-user";
 import { formatDateNumeric } from "../utils";
 import getUserById from "@/services/frontend/get-user";
+import PasswordInput from "../PasswordInput/PasswordInput";
 
 type User = {
   firstName: string;
@@ -20,22 +21,26 @@ type User = {
   lastLogin?: string;
 };
 
+const NotFound = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="text-center">
+      <h1 className="text-6xl font-bold text-gray-800">404</h1>
+      <p className="mt-4 text-gray-600">User not found</p>
+      <Button onClick={() => (window.location.href = "/dashboard")}>
+        Go Back
+      </Button>
+    </div>
+  </div>
+);
+
 const UserDetailPage = () => {
   const { id } = useParams();
   const router = useRouter();
 
-  const [form, setForm] = useState<User>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    lastLogin: "",
-  });
-
+  const [form, setForm] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [enableErrors, setEnableErrors] = useState(false);
   const [errorConfig, setErrorConfig] = useState<{
@@ -50,28 +55,6 @@ const UserDetailPage = () => {
     return errorConfig[field] || "";
   };
 
-  const fetchUser = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/users/${id}`);
-      const data = await res.json();
-      if (data.success) {
-        setForm({
-          firstName: data.data.firstName || "",
-          lastName: data.data.lastName || "",
-          email: data.data.email || "",
-          phone: data.data.phone || "",
-          password: "",
-          lastLogin: data?.data?.lastLogin,
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!id) return;
 
@@ -79,7 +62,10 @@ const UserDetailPage = () => {
       try {
         setLoading(true);
         const data = await getUserById(id as string);
-        if (data.success) {
+
+        if (!data || data.status === 404) {
+          setForm(null);
+        } else if (data.success) {
           setForm({
             firstName: data.data.firstName || "",
             lastName: data.data.lastName || "",
@@ -91,6 +77,7 @@ const UserDetailPage = () => {
         }
       } catch (err) {
         console.error(err);
+        setForm(null);
       } finally {
         setLoading(false);
       }
@@ -98,8 +85,10 @@ const UserDetailPage = () => {
 
     fetchData();
   }, [id]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    if (!form) return;
+    setForm((prev) => prev && { ...prev, [e.target.name]: e.target.value });
   };
 
   const validateForm = () => {
@@ -109,10 +98,10 @@ const UserDetailPage = () => {
       phone?: string;
       password?: string;
     } = {};
-    if (!form.firstName) errors.firstName = "First name is required";
-    if (!form.email) errors.email = "Email is required";
-    if (!form.phone) errors.phone = "Phone is required";
-    if (form.password && form.password.length < 8)
+    if (!form?.firstName) errors.firstName = "First name is required";
+    if (!form?.email) errors.email = "Email is required";
+    if (!form?.phone) errors.phone = "Phone is required";
+    if (form?.password && form.password.length < 8)
       errors.password = "Password must be at least 8 characters";
     setErrorConfig(errors);
     return Object.keys(errors).length === 0;
@@ -120,12 +109,12 @@ const UserDetailPage = () => {
 
   const handleUpdate = async () => {
     setEnableErrors(true);
-    if (!validateForm()) return;
+    if (!validateForm() || !form || !id) return;
 
     try {
       setUpdating(true);
       await updateUser({
-        id: id! as string,
+        id,
         firstName: form.firstName,
         lastName: form.lastName,
         phone: form.phone,
@@ -140,13 +129,13 @@ const UserDetailPage = () => {
   };
 
   const handleDelete = async () => {
+    if (!id) return;
     try {
       setUpdating(true);
-      if (!id) throw new Error("Invalid user id");
-      await deleteUser(id as string);
+      await deleteUser(id);
       setShowDeleteModal(false);
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
     } finally {
       setUpdating(false);
@@ -169,16 +158,18 @@ const UserDetailPage = () => {
     );
   }
 
+  if (!form) return <NotFound />;
+
   return (
     <div className="p-6">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <button
-            className="flex items-center justify-center gap-[2px]"
+            className="flex items-center justify-center gap-[2px] text-gray-800 hover:text-orange-500 transition-colors"
             onClick={() => router.back()}
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" stroke="currentColor" /> Back
           </button>
           <h1 className="text-xl font-semibold text-gray-800">Edit User</h1>
           <span className="text-xs text-gray-400">User ID: {id}</span>
@@ -208,13 +199,12 @@ const UserDetailPage = () => {
               className="bg-gray-100 cursor-not-allowed"
               errorMessage={getError("email")}
             />
-            {/* LAST LOGIN DISPLAY */}
             <div className="flex flex-col justify-center">
               <label className="text-sm font-medium text-gray-700">
                 Last Login
               </label>
               <p className="mt-1 text-[#156eb7]">
-                {form?.lastLogin ? formatDateNumeric(form.lastLogin) : "Never"}
+                {form.lastLogin ? formatDateNumeric(form.lastLogin) : "Never"}
               </p>
             </div>
             <Input
@@ -224,14 +214,13 @@ const UserDetailPage = () => {
               onChange={handleChange}
               errorMessage={getError("phone")}
             />
-            <Input
+            <PasswordInput
               label="New Password"
+              value={form.password || ""}
               name="password"
-              type="password"
-              value={form.password}
+              errorMessage={getError("password")}
               onChange={handleChange}
               placeholder="Leave blank to keep unchanged"
-              errorMessage={getError("password")}
             />
           </div>
 
@@ -240,7 +229,6 @@ const UserDetailPage = () => {
             <Button
               onClick={() => setShowDeleteModal(true)}
               disabled={updating}
-              loading={updating}
               className="bg-red-500 hover:bg-red-600 !w-auto text-white px-6 py-2.5 rounded-lg text-sm font-medium transition shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <UserX className="w-4 h-4" /> Delete
