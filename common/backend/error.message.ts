@@ -17,8 +17,9 @@ class ResultErrorMessage {
   public static readonly UserNotFound = "User not found";
   public static readonly AccessDenied = "Access denied";
   public static readonly OtpIsRequired = 'OTP is required';
-  public static readonly InvalidOrExpiredToken = 'Invalid or expired token';
+  public static readonly InvalidOrExpiredToken = 'Invalid OTP or token has expired';
   public static readonly NewPasswordIsRequired = 'New password is required';
+  public static readonly ResetTokenIsRequired = 'Reset token is required';
 }
 
 export default ResultErrorMessage;
