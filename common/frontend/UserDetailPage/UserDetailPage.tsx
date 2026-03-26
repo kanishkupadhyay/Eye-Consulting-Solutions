@@ -114,7 +114,7 @@ const UserDetailPage = () => {
     try {
       setUpdating(true);
       await updateUser({
-        id,
+        id: id as string,
         firstName: form.firstName,
         lastName: form.lastName,
         phone: form.phone,
@@ -132,7 +132,7 @@ const UserDetailPage = () => {
     if (!id) return;
     try {
       setUpdating(true);
-      await deleteUser(id);
+      await deleteUser(id as string);
       setShowDeleteModal(false);
       router.push("/dashboard");
     } catch (err) {
