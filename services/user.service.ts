@@ -2,7 +2,7 @@ import ResultErrorCodes from "@/common/backend/error.message";
 import { checkIsValidEmail } from "@/common/backend/utils";
 import CountryRepository from "@/repositories/country.repository";
 import UserRepository from "@/repositories/user.repository";
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import StatusCodes from "@/common/backend/status-codes";
 import {
@@ -11,10 +11,15 @@ import {
 } from "@/common/backend/user.interfaces";
 import UserFactory from "@/factories/user.factory";
 import ResultSuccessMessages from "@/common/backend/success.messsage";
+import { EmailService } from "@/common/backend/email.service";
+import crypto from "crypto";
+import { Otp } from "@/models/otp.model";
+import { User } from "@/models/user.model";
 
 class UserService {
   private userRepository = new UserRepository();
   private countryRepository = new CountryRepository();
+  private emailService = new EmailService();
 
   public registerUser = async (data: IUserRegisterRequest) => {
     try {
@@ -299,6 +304,58 @@ class UserService {
     } catch (error: any) {
       return new Response(
         JSON.stringify({ success: false, message: error.message }),
+        {
+          status: StatusCodes.BAD_REQUEST,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+  };
+
+  public sendOtp = async (email: string) => {
+    try {
+      if (!email) throw new Error(ResultErrorCodes.EmailIsRequired);
+
+      // Check if user exists
+      const user = await User.findOne({ email: email.toLowerCase().trim() });
+      if (!user) throw new Error(ResultErrorCodes.UserNotFound);
+
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Generate temporary token for page protection
+      const token = crypto.randomBytes(32).toString("hex");
+
+      // OTP expires in 5 minutes
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+      // Save OTP in MongoDB using Mongoose
+      await Otp.create({
+        email,
+        otp,
+        token,
+        verified: false,
+        expiresAt,
+      });
+
+      // Send OTP email using reusable EmailService
+      await this.emailService.sendOtpMail(email, otp);
+
+      // ✅ Return structured Response like other APIs
+      return new Response(
+        JSON.stringify({ success: true, message: "OTP sent", token }),
+        {
+          status: StatusCodes.OK,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    } catch (error: any) {
+      // ✅ Wrap error in Response object instead of returning plain object
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: error.message || "Internal Server Error",
+        }),
         {
           status: StatusCodes.BAD_REQUEST,
           headers: { "Content-Type": "application/json" },

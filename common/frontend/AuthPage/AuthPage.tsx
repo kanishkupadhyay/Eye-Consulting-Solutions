@@ -6,12 +6,13 @@ import LoginForm from "../LoginForm/LoginForm";
 import RegisterForm from "../RegisterForm/RegisterForm";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import ForgotPasswordForm from "../ForgotPassword/ForgotPassword";
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [view, setView] = useState<"login" | "register" | "forgot">("login");
   const router = useRouter();
 
-  // ✅ Typewriter state
+  // Typewriter
   const lines = ["Hire faster.", "Build better", "teams."];
   const [displayed, setDisplayed] = useState(["", "", ""]);
 
@@ -140,39 +141,60 @@ export default function AuthPage() {
           {/* Heading */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={isLogin ? "login" : "register"}
+              key={view}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-[40px] text-gray-800 tracking-tight [font-smooth:antialiased]">
-                {isLogin ? "Welcome back" : "Create account"}
+              <h2 className="text-[40px] text-gray-800">
+                {view === "login"
+                  ? "Welcome back"
+                  : view === "register"
+                  ? "Create account"
+                  : "Forgot Password"}
               </h2>
+
               <p className="mb-8 text-gray-500 text-sm">
-                {isLogin
+                {view === "login"
                   ? "Sign in to your TalentFlow workspace"
-                  : "Start hiring smarter today"}
+                  : view === "register"
+                  ? "Start hiring smarter today"
+                  : "Enter your email to reset password"}
               </p>
             </motion.div>
           </AnimatePresence>
 
-          {isLogin ? (
-            <LoginForm />
-          ) : (
-            <RegisterForm isRegisteredSuccessfully={() => setIsLogin(true)} />
+          {/* Forms */}
+          {view === "login" && (
+            <LoginForm onForgotPassword={() => setView("forgot")} />
+          )}
+
+          {view === "register" && (
+            <RegisterForm isRegisteredSuccessfully={() => setView("login")} />
+          )}
+
+          {view === "forgot" && (
+            <ForgotPasswordForm onBack={() => setView("login")} />
           )}
 
           {/* Toggle */}
-          <p className="mt-6 text-sm text-gray-600 text-center">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
-            <span
-              onClick={() => setIsLogin(!isLogin)}
-              className="ml-2 text-orange-500 font-semibold cursor-pointer hover:underline"
-            >
-              {isLogin ? "Register" : "Login"}
-            </span>
-          </p>
+          {view !== "forgot" && (
+            <p className="mt-6 text-sm text-gray-600 text-center">
+              {view === "login"
+                ? "Don't have an account?"
+                : "Already have an account?"}
+
+              <span
+                onClick={() =>
+                  setView(view === "login" ? "register" : "login")
+                }
+                className="ml-2 text-orange-500 font-semibold cursor-pointer hover:underline"
+              >
+                {view === "login" ? "Register" : "Login"}
+              </span>
+            </p>
+          )}
         </div>
       </div>
     </div>
