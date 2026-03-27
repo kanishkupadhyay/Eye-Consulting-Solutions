@@ -1,5 +1,11 @@
-import AuthPage from "@/common/frontend/AuthPage/AuthPage";
+"use client";
 
-export default async function Page() {
+import dynamic from "next/dynamic";
+
+const AuthPage = dynamic(() => import("@/common/frontend/AuthPage/AuthPage"), {
+  ssr: false,
+});
+
+export default function Page() {
   return <AuthPage />;
 }
