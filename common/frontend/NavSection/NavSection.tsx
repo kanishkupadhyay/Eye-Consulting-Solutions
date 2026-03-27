@@ -11,7 +11,8 @@ const NavSection = ({ title, items }: INavSectionProps) => {
 
       <div className="flex flex-col gap-1">
         {items.map((item) => {
-          const isActive = pathname === item.href;
+          // Check if the current pathname starts with the item's href (for nested route matching)
+          const isActive = pathname?.startsWith(item.href);
           const Icon = item.icon;
 
           return (
@@ -19,10 +20,9 @@ const NavSection = ({ title, items }: INavSectionProps) => {
               key={item.name}
               href={item.href}
               className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm transition
-                ${
-                  isActive
-                    ? "bg-orange-500 text-white"
-                    : "text-gray-300 hover:bg-gray-800"
+                ${isActive
+                  ? "bg-orange-500 text-white"
+                  : "text-gray-300 hover:bg-gray-800"
                 }`}
             >
               <div className="flex items-center gap-3">

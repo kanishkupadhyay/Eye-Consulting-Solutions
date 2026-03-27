@@ -20,6 +20,9 @@ class ResultErrorMessage {
   public static readonly InvalidOrExpiredToken = 'Invalid OTP or token has expired';
   public static readonly NewPasswordIsRequired = 'New password is required';
   public static readonly ResetTokenIsRequired = 'Reset token is required';
+
+  // Candidate related error messages
+  public static readonly NoResumeFilesProvided = "No resume files were provided.";
 }
 
 export default ResultErrorMessage;
