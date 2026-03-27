@@ -124,8 +124,7 @@ const AddCandidatesPage = () => {
 
         <EmailInput
           value={formData.email}
-          onChange={(value) => setFormData({ ...formData, email: value })}
-          error={enableErrors && !formData.email ? "Email is required" : ""}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
 
         <PhoneInput
@@ -219,12 +218,7 @@ const AddCandidatesPage = () => {
         />
 
         {/* Resume Upload using FileUploader component */}
-        <FileUploader
-          file={resume}
-          onFileChange={(file) => setResume(file)}
-          label="Resume"
-          allowedTypes={[".pdf", ".doc", ".docx"]}
-        />
+        <FileUploader onFilesChange={([file]) => setResume(file)} />
 
         <Button loading={isSubmitting}>Add Candidate</Button>
       </form>
