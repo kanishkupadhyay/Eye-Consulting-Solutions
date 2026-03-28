@@ -12,6 +12,10 @@ class CandidateController {
   public uploadResume = async (req: Request) => {
     return this.candidateService.uploadResume(req);
   };
+
+  public getCandidatesCount = async () => {
+    return this.candidateService.getCandidatesCount();
+  };
 }
 
 const candidateController = new CandidateController();

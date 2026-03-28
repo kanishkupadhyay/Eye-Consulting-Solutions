@@ -7,18 +7,34 @@ import { mainNav, toolsNav } from "./SideBar.Data";
 import { useEffect, useState } from "react";
 import { IUserInfo } from "@/common/backend/user.interfaces";
 import Avatar from "../Avatar/Avatar";
+import getCandidatesCount from "@/services/frontend/candidates-count";
 
 export default function Sidebar() {
-  const [loggedInUserInfo, setLoggedInUserInfo] = useState<IUserInfo | null>(
-    null,
-  );
+  const [loggedInUserInfo, setLoggedInUserInfo] =
+    useState<IUserInfo | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [candidateCount, setCandidateCount] = useState<number>(0);
+
   const router = useRouter();
 
   useEffect(() => {
     const data = localStorage.getItem("userInfo");
     const user = data ? JSON.parse(data) : null;
+
     if (user) setLoggedInUserInfo(user);
+
+    // 🔥 Fetch candidate count
+    const fetchCount = async () => {
+      try {
+        const res = await getCandidatesCount();
+        // API returns { success: true, data: { count: number } }
+        setCandidateCount(res.data.count);
+      } catch (err) {
+        console.error("Failed to fetch candidate count", err);
+      }
+    };
+
+    fetchCount();
   }, []);
 
   const handleLogout = async () => {
@@ -73,11 +89,10 @@ export default function Sidebar() {
                   className="absolute -bottom-2 left-0 w-24 h-4"
                   viewBox="0 0 100 20"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
                     d="M0 10 Q15 0 30 10 T60 10 T100 10"
-                    stroke="#0284c7" /* blue-500 */
+                    stroke="#0284c7"
                     strokeWidth="3"
                     fill="transparent"
                   />
@@ -93,13 +108,23 @@ export default function Sidebar() {
           {/* Navigation */}
           <NavSection
             title="Main"
-            items={mainNav.filter((item) => {
-              // ❗ hide dashboard for NON-admin
-              if (item.href === "/dashboard" && !isAdmin) {
-                return false;
-              }
-              return true;
-            })}
+            items={mainNav
+              .filter((item) => {
+                if (item.href === "/dashboard" && !isAdmin) {
+                  return false;
+                }
+                return true;
+              })
+              .map((item) => {
+                // 🔥 Inject dynamic badge here
+                if (item.href === "/candidates") {
+                  return {
+                    ...item,
+                    badge: candidateCount, // ✅ now a number
+                  };
+                }
+                return item;
+              })}
           />
 
           <NavSection title="Tools" items={toolsNav} />
@@ -126,7 +151,8 @@ export default function Sidebar() {
 
               <div>
                 <p className="text-sm font-medium">
-                  {loggedInUserInfo.firstName} {loggedInUserInfo.lastName}
+                  {loggedInUserInfo.firstName}{" "}
+                  {loggedInUserInfo.lastName}
                 </p>
                 <p className="text-xs text-gray-400">
                   {isAdmin ? "Admin" : "Sub user"}
