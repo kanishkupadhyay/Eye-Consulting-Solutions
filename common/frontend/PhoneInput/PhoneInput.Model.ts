@@ -4,4 +4,5 @@ export interface IPhoneInputProps {
   error?: string;
   required?: boolean;
   maxLength?: number;
+  cssClasses?: string;
 }

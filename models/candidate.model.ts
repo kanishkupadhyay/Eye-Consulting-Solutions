@@ -1,6 +1,24 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 
-const CandidateSchema = new mongoose.Schema(
+export interface ICandidate extends Document {
+  name: string;
+  email: string;
+  phone: string;
+  age?: number;
+  gender?: "Male" | "Female";
+  currentLocation?: string;
+  experienceInMonths?: number;
+  skills: string[];
+  keywords: string[];
+  defenseBackgroundCheck?: boolean;
+  resumeUrl: string;
+  resumeText?: string;
+  createdBy: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -35,28 +53,33 @@ const CandidateSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["Male", "Female", "Other"],
+      enum: ["Male", "Female"],
     },
     currentLocation: {
       type: String,
       trim: true,
       index: true,
     },
-    experience: {
+    experienceInMonths: {
       type: Number,
       min: 0,
-    },
-    skills: {
-      type: [String],
-      default: [],
       index: true,
     },
-    keywords: {
-      type: [String],
-      default: [],
-      index: true,
-    },
-    defenceBackgroundCheck: {
+    skills: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+    ],
+    keywords: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+    ],
+    defenseBackgroundCheck: {
       type: Boolean,
       default: false,
     },
@@ -64,9 +87,35 @@ const CandidateSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    resumeText: {
+      type: String,
+      default: "",
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  },
 );
 
-const Candidate = mongoose.models.Candidate || mongoose.model("Candidate", CandidateSchema);
+// Text index for searching
+CandidateSchema.index({
+  name: "text",
+  skills: "text",
+  keywords: "text",
+  resumeText: "text",
+});
+
+// Compound index for filtering frequently by location and experience
+CandidateSchema.index({ currentLocation: 1, experienceInMonths: -1 });
+
+// Model
+const Candidate =
+  mongoose.models.Candidate ||
+  mongoose.model<ICandidate>("Candidate", CandidateSchema);
+
 export default Candidate;

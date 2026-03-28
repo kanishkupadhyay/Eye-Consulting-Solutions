@@ -23,6 +23,15 @@ class ResultErrorMessage {
 
   // Candidate related error messages
   public static readonly NoResumeFilesProvided = "No resume files were provided.";
+  public static readonly NameIsRequired = "Name is required";
+  public static readonly AgeIsInvalid = "Age must be between 18 and 65";
+  public static readonly GenderIsInvalid = "Gender is invalid";
+  public static readonly CurrentLocationIsRequired = "Current location is required";
+  public static readonly ExperienceYearsCannotBeNegative = "Experience years cannot be negative";
+  public static readonly ExperienceYearsCannotExceed50 = "Experience years cannot exceed 50";
+  public static readonly ExperienceMonthsCannotBeNegative = "Experience months cannot be negative";
+  public static readonly ExperienceMonthsCannotExceed11 = "Experience months cannot exceed 11";
+  public static readonly AtLeastOneSkillIsRequired = "At least one skill is required";
 }
 
 export default ResultErrorMessage;

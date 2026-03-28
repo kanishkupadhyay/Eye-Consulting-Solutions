@@ -36,9 +36,9 @@ const SelectDropdown = ({ label, options, value, onChange, placeholder }: Select
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex justify-between items-center border p-3 rounded-lg w-full text-left bg-white hover:border-orange-500 focus:outline-none transition-colors"
+        className="flex justify-between items-center border border-gray-200 py-2 px-4 shadow-sm rounded-lg w-full text-left bg-white hover:border-orange-500 focus:outline-none transition-colors"
       >
-        <span className={`${value ? "text-gray-800" : "text-gray-400"}`}>
+        <span className={`${value ? "text-gray-800" : "text-gray-400"} text-[14px]`}>
           {value || placeholder || "Select an option"}
         </span>
         <FiChevronDown className="text-gray-500" />

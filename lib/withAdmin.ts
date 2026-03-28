@@ -1,7 +1,7 @@
 import ResultErrorMessage from "@/common/backend/error.message";
 import StatusCodes from "@/common/backend/status-codes";
+import { getDecodedToken } from "@/common/backend/utils";
 import UserRepository from "@/repositories/user.repository";
-import jwt from "jsonwebtoken";
 
 export const withAdminAuth = (
   handler: (req: Request, decoded: any) => Promise<Response>,
@@ -26,10 +26,7 @@ export const withAdminAuth = (
       const token = authHeader.split(" ")[1];
 
       // 🔹 Verify token
-      const decoded = jwt.verify(token, process.env.JWT_AUTH_SECRET!) as {
-        userId: string;
-        isAdmin?: boolean;
-      };
+      const decoded = getDecodedToken(token);
 
       // 🔹 Check admin
       const userService = new UserRepository();

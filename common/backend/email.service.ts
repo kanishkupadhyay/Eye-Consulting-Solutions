@@ -73,7 +73,7 @@ export class EmailService {
 
     await this.transporter.sendMail({
       from: process.env.MAIL_FROM,
-      to: process.env.SMTP_USER,
+      to: process.env.SENDER_MAIL,
       subject,
       text,
     });
