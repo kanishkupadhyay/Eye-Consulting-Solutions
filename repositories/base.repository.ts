@@ -23,13 +23,22 @@ export class BaseRepository<T> {
     return doc;
   }
 
-  public async findWithPagination(filter: any, skip: number, limit: number) {
-    const trips = await this.model
-      .find(filter)
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
-    return trips;
+  public async findWithPagination(
+    filter: any,
+    skip: number,
+    limit: number,
+    sortOptions?: any,
+  ) {
+    const query = this.model.find(filter).skip(skip).limit(limit);
+
+    if (sortOptions) {
+      query.sort(sortOptions);
+    } else {
+      query.sort({ createdAt: -1 });
+    }
+
+    const results = await query;
+    return results;
   }
 
   public async update(id: string, data: Partial<T>) {

@@ -1,3 +1,4 @@
+import { IGetCandidatesRequest } from "@/common/backend/candidate.interface";
 import CandidateService from "@/services/candidate.service";
 
 class CandidateController {
@@ -15,6 +16,10 @@ class CandidateController {
 
   public getCandidatesCount = async () => {
     return this.candidateService.getCandidatesCount();
+  };
+
+  public getCandidates = async (body: IGetCandidatesRequest) => {
+    return this.candidateService.getCandidates(body);
   };
 }
 

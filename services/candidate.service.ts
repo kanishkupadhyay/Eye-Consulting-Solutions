@@ -7,6 +7,7 @@ import S3Uploader from "@/common/backend/s3-uploader";
 import CandidateRepository from "@/repositories/candidate.repository";
 import { Types } from "mongoose";
 import { checkIsValidEmail, getDecodedToken } from "@/common/backend/utils";
+import { IGetCandidatesRequest } from "@/common/backend/candidate.interface";
 
 export default class CandidateService {
   private s3Uploader = new S3Uploader();
@@ -227,6 +228,72 @@ export default class CandidateService {
         }),
         {
           status: StatusCodes.INTERNAL_SERVER_ERROR,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+  };
+
+  public getCandidates = async (body: IGetCandidatesRequest) => {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+      } = body;
+
+      const skip = (page - 1) * limit;
+
+      // Build search filters
+      const filter: any = {};
+
+      if (search) {
+        filter.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+          { currentLocation: { $regex: search, $options: "i" } },
+          { skills: { $regex: search, $options: "i" } },
+          { keywords: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      // Sorting - map sortOrder to 1 or -1
+      const sortDirection = sortOrder.toLowerCase() === "asc" ? 1 : -1;
+      const sortOptions: Record<string, number> = {};
+      sortOptions[sortBy] = sortDirection;
+
+      // Query candidates with pagination and sorting
+      const [candidates, total] = await Promise.all([
+        this.candidateRepository.findWithPagination(
+          filter,
+          skip,
+          limit,
+          sortOptions,
+        ),
+        this.candidateRepository.count(filter),
+      ]);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: candidates,
+          page,
+          totalPages: Math.ceil(total / limit),
+          total,
+        }),
+        {
+          status: StatusCodes.OK,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ success: false, message: error.message }),
+        {
+          status: StatusCodes.BAD_REQUEST,
           headers: { "Content-Type": "application/json" },
         },
       );
