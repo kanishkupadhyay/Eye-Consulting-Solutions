@@ -38,7 +38,7 @@ const CandidatesPage = () => {
 
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore]
+    [loading, hasMore],
   );
 
   useEffect(() => {
@@ -59,10 +59,10 @@ const CandidatesPage = () => {
             }))
             // Filter duplicates
             .filter((c: CandidateWithExtras) => {
-              if (loadedIds.current.has(c._id)) {
+              if (loadedIds.current.has((c as any)._id)) {
                 return false;
               }
-              loadedIds.current.add(c._id);
+              loadedIds.current.add((c as any)._id);
               return true;
             });
 
@@ -83,25 +83,7 @@ const CandidatesPage = () => {
 
   return (
     <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {candidates.map((candidate, index) => {
-        if (index === candidates.length - 1) {
-          return (
-            <div
-              ref={lastCandidateRef}
-              key={candidate._id as unknown as string}
-              className="w-full"
-            >
-              <CandidateDetailCard
-                candidate={candidate}
-                role={candidate.role || "Unknown Role"}
-                rating={candidate.rating ?? 0}
-                onViewProfile={() => console.log("View Profile", candidate.name)}
-                onSchedule={() => console.log("Schedule", candidate.name)}
-                onMoveStage={() => console.log("Move Stage", candidate.name)}
-              />
-            </div>
-          );
-        }
+      {candidates.map((candidate) => {
         return (
           <CandidateDetailCard
             key={candidate._id as unknown as string}
@@ -111,6 +93,7 @@ const CandidatesPage = () => {
             onViewProfile={() => console.log("View Profile", candidate.name)}
             onSchedule={() => console.log("Schedule", candidate.name)}
             onMoveStage={() => console.log("Move Stage", candidate.name)}
+            status={"New"}
           />
         );
       })}

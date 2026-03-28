@@ -1,5 +1,8 @@
 import React from "react";
-import { CandidateDetailCardProps, statusColors } from "./CandidateDetailCard.Model";
+import {
+  CandidateDetailCardProps,
+  statusColors,
+} from "./CandidateDetailCard.Model";
 
 const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   candidate,
@@ -71,7 +74,7 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
 
       {/* Skills */}
       <div className="flex flex-wrap gap-2">
-        {candidate.skills.map((skill) => (
+        {candidate.skills.map((skill: string) => (
           <span
             key={skill}
             className="bg-gray-200 capitalize text-gray-700 text-xs px-3 py-1 rounded-full"

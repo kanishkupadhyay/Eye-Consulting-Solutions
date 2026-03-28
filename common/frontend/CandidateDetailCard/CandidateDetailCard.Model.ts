@@ -28,7 +28,7 @@ export const statusColors: Record<StatusType, string> = {
 };
 
 export interface CandidateDetailCardProps {
-  candidate: ICandidate;
+  candidate: any;
   status: StatusType;
   role?: string; // optional job title or role
   rating?: number; // optional rating (out of 5)
