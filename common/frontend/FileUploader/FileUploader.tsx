@@ -4,26 +4,24 @@ import { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { FiTrash2, FiFileText, FiX, FiFile } from "react-icons/fi";
 import * as mammoth from "mammoth";
-
-type FileWithPreview = File & { preview?: string; removing?: boolean };
-
-interface FileUploaderProps {
-  multiple?: boolean;
-  maxFiles?: number;
-  onFilesChange?: (files: FileWithPreview[]) => void;
-}
+import { FileUploaderProps, FileWithPreview } from "./FileUploader.Model";
 
 const FileUploader: React.FC<FileUploaderProps> = ({
   multiple = true,
   maxFiles = 50,
   onFilesChange,
+  errorMessage = "",
 }) => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(errorMessage);
   const [selectedFile, setSelectedFile] = useState<FileWithPreview | null>(
     null,
   );
   const [docContent, setDocContent] = useState<string>("");
+
+  useEffect(() => {
+    setError(errorMessage);
+  }, [errorMessage]);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {

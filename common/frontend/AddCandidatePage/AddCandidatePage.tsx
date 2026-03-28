@@ -11,6 +11,7 @@ import * as mammoth from "mammoth";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
 import FileUploader from "../FileUploader/FileUploader";
 import InputChips from "../InputChip/InputChip";
+import addCandidate from "@/services/frontend/add-candidate";
 
 type FileWithPreview = File & { preview?: string };
 
@@ -32,7 +33,6 @@ const AddCandidatePage = () => {
 
   const [resume, setResume] = useState<FileWithPreview | null>(null);
   const [resumeContent, setResumeContent] = useState("");
-  const [error, setError] = useState("");
   const [enableErrors, setEnableErrors] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,7 +56,6 @@ const AddCandidatePage = () => {
 
   const validateForm = () => {
     const errors: string[] = [];
-    setError("");
 
     if (!formData.name.trim()) errors.push("Name is required");
     if (!formData.email.trim()) errors.push("Email is required");
@@ -81,7 +80,6 @@ const AddCandidatePage = () => {
     setEnableErrors(true);
 
     if (errors.length) {
-      setError(errors.join(", "));
       return false;
     }
     return true;
@@ -89,21 +87,31 @@ const AddCandidatePage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm() || !resume) return;
 
     setIsSubmitting(true);
+
     try {
-      console.log({
-        ...formData,
-        resume,
+      await addCandidate({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        age: formData.age ? Number(formData.age) : undefined,
+        experienceYears: formData.experienceYears
+          ? Number(formData.experienceYears)
+          : undefined,
+        experienceMonths: formData.experienceMonths
+          ? Number(formData.experienceMonths)
+          : undefined,
         skills: formData.skills,
         keywords: formData.keywords,
+        resume: resume,
+        currentLocation: formData.currentLocation,
       });
 
       router.push("/candidates");
     } catch (err) {
       console.error(err);
-      setError("Failed to submit candidate");
     } finally {
       setIsSubmitting(false);
     }
@@ -253,7 +261,10 @@ const AddCandidatePage = () => {
           onChange={(val) => setFormData({ ...formData, keywords: val })}
         />
 
-        <FileUploader onFilesChange={([file]) => setResume(file)} />
+        <FileUploader
+          onFilesChange={([file]) => setResume(file)}
+          errorMessage={enableErrors && !resume ? "Resume is required" : ""}
+        />
 
         <Button loading={isSubmitting}>Add Candidate</Button>
       </form>

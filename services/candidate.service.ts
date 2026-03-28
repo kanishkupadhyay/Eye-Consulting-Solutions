@@ -56,161 +56,180 @@ export default class CandidateService {
   };
 
   public uploadResume = async (req: Request) => {
-    const authHeader = req.headers.get("Authorization");
-    const token: string = authHeader?.split(" ")[1] ?? "";
+    try {
+      const authHeader = req.headers.get("Authorization");
+      const token: string = authHeader?.split(" ")[1] ?? "";
 
-    const decoded = getDecodedToken(token);
-    const formData = await req.formData();
+      const decoded = getDecodedToken(token);
+      const formData = await req.formData();
 
-    // Extract frontend fields
-    const name = formData.get("name") as string;
-    if (!name) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.NameIsRequired,
-      });
-    }
-    const email = formData.get("email") as string;
-    if (!email) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.EmailIsRequired,
-      });
-    }
+      // 🔹 name
+      const name = (formData.get("name") as string)?.trim();
+      if (!name) throw new Error(ResultErrorMessage.NameIsRequired);
 
-    if (checkIsValidEmail(email)) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.EmailIsNotValid,
-      });
-    }
+      // 🔹 email
+      const email = (formData.get("email") as string)?.trim();
+      if (!email) throw new Error(ResultErrorMessage.EmailIsRequired);
 
-    const phone = formData.get("phone") as string;
+      if (!checkIsValidEmail(email)) {
+        throw new Error(ResultErrorMessage.EmailIsNotValid);
+      }
 
-    if (!phone) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.PhoneNumberIsRequired,
-      });
-    }
+      // 🔹 phone
+      const phone = (formData.get("phone") as string)?.trim();
+      if (!phone) {
+        throw new Error(ResultErrorMessage.PhoneNumberIsRequired);
+      }
 
-    if (phone.length < 7 || phone.length > 15) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.PhoneNumberIsInvalid,
-      });
-    }
-    const age = formData.get("age") ? Number(formData.get("age")) : undefined;
-    if (age && (age < 18 || age > 65)) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.AgeIsInvalid,
-      });
-    }
+      if (phone.length < 7 || phone.length > 15) {
+        throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
+      }
 
-    const gender = formData.get("gender") as "Male" | "Female";
-    if (gender && !["Male", "Female"].includes(gender)) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.GenderIsInvalid,
-      });
-    }
+      // 🔥 FIX: currentLocation validation (your issue)
+      const currentLocation = (
+        formData.get("currentLocation") as string
+      )?.trim();
+      if (!currentLocation) {
+        throw new Error(ResultErrorMessage.CurrentLocationIsRequired);
+      }
 
-    const currentLocation = formData.get("currentLocation") as string;
-    if (!currentLocation) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.CurrentLocationIsRequired,
-      });
-    }
-    const experienceYears = Number(formData.get("experienceYears") || 0);
-    if (!isNaN(experienceYears) && experienceYears < 0) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.ExperienceYearsCannotBeNegative,
-      });
-    }
-    if (!isNaN(experienceYears) && experienceYears > 50) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.ExperienceYearsCannotExceed50,
-      });
-    }
-    const experienceMonths = Number(formData.get("experienceMonths") || 0);
-    if (!isNaN(experienceMonths) && experienceMonths < 0) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.ExperienceMonthsCannotBeNegative,
-      });
-    }
-    if (!isNaN(experienceMonths) && experienceMonths >= 12) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.ExperienceMonthsCannotExceed11,
-      });
-    }
-    const skills =
-      (formData.get("skills") as string)?.split(",").map((s) => s.trim()) || [];
-    if (!skills || !skills.length) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.AtLeastOneSkillIsRequired,
-      });
-    }
-    const keywords =
-      (formData.get("keywords") as string)?.split(",").map((s) => s.trim()) ||
-      [];
-    const defenseBackgroundCheck =
-      formData.get("defenseBackgroundCheck") === "true";
+      // 🔹 age
+      const age = formData.get("age") ? Number(formData.get("age")) : undefined;
+      if (age && (age < 18 || age > 65)) {
+        throw new Error(ResultErrorMessage.AgeIsInvalid);
+      }
 
-    // Convert experience to months
-    const experienceInMonths = experienceYears * 12 + experienceMonths;
+      // 🔹 gender
+      const gender = formData.get("gender") as "Male" | "Female";
+      if (gender && !["Male", "Female"].includes(gender)) {
+        throw new Error(ResultErrorMessage.GenderIsInvalid);
+      }
 
-    // Handle resume file
-    const file = formData.get("resume") as File | null;
-    if(!file) {
-      return NextResponse.json({
-        success: false,
-        message: ResultErrorMessage.NoResumeFilesProvided,
-      });
-    }
-    let resumeUrl = "";
-    let resumeText = "";
+      // 🔹 experience
+      const experienceYears = Number(formData.get("experienceYears") || 0);
+      if (experienceYears < 0) {
+        throw new Error(ResultErrorMessage.ExperienceYearsCannotBeNegative);
+      }
+      if (experienceYears > 50) {
+        throw new Error(ResultErrorMessage.ExperienceYearsCannotExceed50);
+      }
 
-    if (file) {
+      const experienceMonths = Number(formData.get("experienceMonths") || 0);
+      if (experienceMonths < 0) {
+        throw new Error(ResultErrorMessage.ExperienceMonthsCannotBeNegative);
+      }
+      if (experienceMonths >= 12) {
+        throw new Error(ResultErrorMessage.ExperienceMonthsCannotExceed11);
+      }
+
+      // 🔹 skills
+      const skills = formData.get("skills")
+        ? JSON.parse(formData.get("skills") as string)
+        : [];
+
+      if (!skills.length) {
+        throw new Error(ResultErrorMessage.AtLeastOneSkillIsRequired);
+      }
+
+      // 🔹 keywords
+      const keywords = formData.get("keywords")
+        ? JSON.parse(formData.get("keywords") as string)
+        : [];
+
+      const defenseBackgroundCheck =
+        formData.get("defenseBackgroundCheck") === "true";
+
+      const experienceInMonths = experienceYears * 12 + experienceMonths;
+
+      // 🔹 resume file
+      const file = formData.get("resume") as File | null;
+      if (!file) {
+        throw new Error(ResultErrorMessage.NoResumeFilesProvided);
+      }
+
+      let resumeUrl = "";
+      let resumeText = "";
+
       const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-      // Parse resume text for search
       resumeText = await ResumeParser.parseText(fileBuffer, file.type);
 
-      // Upload resume to S3
       resumeUrl = await this.s3Uploader.uploadFile(
         fileBuffer,
         file.name,
         file.type,
       );
+
+      // 🔹 DB save
+      const candidate = await this.candidateRepository.create({
+        name,
+        email,
+        phone,
+        age,
+        gender,
+        currentLocation,
+        experienceInMonths,
+        skills,
+        keywords,
+        defenseBackgroundCheck,
+        resumeUrl,
+        resumeText,
+        createdBy: new Types.ObjectId(decoded.userId),
+      });
+
+      // 🔹 success response
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: candidate,
+        }),
+        {
+          status: StatusCodes.OK,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    } catch (error: any) {
+      console.error("Upload Resume Error:", error);
+
+      // 🔹 ALL validation errors come here as 400 (NOT 500)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: error.message,
+        }),
+        {
+          status: StatusCodes.BAD_REQUEST,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
+  };
 
-    // Prepare candidate data
-    const candidateData = {
-      name,
-      email,
-      phone,
-      age,
-      gender,
-      currentLocation,
-      experienceInMonths,
-      skills,
-      keywords,
-      defenseBackgroundCheck,
-      resumeUrl,
-      resumeText,
-      createdBy: new Types.ObjectId(decoded.userId),
-    };
-
-    // Save using repository
-    const candidate = await this.candidateRepository.create(candidateData);
-
-    return NextResponse.json({ success: true, data: candidate });
+  public getCandidatesCount = async () => {
+    try {
+      const count = await this.candidateRepository.count({});
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: { count },
+        }),
+        {
+          status: StatusCodes.OK,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    } catch (error: any) {
+      console.error("Get Candidates Count Error:", error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: error.message,
+        }),
+        {
+          status: StatusCodes.INTERNAL_SERVER_ERROR,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
   };
 }

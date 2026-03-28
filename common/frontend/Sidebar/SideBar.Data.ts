@@ -12,14 +12,14 @@ import {
 
 export const mainNav: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Candidates", href: "/candidates", icon: Users, badge: 24 },
-  { name: "Job Openings", href: "/jobs", icon: Briefcase, badge: 12 },
+  { name: "Candidates", href: "/candidates", icon: Users },
+  { name: "Job Openings", href: "/jobs", icon: Briefcase },
   { name: "Pipeline", href: "/pipeline", icon: GitBranch },
   { name: "Interviews", href: "/interviews", icon: Calendar },
 ];
 
 export const toolsNav: NavItem[] = [
-  { name: "Messages", href: "/messages", icon: MessageSquare, badge: 5 },
+  { name: "Messages", href: "/messages", icon: MessageSquare },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
