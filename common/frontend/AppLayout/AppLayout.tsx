@@ -6,6 +6,12 @@ import Header from "../Header/Header";
 import { HeaderSearch } from "../HeaderSearch/HeaderSearch";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
+import Button from "../Button/Button";
+import {
+  ArrowDownNarrowWide,
+  ChevronDown,
+  LucideArrowDownNarrowWide,
+} from "lucide-react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -75,7 +81,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         router.push("/candidates/add-candidate");
         break;
       case "bulk-upload":
-        router.push("/candidates/upload");
+        router.push("/candidates/bulk-upload");
         break;
     }
   };
@@ -116,26 +122,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         ref={dropdownRef}
                       >
                         {/* Button */}
-                        <button
+                        <Button
                           type="button"
                           onClick={() => setDropdownOpen(!dropdownOpen)}
-                          className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-orange-500 text-sm font-medium text-white hover:bg-orange-600 focus:outline-none"
+                          className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 text-sm font-medium text-white focus:outline-none"
                         >
                           + Candidates
-                          <svg
-                            className="-mr-1 ml-2 h-5 w-5"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M5.23 7.21a.75.75 0 011.06.02L10 11.293l3.71-4.062a.75.75 0 111.08 1.04l-4.25 4.656a.75.75 0 01-1.08 0L5.25 8.27a.75.75 0 01-.02-1.06z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </button>
+                          <ChevronDown className="ml-2 h-5 w-5" />
+                        </Button>
 
                         {/* Dropdown Menu */}
                         {dropdownOpen && (

@@ -67,7 +67,7 @@ export default function Sidebar() {
 
       {/* 🔥 Sidebar */}
       <aside
-        className={`fixed top-0 left-0 w-full md:w-64 h-screen bg-[#0B1220] text-white flex flex-col justify-between z-50 transform transition-transform duration-300
+        className={`overflow-auto fixed top-0 left-0 w-full md:w-64 h-screen bg-[#0B1220] text-white flex flex-col justify-between z-50 transform transition-transform duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"} 
         md:translate-x-0`}
       >

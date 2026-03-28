@@ -1,3 +1,4 @@
+import { getUniqueColor } from "../utils";
 import { IAvatarProps } from "./Avatar.Model";
 
 const getInitials = (firstName?: string, lastName?: string) => {
@@ -16,7 +17,11 @@ export default function Avatar({
   return (
     <div
       className="rounded-full bg-blue-500 flex items-center justify-center font-semibold text-white"
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: getUniqueColor(firstName + " " + lastName),
+      }}
     >
       {initials}
     </div>

@@ -25,3 +25,16 @@ export const getTokenFromLocalStorage = (): string => {
   }
   return token;
 };
+
+// Generate deterministic color from string
+export const getUniqueColor = (input: string) => {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = input.charCodeAt(i) + ((hash << 5) - hash); // simple hash function
+    hash = hash & hash; // convert to 32bit integer
+  }
+  const hue = Math.abs(hash) % 360; // hue between 0-359
+  const saturation = 65; // fixed saturation for brightness
+  const lightness = 55; // fixed lightness for readability
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};

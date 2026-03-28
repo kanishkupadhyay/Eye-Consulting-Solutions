@@ -32,6 +32,7 @@ class ResultErrorMessage {
   public static readonly ExperienceMonthsCannotBeNegative = "Experience months cannot be negative";
   public static readonly ExperienceMonthsCannotExceed11 = "Experience months cannot exceed 11";
   public static readonly AtLeastOneSkillIsRequired = "At least one skill is required";
+  public static readonly CandidateNotFound = "Candidate not found";
 }
 
 export default ResultErrorMessage;

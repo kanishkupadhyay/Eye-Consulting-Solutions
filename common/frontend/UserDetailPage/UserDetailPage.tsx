@@ -11,6 +11,7 @@ import deleteUser from "@/services/frontend/delete-user";
 import { formatDateNumeric } from "../utils";
 import getUserById from "@/services/frontend/get-user";
 import PasswordInput from "../PasswordInput/PasswordInput";
+import NotFound from "../NotFound/NotFount";
 
 type User = {
   firstName: string;
@@ -20,18 +21,6 @@ type User = {
   password?: string;
   lastLogin?: string;
 };
-
-const NotFound = () => (
-  <div className="flex items-center justify-center h-screen">
-    <div className="text-center">
-      <h1 className="text-6xl font-bold text-gray-800">404</h1>
-      <p className="mt-4 text-gray-600">User not found</p>
-      <Button onClick={() => (window.location.href = "/dashboard")}>
-        Go Back
-      </Button>
-    </div>
-  </div>
-);
 
 const UserDetailPage = () => {
   const { id } = useParams();
@@ -158,7 +147,7 @@ const UserDetailPage = () => {
     );
   }
 
-  if (!form) return <NotFound />;
+  if (!form) return <NotFound title={"User"} />;
 
   return (
     <div className="p-6">
@@ -166,7 +155,7 @@ const UserDetailPage = () => {
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <button
-            className="flex items-center justify-center gap-[2px] text-gray-800 hover:text-orange-500 transition-colors"
+            className="flex items-center font-bold justify-center gap-[2px] text-gray-800 hover:text-orange-500 transition-colors"
             onClick={() => router.back()}
           >
             <ArrowLeft className="w-4 h-4" stroke="currentColor" /> Back

@@ -21,6 +21,10 @@ class CandidateController {
   public getCandidates = async (body: IGetCandidatesRequest) => {
     return this.candidateService.getCandidates(body);
   };
+
+  public getCandidateById = async (id: string | null) => {
+    return this.candidateService.getCandidateById(id);
+  };
 }
 
 const candidateController = new CandidateController();
