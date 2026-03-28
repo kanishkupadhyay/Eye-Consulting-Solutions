@@ -299,4 +299,36 @@ export default class CandidateService {
       );
     }
   };
+
+  public getCandidateById = async (id: string | null) => {
+    try {
+      if (!id) throw new Error(ResultErrorMessage.UserIdIsRequired);
+      const candidate = await this.candidateRepository.findById(id);
+      if (!candidate) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: ResultErrorMessage.CandidateNotFound,
+          }),
+          {
+            status: StatusCodes.NOT_FOUND,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      return new Response(JSON.stringify({ success: true, data: candidate }), {
+        status: StatusCodes.OK,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ success: false, message: error.message }),
+        {
+          status: StatusCodes.INTERNAL_SERVER_ERROR,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+  };
 }

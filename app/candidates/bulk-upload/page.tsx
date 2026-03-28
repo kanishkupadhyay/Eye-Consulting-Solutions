@@ -7,6 +7,6 @@ const CandidatesUploadPage = dynamic(
   { ssr: false },
 );
 
-export default async function page() {
+export default function page() {
   return <CandidatesUploadPage />;
 }

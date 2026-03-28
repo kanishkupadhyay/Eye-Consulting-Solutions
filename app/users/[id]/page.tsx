@@ -6,6 +6,6 @@ const UserDetailPage = dynamic(
   { ssr: false },
 );
 
-export default async function page() {
+export default function page() {
   return <UserDetailPage />;
 }

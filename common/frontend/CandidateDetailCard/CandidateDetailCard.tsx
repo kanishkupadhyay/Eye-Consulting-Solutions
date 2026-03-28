@@ -3,6 +3,8 @@ import {
   CandidateDetailCardProps,
   statusColors,
 } from "./CandidateDetailCard.Model";
+import Link from "next/link";
+import { getUniqueColor } from "../utils";
 
 const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   candidate,
@@ -55,7 +57,10 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
       {/* Header: Avatar + Name + Role + Status */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="rounded-lg w-12 h-12 flex items-center justify-center font-bold text-white text-lg bg-indigo-600">
+          <div
+            className="rounded-lg w-12 h-12 flex items-center justify-center font-bold text-white text-lg bg-indigo-600"
+            style={{ backgroundColor: getUniqueColor(candidate.name) }}
+          >
             {getInitials(candidate.name)}
           </div>
           <div>
@@ -92,12 +97,11 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
 
       {/* Buttons */}
       <div className="flex gap-3">
-        <button
-          onClick={onViewProfile}
-          className="border border-gray-300 rounded px-4 py-2 text-sm hover:bg-gray-100"
-        >
-          View Profile
-        </button>
+        <Link href={`/candidates/${candidate._id}`}>
+          <button className="border border-gray-300 rounded px-4 py-2 text-sm hover:bg-gray-100">
+            View Profile
+          </button>
+        </Link>
         <button
           onClick={onSchedule}
           className="border border-gray-300 rounded px-4 py-2 text-sm hover:bg-gray-100"

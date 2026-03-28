@@ -5,12 +5,15 @@ import CandidateDetailCard from "../CandidateDetailCard/CandidateDetailCard";
 import getCandidates from "@/services/frontend/get-candidates";
 import { ICandidate } from "@/models/candidate.model";
 import CandidateSkeleton from "./CandidateSkeleton";
+import Breadcrumb from "../Breadcrumb/Breadcrumb";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
   role?: string;
   rating?: number;
 }
+
+const breadcrumbItems = [{ name: "Candidates", href: "/candidates" }];
 
 const LIMIT = 20;
 
@@ -25,21 +28,6 @@ const CandidatesPage = () => {
   const loadedIds = useRef(new Set<string>());
 
   const observer = useRef<IntersectionObserver | null>(null);
-  const lastCandidateRef = useCallback(
-    (node: HTMLDivElement) => {
-      if (loading) return;
-      if (observer.current) observer.current.disconnect();
-
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((prev) => prev + 1);
-        }
-      });
-
-      if (node) observer.current.observe(node);
-    },
-    [loading, hasMore],
-  );
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -82,28 +70,33 @@ const CandidatesPage = () => {
   }, [page]);
 
   return (
-    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {candidates.map((candidate) => {
-        return (
+    <div className="p-6 space-y-6">
+      {/* Breadcrumb on top */}
+      <Breadcrumb items={breadcrumbItems} />
+
+      {/* Candidate list grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {candidates.map((candidate) => (
           <CandidateDetailCard
             key={candidate._id as unknown as string}
             candidate={candidate}
             role={candidate.role || "Unknown Role"}
             rating={candidate.rating ?? 0}
-            onViewProfile={() => console.log("View Profile", candidate.name)}
             onSchedule={() => console.log("Schedule", candidate.name)}
             onMoveStage={() => console.log("Move Stage", candidate.name)}
-            status={"New"}
+            status="New"
           />
-        );
-      })}
-
-      {loading &&
-        Array.from({ length: 10 }).map((_, idx) => (
-          <CandidateSkeleton key={idx} />
         ))}
 
-      {error && <div className="text-red-500 col-span-full">{error}</div>}
+        {/* Skeletons */}
+        {loading &&
+          Array.from({ length: 10 }).map((_, idx) => (
+            <CandidateSkeleton key={idx} />
+          ))}
+
+        {/* Error message */}
+        {error && <div className="text-red-500 col-span-full">{error}</div>}
+      </div>
     </div>
   );
 };

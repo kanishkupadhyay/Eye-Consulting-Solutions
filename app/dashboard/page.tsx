@@ -6,6 +6,6 @@ const DashboardPage = dynamic(
   { ssr: false },
 );
 
-export default async function page() {
+export default function page() {
   return <DashboardPage />;
 }

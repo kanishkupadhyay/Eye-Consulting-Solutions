@@ -12,6 +12,7 @@ import SelectDropdown from "../SelectDropdown/SelectDropdown";
 import FileUploader from "../FileUploader/FileUploader";
 import InputChips from "../InputChip/InputChip";
 import addCandidate from "@/services/frontend/add-candidate";
+import Breadcrumb from "../Breadcrumb/Breadcrumb";
 
 type FileWithPreview = File & { preview?: string };
 
@@ -118,163 +119,174 @@ const AddCandidatePage = () => {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <h1 className="text-3xl font-semibold">Add Candidate</h1>
+    <section className="p-6">
+      <Breadcrumb
+        cssClasses="mb-5"
+        items={[
+          { name: "Candidates", href: "/candidates" },
+          { name: "Add Candidate" },
+        ]}
+      />
+      <div className="max-w-3xl mx-auto space-y-6">
+        <h1 className="text-3xl font-semibold">Add Candidate</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Full Name"
-          placeholder="Enter full name"
-          cssClasses="py-2"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          errorMessage={
-            enableErrors && !formData.name ? "Name is required" : ""
-          }
-        />
-
-        <EmailInput
-          cssClasses="py-2"
-          required
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-        />
-
-        <PhoneInput
-          value={formData.phone}
-          cssClasses="py-2"
-          onChange={(value) => setFormData({ ...formData, phone: value })}
-          error={
-            enableErrors && !formData.phone
-              ? "Phone is required"
-              : formData.phone.length && formData.phone.length < 10
-                ? "Phone must be at least 10 digits"
-                : ""
-          }
-        />
-
-        <NumberInput
-          label="Age"
-          placeholder="Enter age"
-          cssClasses="py-2"
-          value={formData.age}
-          onChange={(val) => setFormData({ ...formData, age: val })}
-          errorMessage={
-            enableErrors &&
-            formData.age !== "" &&
-            (Number(formData.age) < 18 || Number(formData.age) > 65)
-              ? "Age must be between 18 and 65"
-              : ""
-          }
-        />
-
-        <SelectDropdown
-          label="Gender"
-          options={["Male", "Female"]}
-          value={formData.gender}
-          onChange={(val) => setFormData({ ...formData, gender: val })}
-          placeholder="Select Gender"
-        />
-
-        <Input
-          label="Current Location"
-          placeholder="Enter location"
-          cssClasses="py-2"
-          errorMessage={
-            enableErrors && !formData.currentLocation
-              ? "Current location is required"
-              : ""
-          }
-          value={formData.currentLocation}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              currentLocation: e.target.value,
-            })
-          }
-        />
-
-        <div className="flex gap-4">
-          <NumberInput
-            label="Experience (Years)"
-            placeholder="0"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Full Name"
+            placeholder="Enter full name"
             cssClasses="py-2"
-            value={formData.experienceYears}
-            onChange={(val) =>
-              setFormData({
-                ...formData,
-                experienceYears: val,
-              })
-            }
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             errorMessage={
-              enableErrors &&
-              (formData.experienceYears === "" ||
-                Number(formData.experienceYears) < 0 ||
-                Number(formData.experienceYears) > 50)
-                ? "Years must be between 0 and 50"
-                : ""
+              enableErrors && !formData.name ? "Name is required" : ""
+            }
+          />
+
+          <EmailInput
+            cssClasses="py-2"
+            required
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
+          />
+
+          <PhoneInput
+            value={formData.phone}
+            cssClasses="py-2"
+            onChange={(value) => setFormData({ ...formData, phone: value })}
+            error={
+              enableErrors && !formData.phone
+                ? "Phone is required"
+                : formData.phone.length && formData.phone.length < 10
+                  ? "Phone must be at least 10 digits"
+                  : ""
             }
           />
 
           <NumberInput
-            label="Experience (Months)"
-            placeholder="0"
+            label="Age"
+            placeholder="Enter age"
             cssClasses="py-2"
-            value={formData.experienceMonths}
-            onChange={(val) =>
-              setFormData({
-                ...formData,
-                experienceMonths: val,
-              })
-            }
+            value={formData.age}
+            onChange={(val) => setFormData({ ...formData, age: val })}
             errorMessage={
               enableErrors &&
-              (formData.experienceMonths === "" ||
-                Number(formData.experienceMonths) < 0 ||
-                Number(formData.experienceMonths) > 11)
-                ? "Months must be between 0 and 11"
+              formData.age !== "" &&
+              (Number(formData.age) < 18 || Number(formData.age) > 65)
+                ? "Age must be between 18 and 65"
                 : ""
             }
           />
-        </div>
 
-        {/* ✅ Skills Chips */}
-        <InputChips
-          label="Skills"
-          placeholder="Type and press Enter"
-          value={formData.skills}
-          errorMessage={
-            enableErrors && formData.skills.length === 0
-              ? "At least one skill is required"
-              : ""
-          }
-          cssClasses="py-2"
-          onChange={(val) => setFormData({ ...formData, skills: val })}
-        />
+          <SelectDropdown
+            label="Gender"
+            options={["Male", "Female"]}
+            value={formData.gender}
+            onChange={(val) => setFormData({ ...formData, gender: val })}
+            placeholder="Select Gender"
+          />
 
-        {/* ✅ Keywords Chips */}
-        <InputChips
-          label="Keywords"
-          cssClasses="py-2"
-          placeholder="Type and press Enter"
-          value={formData.keywords}
-          onChange={(val) => setFormData({ ...formData, keywords: val })}
-        />
+          <Input
+            label="Current Location"
+            placeholder="Enter location"
+            cssClasses="py-2"
+            errorMessage={
+              enableErrors && !formData.currentLocation
+                ? "Current location is required"
+                : ""
+            }
+            value={formData.currentLocation}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                currentLocation: e.target.value,
+              })
+            }
+          />
 
-        <FileUploader
-          onFilesChange={([file]) => setResume(file)}
-          errorMessage={enableErrors && !resume ? "Resume is required" : ""}
-        />
+          <div className="flex gap-4">
+            <NumberInput
+              label="Experience (Years)"
+              placeholder="0"
+              cssClasses="py-2"
+              value={formData.experienceYears}
+              onChange={(val) =>
+                setFormData({
+                  ...formData,
+                  experienceYears: val,
+                })
+              }
+              errorMessage={
+                enableErrors &&
+                (formData.experienceYears === "" ||
+                  Number(formData.experienceYears) < 0 ||
+                  Number(formData.experienceYears) > 50)
+                  ? "Years must be between 0 and 50"
+                  : ""
+              }
+            />
 
-        <Button loading={isSubmitting}>Add Candidate</Button>
-      </form>
+            <NumberInput
+              label="Experience (Months)"
+              placeholder="0"
+              cssClasses="py-2"
+              value={formData.experienceMonths}
+              onChange={(val) =>
+                setFormData({
+                  ...formData,
+                  experienceMonths: val,
+                })
+              }
+              errorMessage={
+                enableErrors &&
+                (formData.experienceMonths === "" ||
+                  Number(formData.experienceMonths) < 0 ||
+                  Number(formData.experienceMonths) > 11)
+                  ? "Months must be between 0 and 11"
+                  : ""
+              }
+            />
+          </div>
 
-      {resume && resume.name.endsWith(".docx") && (
-        <div className="mt-4 p-4 border rounded bg-gray-50 whitespace-pre-wrap text-gray-800">
-          {resumeContent || "Loading preview..."}
-        </div>
-      )}
-    </div>
+          {/* ✅ Skills Chips */}
+          <InputChips
+            label="Skills"
+            placeholder="Type and press Enter"
+            value={formData.skills}
+            errorMessage={
+              enableErrors && formData.skills.length === 0
+                ? "At least one skill is required"
+                : ""
+            }
+            cssClasses="py-2"
+            onChange={(val) => setFormData({ ...formData, skills: val })}
+          />
+
+          {/* ✅ Keywords Chips */}
+          <InputChips
+            label="Keywords"
+            cssClasses="py-2"
+            placeholder="Type and press Enter"
+            value={formData.keywords}
+            onChange={(val) => setFormData({ ...formData, keywords: val })}
+          />
+
+          <FileUploader
+            onFilesChange={([file]) => setResume(file)}
+            errorMessage={enableErrors && !resume ? "Resume is required" : ""}
+          />
+
+          <Button loading={isSubmitting}>Add Candidate</Button>
+        </form>
+
+        {resume && resume.name.endsWith(".docx") && (
+          <div className="mt-4 p-4 border rounded bg-gray-50 whitespace-pre-wrap text-gray-800">
+            {resumeContent || "Loading preview..."}
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
 
