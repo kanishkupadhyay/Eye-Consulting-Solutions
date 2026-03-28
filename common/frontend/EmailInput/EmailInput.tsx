@@ -2,18 +2,14 @@
 
 import { useState } from "react";
 import Input from "../Input/Input";
-
-type Props = {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  required?: boolean;
-};
+import { IEmailInputProps } from "./EmailInput.Mode";
 
 export default function EmailInput({
   value,
   onChange,
+  cssClasses = "",
   required = false,
-}: Props) {
+}: IEmailInputProps) {
   const [error, setError] = useState("");
 
   const validateEmail = (email: string) => {
@@ -39,6 +35,7 @@ export default function EmailInput({
         type="email"
         placeholder="Enter your email"
         value={value}
+        cssClasses={cssClasses}
         errorMessage={error}
         onChange={(e) => {
           onChange(e);

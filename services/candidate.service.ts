@@ -1,20 +1,16 @@
-import AWS from "aws-sdk";
-import mammoth from "mammoth";
 import Candidate from "@/models/candidate.model";
 import { NextResponse } from "next/server";
-import ResultErrorMessage from "@/common/backend/error.message";
 import StatusCodes from "@/common/backend/status-codes";
+import ResultErrorMessage from "@/common/backend/error.message";
+import ResumeParser from "@/common/backend/resume-parser.service";
+import S3Uploader from "@/common/backend/s3-uploader";
+import CandidateRepository from "@/repositories/candidate.repository";
+import { Types } from "mongoose";
+import { checkIsValidEmail, getDecodedToken } from "@/common/backend/utils";
 
 export default class CandidateService {
-  private s3: AWS.S3;
-
-  constructor() {
-    this.s3 = new AWS.S3({
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      region: process.env.AWS_REGION!,
-    });
-  }
+  private s3Uploader = new S3Uploader();
+  private candidateRepository = new CandidateRepository();
 
   public uploadResumes = async (req: Request) => {
     const formData = await req.formData();
@@ -29,197 +25,192 @@ export default class CandidateService {
       );
     }
 
-    const results: Array<Record<string, unknown>> = [];
+    const results = [];
 
     for (const file of uploadedFiles) {
       const fileBuffer = Buffer.from(await file.arrayBuffer());
-      const text = await this.parseTextFromFile(fileBuffer, file.type);
+      const text = await ResumeParser.parseText(fileBuffer, file.type);
 
       const candidateData = {
-        name: this.extractName(text),
-        email: this.extractEmail(text),
-        phone: this.extractPhone(text),
-        gender: this.extractGender(text),
-        skills: this.extractSkills(text),
-        education: this.extractEducation(text),
-        workExperience: this.extractWorkExperience(text),
-        certifications: this.extractCertifications(text),
-        previousCompanies: this.extractPreviousCompanies(text),
-        totalExperienceYears: 0, // will calculate next
-        resumeUrl: "",
+        name: ResumeParser.extractName(text),
+        email: ResumeParser.extractEmail(text),
+        phone: ResumeParser.extractPhone(text),
+        gender: ResumeParser.extractGender(text),
+        skills: ResumeParser.extractSkills(text),
+        resumeUrl: "", // will be set after S3 upload
       };
 
-      // Compute total experience
-      candidateData.totalExperienceYears = this.computeTotalExperience(
-        candidateData.workExperience,
+      // Upload to S3
+      candidateData.resumeUrl = await this.s3Uploader.uploadFile(
+        fileBuffer,
+        file.name,
+        file.type,
       );
-
-      // const s3Params = {
-      //   Bucket: process.env.AWS_S3_BUCKET!,
-      //   Key: `resumes/${Date.now()}-${file.name}`,
-      //   Body: fileBuffer,
-      //   ContentType: file.type,
-      // };
-      // const uploadResult = await this.s3.upload(s3Params).promise();
-      // candidateData.resumeUrl = uploadResult.Location;
 
       const candidate = new Candidate(candidateData);
       await candidate.save();
-
       results.push(candidateData);
     }
 
     return NextResponse.json({ success: true, data: results });
   };
 
-  private parseTextFromFile = async (fileBuffer: Buffer, mimeType: string) => {
-    if (mimeType === "application/pdf") {
-      const { default: pdfParse } = await import("pdf-parse/lib/pdf-parse.js");
-      const data = await pdfParse(fileBuffer);
-      return data.text;
-    } else if (
-      mimeType ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      mimeType === "application/msword"
-    ) {
-      const result = await mammoth.extractRawText({ buffer: fileBuffer });
-      return result.value;
-    } else {
-      return "";
+  public uploadResume = async (req: Request) => {
+    const authHeader = req.headers.get("Authorization");
+    const token: string = authHeader?.split(" ")[1] ?? "";
+
+    const decoded = getDecodedToken(token);
+    const formData = await req.formData();
+
+    // Extract frontend fields
+    const name = formData.get("name") as string;
+    if (!name) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.NameIsRequired,
+      });
     }
-  };
-
-  // Simple parsers
-  private extractEmail = (text: string) => {
-    const match = text.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
-    return match ? match[0] : "";
-  };
-
-  private extractPhone = (text: string) => {
-    const match = text.match(
-      /(\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/,
-    );
-    return match ? match[0] : "";
-  };
-
-  private extractName = (text: string) => {
-    const lines = text
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
-    return lines.length ? lines[0] : "";
-  };
-
-  private extractSkills = (text: string) => {
-    const skillsSectionRegex =
-      /(skills|technical skills|key skills|core competencies)([\s\S]*?)(\n\n|\r\n\r\n|experience|education|projects|$)/i;
-
-    const match = text.match(skillsSectionRegex);
-
-    let skillsText = "";
-
-    if (match) {
-      skillsText = match[2];
-    } else {
-      // fallback: use full text if no section found
-      skillsText = text;
+    const email = formData.get("email") as string;
+    if (!email) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.EmailIsRequired,
+      });
     }
 
-    // Split by common separators
-    const rawSkills = skillsText.split(/[\n,•|]/);
+    if (checkIsValidEmail(email)) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.EmailIsNotValid,
+      });
+    }
 
-    const cleanedSkills = rawSkills
-      .map((skill) => skill.trim())
-      .filter((skill) => skill.length > 2 && skill.length < 50)
-      .map((skill) => skill.replace(/[^a-zA-Z0-9+#.]/g, "")) // clean junk
-      .filter(Boolean);
+    const phone = formData.get("phone") as string;
 
-    // Remove duplicates
-    return [...new Set(cleanedSkills)];
-  };
+    if (!phone) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.PhoneNumberIsRequired,
+      });
+    }
 
-  private extractEducation = (text: string) => {
-    const educationRegex =
-      /(education|academic background|qualifications)([\s\S]*?)(\n\n|\r\n\r\n|experience|skills|certifications|projects|$)/i;
+    if (phone.length < 7 || phone.length > 15) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.PhoneNumberIsInvalid,
+      });
+    }
+    const age = formData.get("age") ? Number(formData.get("age")) : undefined;
+    if (age && (age < 18 || age > 65)) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.AgeIsInvalid,
+      });
+    }
 
-    const match = text.match(educationRegex);
-    if (!match) return [];
+    const gender = formData.get("gender") as "Male" | "Female";
+    if (gender && !["Male", "Female"].includes(gender)) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.GenderIsInvalid,
+      });
+    }
 
-    const lines = match[2].split(/[\n•,-]/).map((l) => l.trim());
-    return lines.filter((line) => line.length > 2);
-  };
+    const currentLocation = formData.get("currentLocation") as string;
+    if (!currentLocation) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.CurrentLocationIsRequired,
+      });
+    }
+    const experienceYears = Number(formData.get("experienceYears") || 0);
+    if (!isNaN(experienceYears) && experienceYears < 0) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.ExperienceYearsCannotBeNegative,
+      });
+    }
+    if (!isNaN(experienceYears) && experienceYears > 50) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.ExperienceYearsCannotExceed50,
+      });
+    }
+    const experienceMonths = Number(formData.get("experienceMonths") || 0);
+    if (!isNaN(experienceMonths) && experienceMonths < 0) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.ExperienceMonthsCannotBeNegative,
+      });
+    }
+    if (!isNaN(experienceMonths) && experienceMonths >= 12) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.ExperienceMonthsCannotExceed11,
+      });
+    }
+    const skills =
+      (formData.get("skills") as string)?.split(",").map((s) => s.trim()) || [];
+    if (!skills || !skills.length) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.AtLeastOneSkillIsRequired,
+      });
+    }
+    const keywords =
+      (formData.get("keywords") as string)?.split(",").map((s) => s.trim()) ||
+      [];
+    const defenseBackgroundCheck =
+      formData.get("defenseBackgroundCheck") === "true";
 
-  private extractWorkExperience = (text: string) => {
-    const experienceRegex =
-      /(experience|professional experience|work experience|employment history)([\s\S]*?)(\n\n|\r\n\r\n|education|skills|projects|$)/i;
+    // Convert experience to months
+    const experienceInMonths = experienceYears * 12 + experienceMonths;
 
-    const match = text.match(experienceRegex);
-    if (!match) return [];
+    // Handle resume file
+    const file = formData.get("resume") as File | null;
+    if(!file) {
+      return NextResponse.json({
+        success: false,
+        message: ResultErrorMessage.NoResumeFilesProvided,
+      });
+    }
+    let resumeUrl = "";
+    let resumeText = "";
 
-    const lines = match[2].split(/[\n•,-]/).map((l) => l.trim());
-    return lines.filter((line) => line.length > 2);
-  };
+    if (file) {
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-  private extractCertifications = (text: string) => {
-    const certRegex =
-      /(certifications|licenses|achievements)([\s\S]*?)(\n\n|\r\n\r\n|experience|education|skills|projects|$)/i;
+      // Parse resume text for search
+      resumeText = await ResumeParser.parseText(fileBuffer, file.type);
 
-    const match = text.match(certRegex);
-    if (!match) return [];
+      // Upload resume to S3
+      resumeUrl = await this.s3Uploader.uploadFile(
+        fileBuffer,
+        file.name,
+        file.type,
+      );
+    }
 
-    const lines = match[2].split(/[\n•,-]/).map((l) => l.trim());
-    return lines.filter((line) => line.length > 2);
-  };
+    // Prepare candidate data
+    const candidateData = {
+      name,
+      email,
+      phone,
+      age,
+      gender,
+      currentLocation,
+      experienceInMonths,
+      skills,
+      keywords,
+      defenseBackgroundCheck,
+      resumeUrl,
+      resumeText,
+      createdBy: new Types.ObjectId(decoded.userId),
+    };
 
-  private extractPreviousCompanies = (text: string) => {
-    const companiesRegex =
-      /(experience|employment history|work experience)([\s\S]*?)(\n\n|\r\n\r\n|education|skills|projects|$)/i;
+    // Save using repository
+    const candidate = await this.candidateRepository.create(candidateData);
 
-    const match = text.match(companiesRegex);
-    if (!match) return [];
-
-    // Try to extract company names from lines (often first word(s) in experience line)
-    const lines = match[2]
-      .split(/[\n•,-]/)
-      .map((l) => l.trim())
-      .filter((line) => line.length > 2);
-
-    const companies: string[] = [];
-    lines.forEach((line) => {
-      const companyMatch = line.match(/at\s+([A-Za-z0-9 &.-]+)/i);
-      if (companyMatch) companies.push(companyMatch[1]);
-    });
-
-    return [...new Set(companies)];
-  };
-
-  private extractGender = (text: string) => {
-    const maleRegex = /\b(male|man|he|him)\b/i;
-    const femaleRegex = /\b(female|woman|she|her)\b/i;
-
-    if (maleRegex.test(text)) return "Male";
-    if (femaleRegex.test(text)) return "Female";
-    return ""; // unknown
-  };
-
-  // Calculate total experience in years
-  private computeTotalExperience = (workExp: string[]) => {
-    let totalMonths = 0;
-
-    const dateRegex = /(\b\d{4}\b)(?:\s*-\s*(\b\d{4}\b|Present))/i; // matches "2018-2021" or "2019-Present"
-
-    workExp.forEach((line) => {
-      const match = line.match(dateRegex);
-      if (match) {
-        const startYear = parseInt(match[1]);
-        const endYear =
-          match[2].toLowerCase() === "present"
-            ? new Date().getFullYear()
-            : parseInt(match[2]);
-        totalMonths += (endYear - startYear) * 12;
-      }
-    });
-
-    return +(totalMonths / 12).toFixed(1); // years
+    return NextResponse.json({ success: true, data: candidate });
   };
 }

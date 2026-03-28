@@ -1,7 +1,7 @@
 import React from "react";
 import { IInputProps } from "./Input.Model";
 
-const Input = ({ label, value, onChange, onBlur, ...props }: IInputProps) => {
+const Input = ({ label, cssClasses = '', value, onChange, onBlur, ...props }: IInputProps) => {
   const emojiRegex = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,7 +34,7 @@ const Input = ({ label, value, onChange, onBlur, ...props }: IInputProps) => {
         value={value}
         onChange={handleChange}
         onBlur={handleBlur}
-        className={`${
+        className={`${cssClasses} ${
           props.errorMessage ? "border-red-500" : ""
         } w-full bg-white border border-gray-200 rounded-lg p-4 text-sm
         focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm ${

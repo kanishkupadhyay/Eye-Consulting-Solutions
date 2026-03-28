@@ -2,11 +2,11 @@
 
 import dynamic from "next/dynamic";
 
-const AddCandidatesPage = dynamic(
-  () => import("@/common/frontend/AddCandidatesPage/AddCandidatesPage"),
+const AddCandidatePage = dynamic(
+  () => import("@/common/frontend/AddCandidatePage/AddCandidatePage"),
   { ssr: false },
 );
 
 export default async function page() {
-  return <AddCandidatesPage />;
+  return <AddCandidatePage />;
 }

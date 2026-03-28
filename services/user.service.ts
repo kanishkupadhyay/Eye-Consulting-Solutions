@@ -1,5 +1,5 @@
 import ResultErrorMessage from "@/common/backend/error.message";
-import { checkIsValidEmail } from "@/common/backend/utils";
+import { checkIsValidEmail, getDecodedToken } from "@/common/backend/utils";
 import CountryRepository from "@/repositories/country.repository";
 import UserRepository from "@/repositories/user.repository";
 import bcrypt from "bcryptjs";
@@ -56,9 +56,9 @@ class UserService {
       if (!newPassword) {
         throw new Error(ResultErrorMessage.NewPasswordIsRequired);
       }
-      const decoded: any = jwt.verify(
+      const decoded: any = getDecodedToken(
         resetToken,
-        process.env.JWT_RESET_SECRET as string,
+        process.env.JWT_RESET_SECRET,
       );
       const user = await User.findOne({ email: decoded?.email });
 

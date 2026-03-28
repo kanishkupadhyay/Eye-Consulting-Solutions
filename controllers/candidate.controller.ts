@@ -8,6 +8,10 @@ class CandidateController {
   public uploadResumes = async (req: Request) => {
     return this.candidateService.uploadResumes(req);
   };
+
+  public uploadResume = async (req: Request) => {
+    return this.candidateService.uploadResume(req);
+  };
 }
 
 const candidateController = new CandidateController();
