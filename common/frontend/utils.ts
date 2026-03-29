@@ -38,3 +38,32 @@ export const getUniqueColor = (input: string) => {
   const lightness = 55; // fixed lightness for readability
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
+
+// utils/resume.ts
+
+/**
+ * Checks if a resume is new (uploaded within the last 7 days)
+ * @param createdAt - MongoDB createdAt field
+ * @returns "new" if uploaded within 7 days, otherwise "old"
+ */
+export const getResumeStatus = (createdAt: Date | string): "New" | "Old" => {
+  const resumeDate = new Date(createdAt);
+  const now = new Date();
+
+  const diffInMs = now.getTime() - resumeDate.getTime();
+  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+  return diffInDays <= 7 ? "New" : "Old";
+};
+
+export const getComputedCandidateExperience = (
+  experienceInMonths: number,
+): string => {
+  const years = Math.floor((experienceInMonths || 0) / 12);
+  const months = (experienceInMonths || 0) % 12;
+  if (years === 0) {
+    return `${months} months`;
+  }
+
+  return `${years} years ${months ? `${months} months` : ""}`;
+};

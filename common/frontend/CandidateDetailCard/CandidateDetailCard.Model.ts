@@ -17,11 +17,11 @@ export interface ICandidate {
 }
 
 // Status types for badge
-export type StatusType = "New" | "Offer" | "Interview" | "Screening" | "Hired";
+export type StatusType = "New" | "Old" | "Interview" | "Screening" | "Hired";
 
 export const statusColors: Record<StatusType, string> = {
   New: "bg-purple-200 text-purple-700",
-  Offer: "bg-green-200 text-green-700",
+  Old: "bg-green-200 text-green-700",
   Interview: "bg-blue-200 text-blue-700",
   Screening: "bg-yellow-200 text-yellow-700",
   Hired: "bg-teal-200 text-teal-700",
@@ -29,10 +29,4 @@ export const statusColors: Record<StatusType, string> = {
 
 export interface CandidateDetailCardProps {
   candidate: any;
-  status: StatusType;
-  role?: string; // optional job title or role
-  rating?: number; // optional rating (out of 5)
-  onViewProfile?: () => void;
-  onSchedule?: () => void;
-  onMoveStage?: () => void;
 }

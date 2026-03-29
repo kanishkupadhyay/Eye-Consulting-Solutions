@@ -14,11 +14,9 @@ export default function Sidebar() {
   const [candidateCount, setCandidateCount] = useState<number>(0);
 
   const router = useRouter();
-   const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
-
-
     // 🔥 Fetch candidate count
     const fetchCount = async () => {
       try {
@@ -105,7 +103,10 @@ export default function Sidebar() {
             title="Main"
             items={mainNav
               .filter((item) => {
-                if (item.href === "/dashboard" && !isAdmin) {
+                if (
+                  ["/dashboard", "/clients"].includes(item.href) &&
+                  !isAdmin
+                ) {
                   return false;
                 }
                 return true;
@@ -139,15 +140,11 @@ export default function Sidebar() {
           {/* Profile */}
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Avatar
-                firstName={user?.firstName}
-                lastName={user?.lastName}
-              />
+              <Avatar firstName={user?.firstName} lastName={user?.lastName} />
 
               <div>
                 <p className="text-sm font-medium">
-                  {user?.firstName}{" "}
-                  {user?.lastName}
+                  {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-gray-400">
                   {isAdmin ? "Admin" : "Sub user"}
