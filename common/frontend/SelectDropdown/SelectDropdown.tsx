@@ -31,7 +31,7 @@ const SelectDropdown = ({ label, options, value, onChange, placeholder }: Select
   return (
     <div className="flex flex-col relative" ref={dropdownRef}>
       {/* Label */}
-      <label className="mb-1 text-sm font-medium text-gray-700">{label}</label>
+      <label className="mb-1 text-sm font-medium text-gray-500">{label}</label>
       
       <button
         type="button"

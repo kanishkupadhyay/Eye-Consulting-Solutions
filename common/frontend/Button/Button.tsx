@@ -17,9 +17,11 @@ export default function Button({
       {...props}
       disabled={loading || props.disabled}
       className={`w-full bg-[#156eb7] text-white py-3 rounded-lg 
-      flex items-center justify-center gap-2
-      transition-all duration-200 shadow-md
-      disabled:opacity-70 disabled:!cursor-not-allowed ${className} ${loading || props.disabled ? "!pointer-events-none" : ""}`}
+    flex items-center justify-center gap-2
+    transition-all duration-200 shadow-md
+    hover:bg-[#125694]  /* Darker on hover */
+    disabled:opacity-70 disabled:!cursor-not-allowed 
+    ${className} ${loading || props.disabled ? "!pointer-events-none" : ""}`}
     >
       {loading ? (
         <span className="flex items-center justify-center gap-2">

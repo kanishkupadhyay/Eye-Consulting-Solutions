@@ -1,4 +1,3 @@
-import Candidate from "@/models/candidate.model";
 import { NextResponse } from "next/server";
 import StatusCodes from "@/common/backend/status-codes";
 import ResultErrorMessage from "@/common/backend/error.message";
@@ -15,6 +14,7 @@ export default class CandidateService {
 
   public uploadResumes = async (req: Request) => {
     const formData = await req.formData();
+
     const uploadedFiles = Array.from(formData.values()).filter(
       (value): value is File => value instanceof File,
     );
@@ -30,6 +30,8 @@ export default class CandidateService {
 
     for (const file of uploadedFiles) {
       const fileBuffer = Buffer.from(await file.arrayBuffer());
+
+      // Parse text
       const text = await ResumeParser.parseText(fileBuffer, file.type);
 
       const candidateData = {
@@ -38,22 +40,18 @@ export default class CandidateService {
         phone: ResumeParser.extractPhone(text),
         gender: ResumeParser.extractGender(text),
         skills: ResumeParser.extractSkills(text),
-        resumeUrl: "", // will be set after S3 upload
+
+        // Return file reference instead of uploading
+        resumeUrl: file.name, // or you can pass a temp URL if frontend sends one
       };
 
-      // Upload to S3
-      candidateData.resumeUrl = await this.s3Uploader.uploadFile(
-        fileBuffer,
-        file.name,
-        file.type,
-      );
-
-      const candidate = new Candidate(candidateData);
-      await candidate.save();
       results.push(candidateData);
     }
 
-    return NextResponse.json({ success: true, data: results });
+    return NextResponse.json({
+      success: true,
+      data: results,
+    });
   };
 
   public uploadResume = async (req: Request) => {
