@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import CandidateDetailCard from "../CandidateDetailCard/CandidateDetailCard";
 import getCandidates from "@/services/frontend/get-candidates";
 import { ICandidate } from "@/models/candidate.model";
 import CandidateSkeleton from "./CandidateSkeleton";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
+import { getComputedCandidateExperience } from "../utils";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
@@ -41,7 +42,6 @@ const CandidatesPage = () => {
             .map((c: any) => ({
               ...c,
               createdBy: c.createdBy?._id || c.createdBy || "", // convert ObjectId to string
-              status: c.status || "New",
               role: c.role || "Unknown Role",
               rating: c.rating ?? 0,
             }))
@@ -80,11 +80,10 @@ const CandidatesPage = () => {
           <CandidateDetailCard
             key={candidate._id as unknown as string}
             candidate={candidate}
-            role={candidate.role || "Unknown Role"}
+            experience={getComputedCandidateExperience(candidate.experienceInMonths || 0)}
             rating={candidate.rating ?? 0}
             onSchedule={() => console.log("Schedule", candidate.name)}
             onMoveStage={() => console.log("Move Stage", candidate.name)}
-            status="New"
           />
         ))}
 
