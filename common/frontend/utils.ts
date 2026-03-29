@@ -17,7 +17,7 @@ export function formatDateNumeric(isoString: string) {
 }
 
 export const getTokenFromLocalStorage = (): string => {
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem("token");
 
   if (!token) {
     Notification.error("You are not authenticated");

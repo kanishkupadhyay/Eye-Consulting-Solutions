@@ -6,6 +6,7 @@ import loginUser from "@/services/frontend/login";
 import { useRouter } from "next/navigation";
 import Button from "../Button/Button";
 import PasswordInput from "../PasswordInput/PasswordInput";
+import { useAuth } from "@/context/AuthContext";
 
 type LoginFormProps = {
   onForgotPassword: () => void;
@@ -20,6 +21,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
   }>({});
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,11 +36,9 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
     try {
       const response = await loginUser(formData.email, formData.password);
 
-      localStorage.setItem("authToken", response?.data.token);
-      localStorage.setItem("userInfo", JSON.stringify(response?.data?.user));
+      login(response?.data?.user, response?.data?.token);
 
       const isAdmin = response?.data?.user?.isAdmin;
-      window.dispatchEvent(new Event("authChange"));
 
       router.push(isAdmin ? "/dashboard" : "/");
     } finally {
@@ -83,7 +83,9 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
       <div>
         <PasswordInput
           value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           errorMessage={
             enableErrors && errorConfig.password ? errorConfig.password : ""
           }

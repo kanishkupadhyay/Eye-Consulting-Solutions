@@ -5,23 +5,19 @@ import { LogOut, Menu, X } from "lucide-react";
 import NavSection from "../NavSection/NavSection";
 import { mainNav, toolsNav } from "./SideBar.Data";
 import { useEffect, useState } from "react";
-import { IUserInfo } from "@/common/backend/user.interfaces";
 import Avatar from "../Avatar/Avatar";
 import getCandidatesCount from "@/services/frontend/candidates-count";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Sidebar() {
-  const [loggedInUserInfo, setLoggedInUserInfo] =
-    useState<IUserInfo | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [candidateCount, setCandidateCount] = useState<number>(0);
 
   const router = useRouter();
+   const { user, logout } = useAuth();
 
   useEffect(() => {
-    const data = localStorage.getItem("userInfo");
-    const user = data ? JSON.parse(data) : null;
 
-    if (user) setLoggedInUserInfo(user);
 
     // 🔥 Fetch candidate count
     const fetchCount = async () => {
@@ -38,14 +34,13 @@ export default function Sidebar() {
   }, []);
 
   const handleLogout = async () => {
-    localStorage.clear();
-    window.dispatchEvent(new Event("authChange"));
+    logout();
     router.push("/sign-in");
   };
 
-  if (!loggedInUserInfo) return null;
+  if (!user) return null;
 
-  const isAdmin = loggedInUserInfo.isAdmin === true;
+  const isAdmin = user?.isAdmin === true;
 
   return (
     <>
@@ -145,14 +140,14 @@ export default function Sidebar() {
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar
-                firstName={loggedInUserInfo.firstName}
-                lastName={loggedInUserInfo.lastName}
+                firstName={user?.firstName}
+                lastName={user?.lastName}
               />
 
               <div>
                 <p className="text-sm font-medium">
-                  {loggedInUserInfo.firstName}{" "}
-                  {loggedInUserInfo.lastName}
+                  {user?.firstName}{" "}
+                  {user?.lastName}
                 </p>
                 <p className="text-xs text-gray-400">
                   {isAdmin ? "Admin" : "Sub user"}

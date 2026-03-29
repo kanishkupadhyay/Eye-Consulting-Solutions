@@ -11,7 +11,7 @@ import deleteUser from "@/services/frontend/delete-user";
 import { formatDateNumeric } from "../utils";
 import getUserById from "@/services/frontend/get-user";
 import PasswordInput from "../PasswordInput/PasswordInput";
-import NotFound from "../NotFound/NotFount";
+import NotFound from "../NotFound/NotFound";
 
 type User = {
   firstName: string;
