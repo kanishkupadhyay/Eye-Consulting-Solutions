@@ -22,7 +22,7 @@ export default class ResumeParser {
 
   public static extractEmail(text: string): string {
     const match = text.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i);
-    return match ? match[0] : "";
+    return match ? match[0].toLowerCase() : "";
   }
 
   public static extractPhone(text: string): string {

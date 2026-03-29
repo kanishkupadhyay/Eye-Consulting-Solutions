@@ -90,7 +90,7 @@ const CandidatesPage = () => {
 
         {/* Skeletons */}
         {loading &&
-          Array.from({ length: 10 }).map((_, idx) => (
+          Array.from({ length: 12 }).map((_, idx) => (
             <CandidateSkeleton key={idx} />
           ))}
 
