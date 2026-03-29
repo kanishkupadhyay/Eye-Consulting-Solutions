@@ -80,10 +80,6 @@ const CandidatesPage = () => {
           <CandidateDetailCard
             key={candidate._id as unknown as string}
             candidate={candidate}
-            experience={getComputedCandidateExperience(candidate.experienceInMonths || 0)}
-            rating={candidate.rating ?? 0}
-            onSchedule={() => console.log("Schedule", candidate.name)}
-            onMoveStage={() => console.log("Move Stage", candidate.name)}
           />
         ))}
 
