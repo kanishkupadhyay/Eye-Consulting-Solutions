@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import getUsers from "@/services/frontend/get-users";
 import { formatDateNumeric } from "../utils";
+import { useAuth } from "@/context/AuthContext";
+import NotFound from "../NotFound/NotFound";
 
 const pageSize = 20;
 
@@ -64,6 +66,7 @@ const DashboardPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const { user } = useAuth();
 
   const fetchUsers = async (pageNumber: number) => {
     try {
@@ -88,10 +91,14 @@ const DashboardPage = () => {
     }
   };
 
-  // 🔥 API call on page change
   useEffect(() => {
+    if (user && !user.isAdmin) return;
     fetchUsers(page);
-  }, [page]);
+  }, [page, user]);
+
+  if (user && !user.isAdmin) {
+    return <NotFound title={""} />;
+  }
 
   return (
     <div className="p-6 space-y-6">

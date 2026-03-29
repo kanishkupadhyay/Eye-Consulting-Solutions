@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ICandidate } from "@/models/candidate.model";
 import getCandidateById from "@/services/frontend/get-candidate";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
-import NotFound from "../NotFound/NotFount";
+import NotFound from "../NotFound/NotFound";
 import { getUniqueColor } from "../utils";
 
 interface CandidateDetailPageProps {

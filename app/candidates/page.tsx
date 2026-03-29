@@ -1,5 +1,6 @@
 "use client";
 
+import AuthGuard from "@/common/frontend/AuthGuard/AuthGuard";
 import dynamic from "next/dynamic";
 
 const CandidatesPage = dynamic(
@@ -8,5 +9,9 @@ const CandidatesPage = dynamic(
 );
 
 export default function page() {
-  return <CandidatesPage />;
+  return (
+    <AuthGuard>
+      <CandidatesPage />
+    </AuthGuard>
+  );
 }

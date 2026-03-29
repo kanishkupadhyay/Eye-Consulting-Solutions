@@ -7,48 +7,14 @@ import { HeaderSearch } from "../HeaderSearch/HeaderSearch";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import Button from "../Button/Button";
-import {
-  ArrowDownNarrowWide,
-  ChevronDown,
-  LucideArrowDownNarrowWide,
-} from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userInfo, setUserInfo] = useState<any>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false); // New: dropdown state
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for outside click
-
-  // User info listener
-  useEffect(() => {
-    const getUserInfo = () => {
-      const data = localStorage.getItem("userInfo");
-      setUserInfo(data ? JSON.parse(data) : null);
-    };
-    getUserInfo();
-    window.addEventListener("storage", getUserInfo);
-    window.addEventListener("authChange", getUserInfo);
-    return () => {
-      window.removeEventListener("storage", getUserInfo);
-      window.removeEventListener("authChange", getUserInfo);
-    };
-  }, []);
-
-  // Auth listener
-  useEffect(() => {
-    const checkToken = () => {
-      const token = localStorage.getItem("authToken");
-      setIsLoggedIn(!!token);
-    };
-    checkToken();
-    window.addEventListener("storage", checkToken);
-    window.addEventListener("authChange", checkToken);
-    return () => {
-      window.removeEventListener("storage", checkToken);
-      window.removeEventListener("authChange", checkToken);
-    };
-  }, []);
+  const { user } = useAuth();
 
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
@@ -102,13 +68,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      {isLoggedIn && <Sidebar />}
+      {user && <Sidebar />}
 
-      <div
-        className={`${isLoggedIn ? "md:ml-64" : ""} flex flex-col min-h-screen`}
-      >
+      <div className={`${user ? "md:ml-64" : ""} flex flex-col min-h-screen`}>
         {/* Header */}
-        {isLoggedIn && (
+        {user && (
           <div className="sticky top-0 z-40 bg-white border-gray-300">
             <Header
               title={dynamicTitle}
@@ -158,10 +122,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {isLoggedIn ? (
+        {user ? (
           <h1 className="bg-[#f4f1eb] px-6 pt-6 pb-2 text-2xl font-semibold text-gray-800">
-            Welcome,{" "}
-            <span className="text-gray-900">{userInfo?.firstName}</span>{" "}
+            Welcome, <span className="text-gray-900">{user?.firstName}</span>{" "}
             <span
               className="inline-block origin-[70%_70%] animate-[wave_1.5s_ease-in-out_infinite]"
               style={{
@@ -190,7 +153,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         ) : null}
 
         <main
-          className={`flex-1 overflow-y-auto ${isLoggedIn ? "bg-[#f4f1eb]" : "bg-gray-100"}`}
+          className={`flex-1 overflow-y-auto ${user ? "bg-[#f4f1eb]" : "bg-gray-100"}`}
         >
           {children}
         </main>
