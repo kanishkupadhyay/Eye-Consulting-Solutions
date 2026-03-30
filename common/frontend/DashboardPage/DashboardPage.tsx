@@ -45,7 +45,7 @@ const DashboardPage = () => {
         res.data.map((item: any) => ({
           ...item,
           lastLogin: formatDateNumeric(item?.lastLogin),
-        })) || []
+        })) || [],
       );
 
       setTotalPages(res.totalPages || 1);
@@ -88,9 +88,10 @@ const DashboardPage = () => {
     // Resume Count Column with label-value dropdown
     {
       header: (
-        <div className="inline-flex items-center w-64 select-none cursor-pointer">
+        <div className="flex justify-center items-center w-64 select-none cursor-pointer">
           <SelectDropdown
             label=""
+            cssClasses="!border-none !shadow-none"
             options={resumeOptions}
             value={resumeFilter}
             onChange={(val) => setResumeFilter(val)}
@@ -101,7 +102,11 @@ const DashboardPage = () => {
       accessor: "resumeCountConfig",
       render: (row: any) => {
         const config = row.resumeCountConfig || {};
-        return config[resumeFilter] || 0;
+        return (
+          <div className="flex justify-center items-center w-full h-full">
+            {config[resumeFilter] || 0}
+          </div>
+        );
       },
     },
 

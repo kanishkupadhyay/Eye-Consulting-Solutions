@@ -14,9 +14,10 @@ interface SelectDropdownProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  cssClasses?: string;
 }
 
-const SelectDropdown = ({ label, options, value, onChange, placeholder }: SelectDropdownProps) => {
+const SelectDropdown = ({ label, options, value, onChange, placeholder, cssClasses = '' }: SelectDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +44,7 @@ const SelectDropdown = ({ label, options, value, onChange, placeholder }: Select
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex justify-between items-center border border-gray-200 py-2 px-4 shadow-sm rounded-lg w-full text-left bg-white hover:border-orange-500 focus:outline-none transition-colors"
+        className={`flex justify-between items-center border border-gray-200 py-2 px-4 shadow-sm rounded-lg w-full text-left bg-white hover:border-orange-500 focus:outline-none transition-colors ${cssClasses}`}
       >
         <span className={`${selectedOption ? "text-gray-800" : "text-gray-400"} text-[14px]`}>
           {selectedOption?.label || placeholder || "Select an option"}
