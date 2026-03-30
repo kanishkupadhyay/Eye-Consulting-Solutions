@@ -20,6 +20,11 @@ type User = {
   phone: string;
   password?: string;
   lastLogin?: string;
+  resumeCountConfig?: {
+    today?: number;
+    thisWeek?: number;
+    thisMonth?: number;
+  };
 };
 
 const UserDetailPage = () => {
@@ -62,6 +67,7 @@ const UserDetailPage = () => {
             phone: data.data.phone || "",
             password: "",
             lastLogin: data.data.lastLogin,
+            resumeCountConfig: data.data.resumeCountConfig || {},
           });
         }
       } catch (err) {
@@ -196,6 +202,7 @@ const UserDetailPage = () => {
                 {form.lastLogin ? formatDateNumeric(form.lastLogin) : "Never"}
               </p>
             </div>
+
             <Input
               label="Phone"
               name="phone"
@@ -211,6 +218,23 @@ const UserDetailPage = () => {
               onChange={handleChange}
               placeholder="Leave blank to keep unchanged"
             />
+                        {/* Resume Uploaded Section */}
+            <div className="flex flex-col justify-center">
+              <label className="text-sm font-medium text-gray-700">
+                Resume Uploaded
+              </label>
+              <div className="mt-1 space-y-1">
+                <p className="text-[#156eb7]">
+                  Today: {form.resumeCountConfig?.today || 0}
+                </p>
+                <p className="text-[#156eb7]">
+                  This Week: {form.resumeCountConfig?.thisWeek || 0}
+                </p>
+                <p className="text-[#156eb7]">
+                  This Month: {form.resumeCountConfig?.thisMonth || 0}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Action Buttons */}

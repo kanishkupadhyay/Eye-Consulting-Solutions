@@ -26,8 +26,8 @@ const AddCandidatePage = () => {
     age: "",
     gender: "",
     currentLocation: "",
-    experienceYears: "1",
-    experienceMonths: "0",
+    experienceYears: "0",
+    experienceMonths: "1",
     skills: [] as string[],
     keywords: [] as string[],
   });
