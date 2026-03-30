@@ -181,7 +181,10 @@ const AddCandidatePage = () => {
 
           <SelectDropdown
             label="Gender"
-            options={["Male", "Female"]}
+            options={[
+              { label: "Male", value: "male" },
+              { label: "Female", value: "female" },
+            ]}
             value={formData.gender}
             onChange={(val) => setFormData({ ...formData, gender: val })}
             placeholder="Select Gender"
