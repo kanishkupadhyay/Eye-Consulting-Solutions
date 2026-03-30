@@ -62,7 +62,8 @@ const CandidatesUploadPage = () => {
   };
 
   useEffect(() => {
-    return () => parsedCandidates.forEach(c => URL.revokeObjectURL(c.previewUrl));
+    return () =>
+      parsedCandidates.forEach((c) => URL.revokeObjectURL(c.previewUrl));
   }, [parsedCandidates]);
 
   return (
@@ -128,7 +129,10 @@ const CandidatesUploadPage = () => {
                 cssClasses="py-2"
                 value={selectedCandidate.name || ""}
                 onChange={(e) =>
-                  setSelectedCandidate({ ...selectedCandidate, name: e.target.value })
+                  setSelectedCandidate({
+                    ...selectedCandidate,
+                    name: e.target.value,
+                  })
                 }
               />
 
@@ -136,7 +140,10 @@ const CandidatesUploadPage = () => {
                 cssClasses="py-2"
                 value={selectedCandidate.email || ""}
                 onChange={(e) =>
-                  setSelectedCandidate({ ...selectedCandidate, email: e.target.value })
+                  setSelectedCandidate({
+                    ...selectedCandidate,
+                    email: e.target.value,
+                  })
                 }
               />
 
@@ -150,7 +157,10 @@ const CandidatesUploadPage = () => {
 
               <SelectDropdown
                 label="Gender"
-                options={["Male", "Female", "Other"]}
+                options={[
+                  { label: "Male", value: "male" },
+                  { label: "Female", value: "female" },
+                ]}
                 value={selectedCandidate.gender || ""}
                 onChange={(val) =>
                   setSelectedCandidate({ ...selectedCandidate, gender: val })

@@ -26,8 +26,8 @@ const AddCandidatePage = () => {
     age: "",
     gender: "",
     currentLocation: "",
-    experienceYears: "1",
-    experienceMonths: "0",
+    experienceYears: "0",
+    experienceMonths: "1",
     skills: [] as string[],
     keywords: [] as string[],
   });
@@ -181,7 +181,10 @@ const AddCandidatePage = () => {
 
           <SelectDropdown
             label="Gender"
-            options={["Male", "Female"]}
+            options={[
+              { label: "Male", value: "male" },
+              { label: "Female", value: "female" },
+            ]}
             value={formData.gender}
             onChange={(val) => setFormData({ ...formData, gender: val })}
             placeholder="Select Gender"

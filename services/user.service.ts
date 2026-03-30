@@ -245,23 +245,93 @@ class UserService {
 
       const skip = (page - 1) * limit;
 
-      const filter: any = {
+      const match: any = {
         $or: [{ isAdmin: false }, { isAdmin: { $exists: false } }],
       };
 
       if (search) {
-        filter.$or = [
-          { firstName: { $regex: search, $options: "i" } },
-          { lastName: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
+        match.$and = [
+          {
+            $or: [
+              { firstName: { $regex: search, $options: "i" } },
+              { lastName: { $regex: search, $options: "i" } },
+              { email: { $regex: search, $options: "i" } },
+            ],
+          },
         ];
       }
 
-      // 🔥 reuse BaseRepository methods
-      const [users, total] = await Promise.all([
-        this.userRepository.findWithPagination(filter, skip, limit),
-        this.userRepository.count(filter),
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - 7);
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(startOfMonth.getDate() - 30);
+
+      const users = await this.userRepository.model.aggregate([
+        { $match: match },
+
+        {
+          $lookup: {
+            from: "candidates",
+            let: { userId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$createdBy", "$$userId"] },
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  today: {
+                    $sum: {
+                      $cond: [{ $gte: ["$createdAt", startOfToday] }, 1, 0],
+                    },
+                  },
+                  thisWeek: {
+                    $sum: {
+                      $cond: [{ $gte: ["$createdAt", startOfWeek] }, 1, 0],
+                    },
+                  },
+                  thisMonth: {
+                    $sum: {
+                      $cond: [{ $gte: ["$createdAt", startOfMonth] }, 1, 0],
+                    },
+                  },
+                },
+              },
+            ],
+            as: "resumeStats",
+          },
+        },
+
+        {
+          $addFields: {
+            resumeCountConfig: {
+              $let: {
+                vars: {
+                  stats: { $arrayElemAt: ["$resumeStats", 0] },
+                },
+                in: {
+                  today: { $ifNull: ["$$stats.today", 0] },
+                  thisWeek: { $ifNull: ["$$stats.thisWeek", 0] },
+                  thisMonth: { $ifNull: ["$$stats.thisMonth", 0] },
+                },
+              },
+            },
+          },
+        },
+
+        { $project: { resumeStats: 0 } },
+
+        { $skip: skip },
+        { $limit: limit },
       ]);
+
+      const total = await this.userRepository.count(match);
 
       return new Response(
         JSON.stringify({
@@ -307,8 +377,78 @@ class UserService {
         );
       }
 
+      // === Resume Count Logic ===
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - 7);
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(startOfMonth.getDate() - 30);
+
+      const resumeStats = await this.userRepository.model
+        .aggregate([
+          { $match: { _id: user._id } },
+          {
+            $lookup: {
+              from: "candidates",
+              let: { userId: "$_id" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$createdBy", "$$userId"] },
+                  },
+                },
+                {
+                  $group: {
+                    _id: null,
+                    today: {
+                      $sum: {
+                        $cond: [{ $gte: ["$createdAt", startOfToday] }, 1, 0],
+                      },
+                    },
+                    thisWeek: {
+                      $sum: {
+                        $cond: [{ $gte: ["$createdAt", startOfWeek] }, 1, 0],
+                      },
+                    },
+                    thisMonth: {
+                      $sum: {
+                        $cond: [{ $gte: ["$createdAt", startOfMonth] }, 1, 0],
+                      },
+                    },
+                  },
+                },
+              ],
+              as: "resumeStats",
+            },
+          },
+          {
+            $addFields: {
+              resumeCountConfig: {
+                $let: {
+                  vars: { stats: { $arrayElemAt: ["$resumeStats", 0] } },
+                  in: {
+                    today: { $ifNull: ["$$stats.today", 0] },
+                    thisWeek: { $ifNull: ["$$stats.thisWeek", 0] },
+                    thisMonth: { $ifNull: ["$$stats.thisMonth", 0] },
+                  },
+                },
+              },
+            },
+          },
+          { $project: { resumeStats: 0 } },
+        ])
+        .exec();
+
+      const userWithResumeCount = resumeStats[0] || {
+        ...user.toObject(),
+        resumeCountConfig: { today: 0, thisWeek: 0, thisMonth: 0 },
+      };
+
       return NextResponse.json(
-        { success: true, data: user },
+        { success: true, data: userWithResumeCount },
         { status: StatusCodes.OK },
       );
     } catch (error: any) {

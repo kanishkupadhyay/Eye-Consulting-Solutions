@@ -3,9 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { FiChevronDown } from "react-icons/fi";
 
-interface SelectDropdownProps {
+interface Option {
   label: string;
-  options: string[];
+  value: string;
+}
+
+interface SelectDropdownProps {
+  label?: string;
+  options: Option[];
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -28,18 +33,20 @@ const SelectDropdown = ({ label, options, value, onChange, placeholder }: Select
     };
   }, []);
 
+  const selectedOption = options.find(opt => opt.value === value);
+
   return (
     <div className="flex flex-col relative" ref={dropdownRef}>
-      {/* Label */}
-      <label className="mb-1 text-sm font-medium text-gray-500">{label}</label>
+      {/* Top Label */}
+      {label && <label className="mb-1 text-sm font-medium text-gray-500">{label}</label>}
       
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex justify-between items-center border border-gray-200 py-2 px-4 shadow-sm rounded-lg w-full text-left bg-white hover:border-orange-500 focus:outline-none transition-colors"
       >
-        <span className={`${value ? "text-gray-800" : "text-gray-400"} text-[14px]`}>
-          {value || placeholder || "Select an option"}
+        <span className={`${selectedOption ? "text-gray-800" : "text-gray-400"} text-[14px]`}>
+          {selectedOption?.label || placeholder || "Select an option"}
         </span>
         <FiChevronDown className="text-gray-500" />
       </button>
@@ -50,12 +57,12 @@ const SelectDropdown = ({ label, options, value, onChange, placeholder }: Select
             <div
               key={idx}
               onClick={() => {
-                onChange(option);
+                onChange(option.value);
                 setIsOpen(false);
               }}
               className="p-3 hover:bg-orange-100 cursor-pointer transition-colors"
             >
-              {option}
+              {option.label}
             </div>
           ))}
         </div>

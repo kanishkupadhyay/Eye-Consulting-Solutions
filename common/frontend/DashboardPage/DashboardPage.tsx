@@ -17,48 +17,9 @@ import getUsers from "@/services/frontend/get-users";
 import { formatDateNumeric } from "../utils";
 import { useAuth } from "@/context/AuthContext";
 import NotFound from "../NotFound/NotFound";
+import SelectDropdown from "../SelectDropdown/SelectDropdown";
 
 const pageSize = 20;
-
-const columns: any[] = [
-  {
-    header: "First Name",
-    accessor: "firstName",
-  },
-  {
-    header: "Last Name",
-    accessor: "lastName",
-  },
-  {
-    header: "Email",
-    accessor: "email",
-  },
-  {
-    header: "Password",
-    accessor: "password",
-    render: () => "••••••••",
-  },
-  {
-    header: "Phone",
-    accessor: "phone",
-  },
-  {
-    header: "Last Login",
-    accessor: "lastLogin",
-  },
-  {
-    header: "Action",
-    accessor: "_id",
-    render: (row: any) => (
-      <Link
-        href={`/users/${row._id}`}
-        className="text-orange-500 hover:underline font-medium text-sm flex items-center"
-      >
-        <PencilLine size={16} />
-      </Link>
-    ),
-  },
-];
 
 const DashboardPage = () => {
   const [page, setPage] = useState(1);
@@ -66,6 +27,9 @@ const DashboardPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState<number>(0);
+
+  const [resumeFilter, setResumeFilter] = useState<string>("today");
+
   const { user } = useAuth();
 
   const fetchUsers = async (pageNumber: number) => {
@@ -76,12 +40,14 @@ const DashboardPage = () => {
         page: pageNumber,
         limit: pageSize,
       });
+
       setData(
         res.data.map((item: any) => ({
           ...item,
           lastLogin: formatDateNumeric(item?.lastLogin),
-        })) || [],
+        })) || []
       );
+
       setTotalPages(res.totalPages || 1);
       setTotalCount(res.total);
     } catch (err) {
@@ -99,6 +65,59 @@ const DashboardPage = () => {
   if (user && !user.isAdmin) {
     return <NotFound title={""} />;
   }
+
+  // Options for dropdown with full label
+  const resumeOptions = [
+    { value: "today", label: "Resume Uploaded (Today)" },
+    { value: "thisWeek", label: "Resume Uploaded (This Week)" },
+    { value: "thisMonth", label: "Resume Uploaded (This Month)" },
+  ];
+
+  const columns: any[] = [
+    { header: "First Name", accessor: "firstName" },
+    { header: "Last Name", accessor: "lastName" },
+    { header: "Email", accessor: "email" },
+    {
+      header: "Password",
+      accessor: "password",
+      render: () => "••••••••",
+    },
+    { header: "Phone", accessor: "phone" },
+    { header: "Last Login", accessor: "lastLogin" },
+
+    // Resume Count Column with label-value dropdown
+    {
+      header: (
+        <div className="inline-flex items-center w-64 select-none cursor-pointer">
+          <SelectDropdown
+            label=""
+            options={resumeOptions}
+            value={resumeFilter}
+            onChange={(val) => setResumeFilter(val)}
+            placeholder=""
+          />
+        </div>
+      ),
+      accessor: "resumeCountConfig",
+      render: (row: any) => {
+        const config = row.resumeCountConfig || {};
+        return config[resumeFilter] || 0;
+      },
+    },
+
+    {
+      header: "Action",
+      accessor: "_id",
+      render: (row: any) => (
+        <Link
+          href={`/users/${row._id}`}
+          className="text-orange-500 hover:underline font-medium text-sm flex items-center"
+        >
+          <PencilLine size={16} />
+        </Link>
+      ),
+    },
+  ];
 
   return (
     <div className="p-6 space-y-6">
