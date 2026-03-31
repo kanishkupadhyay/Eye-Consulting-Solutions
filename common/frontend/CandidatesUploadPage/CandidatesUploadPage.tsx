@@ -15,6 +15,7 @@ import InputChips from "../InputChip/InputChip";
 import EducationList from "../EducationList/EducationList";
 import ExperienceList from "../ExperienceList/ExperienceList";
 import { IEducation, IExperience } from "@/models/candidate.model";
+import { renderAsync } from "docx-preview";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -29,6 +30,9 @@ const CandidatesUploadPage = () => {
   const [educationErrors, setEducationErrors] = useState<any[]>([]);
   const [experienceErrors, setExperienceErrors] = useState<any[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+
+  // DOCX preview HTML
+  const [docxHtml, setDocxHtml] = useState<string>("");
 
   const handleFilesChange = (selectedFiles: File[]) => setFiles(selectedFiles);
 
@@ -80,7 +84,7 @@ const CandidatesUploadPage = () => {
         if (c.previewUrl) URL.revokeObjectURL(c.previewUrl);
       });
     };
-  }, [files]);
+  }, [files, parsedCandidates]);
 
   useEffect(() => {
     if (selectedCandidate) {
@@ -93,7 +97,30 @@ const CandidatesUploadPage = () => {
     }
   }, [selectedCandidate]);
 
-  // --- Full validation including fields & lists ---
+  useEffect(() => {
+    const loadDocxPreview = async () => {
+      if (!selectedCandidate?.file) return;
+
+      const file = selectedCandidate.file;
+      if (file.name.endsWith(".docx")) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const container = document.createElement("div");
+          await renderAsync(arrayBuffer, container);
+          setDocxHtml(container.innerHTML);
+        } catch (error) {
+          console.error("Error rendering DOCX preview:", error);
+          setDocxHtml("Failed to load DOCX preview.");
+        }
+      } else {
+        setDocxHtml("");
+      }
+    };
+
+    loadDocxPreview();
+  }, [selectedCandidate]);
+
+  // --- Validation function ---
   const validateCandidate = () => {
     let hasError = false;
 
@@ -115,7 +142,6 @@ const CandidatesUploadPage = () => {
       hasError = true;
     }
 
-    // --- Education validation ---
     const eduErrs: any[] = [];
     education.forEach((edu, i) => {
       const e: any = {};
@@ -129,7 +155,6 @@ const CandidatesUploadPage = () => {
       eduErrs[i] = e;
     });
 
-    // --- Experience validation ---
     let currentJobCount = 0;
     const expErrs: any[] = [];
     experience.forEach((exp, i) => {
@@ -233,8 +258,9 @@ const CandidatesUploadPage = () => {
           {selectedCandidate && (
             <div className="space-y-4">
               <Input
-                label="Name"
+                label="Full Name"
                 cssClasses="py-2"
+                placeholder="Enter full name"
                 required
                 value={selectedCandidate.name || ""}
                 onChange={(e) =>
@@ -246,6 +272,7 @@ const CandidatesUploadPage = () => {
               <EmailInput
                 cssClasses="py-2"
                 required
+                placeholder="Enter email"
                 value={selectedCandidate.email || ""}
                 onChange={(e) =>
                   setSelectedCandidate({ ...selectedCandidate, email: e.target.value })
@@ -297,12 +324,34 @@ const CandidatesUploadPage = () => {
                 errors={enableErrors ? experienceErrors : []}
               />
 
+              {/* --- Resume Preview --- */}
               <div className="h-[400px] border rounded overflow-hidden">
-                <iframe
-                  src={selectedCandidate.previewUrl}
-                  className="w-full h-full"
-                  title="Resume Preview"
-                />
+                {selectedCandidate.file.name.endsWith(".pdf") && (
+                  <iframe
+                    src={selectedCandidate.previewUrl}
+                    className="w-full h-full"
+                    title="Resume Preview"
+                  />
+                )}
+
+                {selectedCandidate.file.name.endsWith(".docx") && (
+                  <div
+                    className="w-full h-full overflow-auto p-2 bg-gray-50"
+                    dangerouslySetInnerHTML={{
+                      __html: docxHtml || "Loading preview...",
+                    }}
+                  />
+                )}
+
+                {selectedCandidate.file.name.endsWith(".doc") && (
+                  <iframe
+                    src={`https://docs.google.com/gview?url=${encodeURIComponent(
+                      selectedCandidate.previewUrl
+                    )}&embedded=true`}
+                    className="w-full h-full"
+                    title="Resume Preview"
+                  />
+                )}
               </div>
 
               <div className="mt-4">

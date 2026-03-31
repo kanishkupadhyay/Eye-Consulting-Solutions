@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Input from "../Input/Input";
-import { IEmailInputProps } from "./EmailInput.Mode";
+import { IEmailInputProps } from "./EmailInput.Model";
 
 export default function EmailInput({
   value,
   onChange,
   cssClasses = "",
   required = false,
+  placeholder = "Enter your email",
 }: IEmailInputProps) {
   const [error, setError] = useState("");
 
@@ -33,7 +34,7 @@ export default function EmailInput({
       <Input
         label="Email address"
         type="email"
-        placeholder="Enter your email"
+        placeholder={placeholder}
         value={value}
         cssClasses={cssClasses}
         errorMessage={error}

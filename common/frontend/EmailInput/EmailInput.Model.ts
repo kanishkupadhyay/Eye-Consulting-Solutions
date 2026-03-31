@@ -3,4 +3,5 @@ export interface IEmailInputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
   cssClasses?: string;
+  placeholder?: string;
 }
