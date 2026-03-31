@@ -44,7 +44,7 @@ const DashboardPage = () => {
       setData(
         res.data.map((item: any) => ({
           ...item,
-          lastLogin: formatDateNumeric(item?.lastLogin),
+          lastLogin: item?.lastLogin ? formatDateNumeric(item?.lastLogin) : "Never",
         })) || [],
       );
 
@@ -103,7 +103,7 @@ const DashboardPage = () => {
       render: (row: any) => {
         const config = row.resumeCountConfig || {};
         return (
-          <div className="flex justify-center items-center w-full h-full">
+          <div className="flex justify-center items-center w-full h-full font-bold">
             {config[resumeFilter] || 0}
           </div>
         );
