@@ -23,8 +23,8 @@ interface Props {
 const emptyExperience: IExperience = {
   company: "",
   role: "",
-  startDate: new Date(),
-  endDate: new Date(),
+  startDate: new Date().toString(),
+  endDate: new Date().toString(),
   description: "",
 };
 
@@ -32,7 +32,7 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
   const handleChange = (
     index: number,
     field: keyof IExperience,
-    val: IExperience[keyof IExperience]
+    val: IExperience[keyof IExperience],
   ) => {
     const updated = [...value];
     updated[index] = { ...updated[index], [field]: val };
@@ -104,24 +104,33 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
               type="date"
               placeholder="Select start date"
               cssClasses="py-2"
-              value={formatDate(exp.startDate)}
+              value={formatDate(new Date(exp.startDate))}
               onChange={(e) =>
-                handleChange(index, "startDate", new Date(e.target.value))
+                handleChange(
+                  index,
+                  "startDate",
+                  new Date(e.target.value).toString(),
+                )
               }
               errorMessage={errors[index]?.startDate || ""}
             />
-
-            <Input
-              label="End Date"
-              type="date"
-              placeholder="Select end date"
-              cssClasses="py-2"
-              value={formatDate(exp.endDate)}
-              onChange={(e) =>
-                handleChange(index, "endDate", new Date(e.target.value))
-              }
-              errorMessage={errors[index]?.endDate || ""}
-            />
+            {exp.endDate && (
+              <Input
+                label="End Date"
+                type="date"
+                placeholder="Select end date"
+                cssClasses="py-2"
+                value={formatDate(new Date(exp.endDate))}
+                onChange={(e) =>
+                  handleChange(
+                    index,
+                    "endDate",
+                    new Date(e.target.value).toString(),
+                  )
+                }
+                errorMessage={errors[index]?.endDate || ""}
+              />
+            )}
           </div>
 
           <Input
