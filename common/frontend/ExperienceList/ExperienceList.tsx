@@ -17,14 +17,15 @@ interface ExperienceError {
 interface Props {
   value: IExperience[];
   onChange: (val: IExperience[]) => void;
-  errors?: ExperienceError[]; // ✅ Added errors prop
+  errors?: ExperienceError[];
 }
 
 const emptyExperience: IExperience = {
   company: "",
   role: "",
   startDate: new Date().toString(),
-  endDate: new Date().toString(),
+  endDate: null,
+  currentlyWorking: false,
   description: "",
 };
 
@@ -34,22 +35,37 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
     field: keyof IExperience,
     val: IExperience[keyof IExperience],
   ) => {
-    const updated = [...value];
-    updated[index] = { ...updated[index], [field]: val };
+    let updated = [...value];
+
+    // ✅ Only one currently working allowed
+    if (field === "currentlyWorking" && val === true) {
+      updated = updated.map((item, i) => ({
+        ...item,
+        currentlyWorking: i === index,
+        endDate: i === index ? null : item.endDate,
+      }));
+    } else {
+      updated[index] = { ...updated[index], [field]: val };
+    }
+
     onChange(updated);
   };
 
   const addItem = () => onChange([...value, { ...emptyExperience }]);
+
   const removeItem = (index: number) =>
     onChange(value.filter((_, i) => i !== index));
 
-  const formatDate = (date?: Date) => {
+  const formatDate = (date?: Date | string | null) => {
     if (!date) return "";
     const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
     const month = (d.getMonth() + 1).toString().padStart(2, "0");
     const day = d.getDate().toString().padStart(2, "0");
     return `${d.getFullYear()}-${month}-${day}`;
   };
+
+  const hasCurrent = value.some((e) => e.currentlyWorking);
 
   return (
     <div className="space-y-4">
@@ -66,10 +82,10 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
           key={index}
           className="border border-gray-300 rounded-md p-4 space-y-3 relative"
         >
-          {/* Section title */}
-          <h3 className="text-lg font-medium mb-2">Experience - {index + 1}</h3>
+          <h3 className="text-lg font-medium mb-2">
+            Experience - {index + 1}
+          </h3>
 
-          {/* Remove button */}
           <button
             type="button"
             onClick={() => removeItem(index)}
@@ -98,13 +114,28 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
             />
           </div>
 
+          {/* ✅ Currently Working Checkbox */}
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              type="checkbox"
+              checked={exp.currentlyWorking || false}
+              disabled={hasCurrent && !exp.currentlyWorking}
+              onChange={(e) =>
+                handleChange(index, "currentlyWorking", e.target.checked)
+              }
+              className="w-4 h-4"
+            />
+            <label className="text-sm text-gray-600">
+              Currently Working
+            </label>
+          </div>
+
           <div className="flex gap-3">
             <Input
               label="Start Date *"
               type="date"
-              placeholder="Select start date"
               cssClasses="py-2"
-              value={formatDate(new Date(exp.startDate))}
+              value={formatDate(exp.startDate)}
               onChange={(e) =>
                 handleChange(
                   index,
@@ -114,13 +145,14 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
               }
               errorMessage={errors[index]?.startDate || ""}
             />
-            {exp.endDate && (
+
+            {/* ✅ Hide End Date if currently working */}
+            {!exp.currentlyWorking && (
               <Input
-                label="End Date"
+                label="End Date *"
                 type="date"
-                placeholder="Select end date"
                 cssClasses="py-2"
-                value={formatDate(new Date(exp.endDate))}
+                value={formatDate(exp.endDate)}
                 onChange={(e) =>
                   handleChange(
                     index,
@@ -138,12 +170,13 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
             placeholder="Describe role and responsibilities"
             value={exp.description || ""}
             cssClasses="py-2"
-            onChange={(e) => handleChange(index, "description", e.target.value)}
+            onChange={(e) =>
+              handleChange(index, "description", e.target.value)
+            }
           />
         </div>
       ))}
 
-      {/* Add button */}
       <Button type="button" className="!w-auto p-[10px]" onClick={addItem}>
         <PlusCircle /> Add Experience
       </Button>

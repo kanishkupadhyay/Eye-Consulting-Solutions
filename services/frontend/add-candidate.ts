@@ -28,7 +28,7 @@ export default async function addCandidate(params: IAddCandidateParams) {
   const cleanFile = new File(
     [params.resume],
     params.resume.name.replace(/[^\w.\-]/g, "_"),
-    { type: params.resume.type }
+    { type: params.resume.type },
   );
   formData.append("resume", cleanFile);
 
@@ -43,7 +43,8 @@ export default async function addCandidate(params: IAddCandidateParams) {
   if (params.experienceMonths !== undefined)
     formData.append("experienceMonths", params.experienceMonths.toString());
   if (params.skills) formData.append("skills", JSON.stringify(params.skills));
-  if (params.keywords) formData.append("keywords", JSON.stringify(params.keywords));
+  if (params.keywords)
+    formData.append("keywords", JSON.stringify(params.keywords));
   if (params.gender) formData.append("gender", params.gender);
 
   // 🔹 Ensure education years are numbers
@@ -63,9 +64,15 @@ export default async function addCandidate(params: IAddCandidateParams) {
     company: exp.company.trim(),
     role: exp.role.trim(),
     startDate: new Date(exp.startDate).toISOString(),
-    endDate: exp.endDate ? new Date(exp.endDate).toISOString() : null,
+    endDate: exp.currentlyWorking
+      ? null
+      : exp.endDate
+        ? new Date(exp.endDate).toISOString()
+        : null,
+    currentlyWorking: !!exp.currentlyWorking,
     description: exp.description?.trim() || "",
   }));
+
   formData.append("experience", JSON.stringify(cleanExperience));
 
   try {

@@ -35,6 +35,7 @@ class ResultErrorMessage {
   public static readonly CandidateNotFound = "Candidate not found";
   public static readonly InvalidEducationFormat = "Invalid education format";
   public static readonly InvalidExperienceFormat = "Invalid experience format";
+  public static readonly OnlyOneJobCanBeMarkedAsCurrentlyWorking = "Only one job can be marked as currently working.";
 }
 
 export default ResultErrorMessage;

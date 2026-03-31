@@ -96,10 +96,10 @@ export default class CandidateService {
         throw new Error(ResultErrorMessage.AgeIsInvalid);
       }
 
-      // const gender = formData.get("gender") as "Male" | "Female";
-      // if (gender && !["Male", "Female"].includes(gender)) {
-      //   throw new Error(ResultErrorMessage.GenderIsInvalid);
-      // }
+      const gender = formData.get("gender") as "Male" | "Female";
+      if (gender && !["Male", "Female"].includes(gender)) {
+        throw new Error(ResultErrorMessage.GenderIsInvalid);
+      }
 
       const experienceYears = Number(formData.get("experienceYears") || 0);
       if (experienceYears < 0 || experienceYears > 50) {
@@ -155,10 +155,7 @@ export default class CandidateService {
         ) {
           throw new Error(`Education[${index}] startYear is invalid`);
         }
-        if (
-          edu.endYear &&
-          (edu.endYear < 1900 || edu.endYear > new Date().getFullYear())
-        ) {
+        if (edu.endYear && edu.endYear < 1900) {
           throw new Error(`Education[${index}] endYear is invalid`);
         }
         if (edu.startYear && edu.endYear && edu.startYear > edu.endYear) {
@@ -180,14 +177,17 @@ export default class CandidateService {
       if (!Array.isArray(experience)) {
         throw new Error(ResultErrorMessage.InvalidExperienceFormat);
       }
+      let currentlyWorkingCount = 0;
 
       experience.forEach((exp, index: number) => {
         if (!exp.company?.trim()) {
           throw new Error(`Experience[${index}] company is required`);
         }
+
         if (!exp.role?.trim()) {
           throw new Error(`Experience[${index}] role is required`);
         }
+
         if (!exp.startDate) {
           throw new Error(`Experience[${index}] startDate is required`);
         }
@@ -197,6 +197,22 @@ export default class CandidateService {
 
         if (isNaN(start.getTime())) {
           throw new Error(`Experience[${index}] startDate is invalid`);
+        }
+
+        if (exp.currentlyWorking) {
+          currentlyWorkingCount++;
+
+          if (exp.endDate) {
+            throw new Error(
+              `Experience[${index}] endDate should not exist if currentlyWorking is true`,
+            );
+          }
+        } else {
+          if (!exp.endDate) {
+            throw new Error(
+              `Experience[${index}] endDate is required if not currently working`,
+            );
+          }
         }
 
         if (end && isNaN(end.getTime())) {
@@ -209,6 +225,12 @@ export default class CandidateService {
           );
         }
       });
+
+      if (currentlyWorkingCount > 1) {
+        throw new Error(
+          ResultErrorMessage.OnlyOneJobCanBeMarkedAsCurrentlyWorking,
+        );
+      }
 
       const file = formData.get("resume") as File | null;
 
@@ -232,7 +254,7 @@ export default class CandidateService {
         email,
         phone,
         age,
-        gender: 'Male',
+        gender,
         currentLocation,
         experienceInMonths,
         education,

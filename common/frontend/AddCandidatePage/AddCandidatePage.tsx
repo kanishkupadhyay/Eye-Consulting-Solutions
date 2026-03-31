@@ -93,40 +93,90 @@ const AddCandidatePage = () => {
     )
       errors.push("Age must be between 18 and 65");
 
-    // Education validation
-    if (education.length === 0) {
-      errors.push("At least one education entry is required");
-    }
-    education.forEach((edu, index) => {
-      const e: (typeof educationErrors)[0] = {};
-      if (!edu.degree.trim()) e.degree = "Degree is required";
-      if (!edu.institute.trim()) e.institute = "Institute is required";
-      if (edu.startYear === undefined || edu.startYear === null)
-        e.startYear = "Start Year is required";
-      if (edu.endYear === undefined || edu.endYear === null)
-        e.endYear = "End Year is required";
-      if (
-        edu.startYear !== undefined &&
-        edu.endYear !== undefined &&
-        edu.startYear > edu.endYear
-      )
-        e.endYear = "End Year must be after Start Year";
-      eduErrors[index] = e;
-    });
+    if (education.length > 0) {
+      education.forEach((edu, index) => {
+        const e: (typeof educationErrors)[0] = {};
 
-    // Experience validation
-    if (experience.length === 0) {
-      errors.push("At least one experience entry is required");
+        const isEmpty =
+          !edu.degree?.trim() &&
+          !edu.institute?.trim() &&
+          !edu.startYear &&
+          !edu.endYear;
+
+        if (isEmpty) {
+          eduErrors[index] = {};
+          return;
+        }
+
+        if (!edu.degree?.trim()) e.degree = "Degree is required";
+        if (!edu.institute?.trim()) e.institute = "Institute is required";
+        if (edu.startYear === undefined || edu.startYear === null)
+          e.startYear = "Start Year is required";
+        if (edu.endYear === undefined || edu.endYear === null)
+          e.endYear = "End Year is required";
+
+        if (
+          edu.startYear !== undefined &&
+          edu.endYear !== undefined &&
+          edu.startYear > edu.endYear
+        ) {
+          e.endYear = "End Year must be after Start Year";
+        }
+
+        eduErrors[index] = e;
+      });
     }
-    experience.forEach((exp, index) => {
-      const e: (typeof experienceErrors)[0] = {};
-      if (!exp.company.trim()) e.company = "Company is required";
-      if (!exp.role.trim()) e.role = "Role is required";
-      if (!exp.startDate) e.startDate = "Start Date is required";
-      if (exp.startDate && exp.endDate && exp.startDate > exp.endDate)
-        e.endDate = "End Date must be after Start Date";
-      expErrors[index] = e;
-    });
+
+    let currentlyWorkingCount = 0;
+
+    if (experience.length > 0) {
+      experience.forEach((exp, index) => {
+        const e: (typeof experienceErrors)[0] = {};
+
+        const isEmpty =
+          !exp.company?.trim() &&
+          !exp.role?.trim() &&
+          !exp.startDate &&
+          !exp.endDate;
+
+        // ✅ Skip empty row
+        if (isEmpty) {
+          expErrors[index] = {};
+          return;
+        }
+
+        // ❌ Partial → validate fully
+        if (!exp.company?.trim()) e.company = "Company is required";
+        if (!exp.role?.trim()) e.role = "Role is required";
+        if (!exp.startDate) e.startDate = "Start Date is required";
+
+        const start = exp.startDate ? new Date(exp.startDate) : null;
+        const end = exp.endDate ? new Date(exp.endDate) : null;
+
+        if (exp.currentlyWorking) {
+          currentlyWorkingCount++;
+
+          if (exp.endDate) {
+            e.endDate = "End date should not be set if currently working";
+          }
+        } else {
+          if (!exp.endDate) {
+            e.endDate = "End Date is required";
+          }
+        }
+
+        if (start && end && start > end) {
+          e.endDate = "End Date must be after Start Date";
+        }
+
+        expErrors[index] = e;
+      });
+    }
+
+    if (currentlyWorkingCount > 1) {
+      alert("Only one experience can be marked as your current job");
+      return false;
+    }
 
     setEnableErrors(true);
     setEducationErrors(eduErrors);
@@ -135,13 +185,14 @@ const AddCandidatePage = () => {
     return (
       errors.length === 0 &&
       eduErrors.every((e) => Object.keys(e).length === 0) &&
-      expErrors.every((e) => Object.keys(e).length === 0)
+      expErrors.every((e) => Object.keys(e).length === 0) &&
+      resume !== null
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm() || !resume) return;
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
@@ -161,7 +212,7 @@ const AddCandidatePage = () => {
         keywords: formData.keywords,
         education,
         experience,
-        resume: resume,
+        resume: resume as File,
         currentLocation: formData.currentLocation,
         gender: formData.gender,
       });
@@ -195,7 +246,9 @@ const AddCandidatePage = () => {
             required={true}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            errorMessage={enableErrors && !formData.name ? "Name is required" : ""}
+            errorMessage={
+              enableErrors && !formData.name ? "Name is required" : ""
+            }
           />
 
           <EmailInput
@@ -216,8 +269,8 @@ const AddCandidatePage = () => {
               enableErrors && !formData.phone
                 ? "Phone is required"
                 : formData.phone.length && formData.phone.length < 10
-                ? "Phone must be at least 10 digits"
-                : ""
+                  ? "Phone must be at least 10 digits"
+                  : ""
             }
           />
 
