@@ -26,5 +26,5 @@ export default async function verifyCandidate(params: {
 
   const data = await res.json();
 
-  return { data, exists: res.status === 409 };
+  return { data, exists: res.status === 409, message: data.message };
 }
