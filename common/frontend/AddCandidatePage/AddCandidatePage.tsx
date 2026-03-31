@@ -330,6 +330,7 @@ const AddCandidatePage = () => {
           {/* Skills & Keywords */}
           <InputChips
             label="Skills"
+            required
             placeholder="Type and press Enter"
             value={formData.skills}
             errorMessage={enableErrors && formData.skills.length === 0 ? "At least one skill is required" : ""}

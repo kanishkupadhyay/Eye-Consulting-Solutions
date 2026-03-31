@@ -28,18 +28,16 @@ const CandidatesUploadPage = () => {
   const [enableErrors, setEnableErrors] = useState(false);
   const [educationErrors, setEducationErrors] = useState<any[]>([]);
   const [experienceErrors, setExperienceErrors] = useState<any[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const handleFilesChange = (selectedFiles: File[]) => setFiles(selectedFiles);
 
   const handleParseResumes = async () => {
-    if (!files.length) {
-      alert("Please upload at least one resume.");
-      return;
-    }
+    if (!files.length) return;
+
     try {
       setLoading(true);
       const response = await bulkParseCandidates({ resumes: files });
-      // Generate previewUrls only once here and store inside each candidate object
       const enriched = response.data.map((c: any, index: number) => ({
         ...c,
         file: files[index],
@@ -59,9 +57,9 @@ const CandidatesUploadPage = () => {
 
   const handleUploadAll = async () => {
     if (!parsedCandidates.length) return;
+
     try {
       setUploading(true);
-      // await uploadCandidatesToDB(parsedCandidates);
       alert("All candidates uploaded successfully!");
       setParsedCandidates([]);
       setFiles([]);
@@ -73,39 +71,106 @@ const CandidatesUploadPage = () => {
     }
   };
 
-  // ONLY revoke object URLs when files change or component unmounts,
-  // so preview URLs remain valid during edits and side panel open
   useEffect(() => {
     return () => {
       files.forEach((file) => {
-        if ((file as any).previewUrl) {
-          URL.revokeObjectURL((file as any).previewUrl);
-        }
+        if ((file as any).previewUrl) URL.revokeObjectURL((file as any).previewUrl);
       });
-      // Also revoke from candidates just in case
       parsedCandidates.forEach((c) => {
         if (c.previewUrl) URL.revokeObjectURL(c.previewUrl);
       });
     };
   }, [files]);
 
-  // Sync education and experience when candidate changes
   useEffect(() => {
     if (selectedCandidate) {
       setEducation(selectedCandidate.education || []);
       setExperience(selectedCandidate.experience || []);
+      setEnableErrors(false);
+      setEducationErrors([]);
+      setExperienceErrors([]);
+      setFieldErrors({});
     }
   }, [selectedCandidate]);
 
-  // Save changes locally & close side panel
+  // --- Full validation including fields & lists ---
+  const validateCandidate = () => {
+    let hasError = false;
+
+    const fErrors: { [key: string]: string } = {};
+    if (!selectedCandidate?.name?.trim()) {
+      fErrors.name = "Name is required";
+      hasError = true;
+    }
+    if (!selectedCandidate?.email?.trim()) {
+      fErrors.email = "Email is required";
+      hasError = true;
+    }
+    if (!selectedCandidate?.phone?.trim()) {
+      fErrors.phone = "Phone is required";
+      hasError = true;
+    }
+    if (!selectedCandidate?.skills?.length) {
+      fErrors.skills = "At least one skill is required";
+      hasError = true;
+    }
+
+    // --- Education validation ---
+    const eduErrs: any[] = [];
+    education.forEach((edu, i) => {
+      const e: any = {};
+      if (!edu.degree?.trim()) e.degree = "Degree is required";
+      if (!edu.institute?.trim()) e.institute = "Institute is required";
+      if (!edu.startYear) e.startYear = "Start Year is required";
+      if (!edu.endYear) e.endYear = "End Year is required";
+      if (edu.startYear && edu.endYear && edu.startYear > edu.endYear)
+        e.endYear = "End Year must be after Start Year";
+      if (Object.keys(e).length > 0) hasError = true;
+      eduErrs[i] = e;
+    });
+
+    // --- Experience validation ---
+    let currentJobCount = 0;
+    const expErrs: any[] = [];
+    experience.forEach((exp, i) => {
+      const e: any = {};
+      if (!exp.company?.trim()) e.company = "Company is required";
+      if (!exp.role?.trim()) e.role = "Role is required";
+      if (!exp.startDate) e.startDate = "Start Date is required";
+
+      const start = exp.startDate ? new Date(exp.startDate) : null;
+      const end = exp.endDate ? new Date(exp.endDate) : null;
+
+      if (exp.currentlyWorking) {
+        currentJobCount++;
+        if (exp.endDate) e.endDate = "End date should not be set if currently working";
+      } else {
+        if (!exp.endDate) e.endDate = "End Date is required";
+      }
+
+      if (start && end && start > end) e.endDate = "End Date must be after Start Date";
+
+      if (Object.keys(e).length > 0) hasError = true;
+      expErrs[i] = e;
+    });
+    if (currentJobCount > 1) hasError = true;
+
+    setEnableErrors(true);
+    setEducationErrors(eduErrs);
+    setExperienceErrors(expErrs);
+    setFieldErrors(fErrors);
+
+    return !hasError;
+  };
+
   const handleSaveCandidate = () => {
     if (!selectedCandidate) return;
+    if (!validateCandidate()) return;
 
     const updatedCandidate = {
       ...selectedCandidate,
       education,
       experience,
-      // Keep previewUrl intact to avoid breaking iframe preview
       previewUrl: selectedCandidate.previewUrl,
     };
 
@@ -131,11 +196,7 @@ const CandidatesUploadPage = () => {
 
         {!parsedCandidates.length && (
           <>
-            <FileUploader
-              multiple
-              maxFiles={50}
-              onFilesChange={handleFilesChange}
-            />
+            <FileUploader multiple maxFiles={50} onFilesChange={handleFilesChange} />
             <div className="mt-4">
               <Button onClick={handleParseResumes} disabled={loading}>
                 {loading ? "Parsing..." : "Parse Resumes"}
@@ -174,32 +235,31 @@ const CandidatesUploadPage = () => {
               <Input
                 label="Name"
                 cssClasses="py-2"
+                required
                 value={selectedCandidate.name || ""}
                 onChange={(e) =>
-                  setSelectedCandidate({
-                    ...selectedCandidate,
-                    name: e.target.value,
-                  })
+                  setSelectedCandidate({ ...selectedCandidate, name: e.target.value })
                 }
+                errorMessage={enableErrors ? fieldErrors.name : ""}
               />
 
               <EmailInput
                 cssClasses="py-2"
+                required
                 value={selectedCandidate.email || ""}
                 onChange={(e) =>
-                  setSelectedCandidate({
-                    ...selectedCandidate,
-                    email: e.target.value,
-                  })
+                  setSelectedCandidate({ ...selectedCandidate, email: e.target.value })
                 }
               />
 
               <PhoneInput
                 cssClasses="py-2"
                 value={selectedCandidate.phone || ""}
+                required
                 onChange={(val) =>
                   setSelectedCandidate({ ...selectedCandidate, phone: val })
                 }
+                error={enableErrors ? fieldErrors.phone : ""}
               />
 
               <SelectDropdown
@@ -218,10 +278,12 @@ const CandidatesUploadPage = () => {
               <InputChips
                 label="Skills"
                 value={selectedCandidate.skills || []}
+                required
                 onChange={(val) =>
                   setSelectedCandidate({ ...selectedCandidate, skills: val })
                 }
                 placeholder="Type skill and press Enter"
+                errorMessage={enableErrors ? fieldErrors.skills : ""}
               />
 
               <EducationList
