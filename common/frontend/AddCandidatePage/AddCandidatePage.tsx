@@ -389,6 +389,7 @@ const AddCandidatePage = () => {
           />
 
           <FileUploader
+            maxFiles={1}
             onFilesChange={([file]) => setResume(file)}
             errorMessage={enableErrors && !resume ? "Resume is required" : ""}
           />

@@ -52,7 +52,7 @@ const CandidateSkeleton = () => {
 
         {/* Tabs */}
         <div className="bg-white rounded-md shadow-md">
-          <div className="flex border-b">
+          <div className="flex border-b border-gray-300">
             <div className="h-10 w-24 bg-gray-300 rounded-t-md" />
             <div className="h-10 w-24 bg-gray-200 rounded-t-md ml-2" />
           </div>
@@ -158,7 +158,7 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
 
         {/* Tabs */}
         <div className="bg-white rounded-md shadow-md">
-          <div className="flex border-b">
+          <div className="flex border-b border-gray-300">
             <button
               className={`flex-1 py-3 ${activeTab === "details" ? "border-b-2 border-blue-500 text-blue-600" : ""}`}
               onClick={() => setActiveTab("details")}

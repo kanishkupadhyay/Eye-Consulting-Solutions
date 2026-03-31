@@ -177,8 +177,8 @@ const ExperienceList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
         </div>
       ))}
 
-      <Button type="button" className="!w-auto p-[10px]" onClick={addItem}>
-        <PlusCircle /> Add Experience
+      <Button type="button" className="!w-auto p-2 text-[12px]" onClick={addItem}>
+        <PlusCircle size={16}/> Add Experience
       </Button>
     </div>
   );

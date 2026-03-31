@@ -135,8 +135,8 @@ const EducationList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
       ))}
 
       {/* Add button */}
-      <Button type="button" className="!w-auto p-[10px]" onClick={addItem}>
-        <PlusCircle /> Add Education
+      <Button type="button" className="!w-auto p-2 text-[12px]" onClick={addItem}>
+        <PlusCircle size={16}/> Add Education
       </Button>
     </div>
   );

@@ -119,7 +119,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         {...getRootProps()}
         className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ease-in-out
           ${isDragActive ? "border-blue-500 bg-blue-50 animate-pulse" : "border-gray-300 hover:border-orange-500"} 
-          cursor-pointer`}
+          cursor-pointer ${error ? "border-red-500 bg-red-50" : ""}`}
       >
         <input {...getInputProps()} />
         <p className="text-gray-600 text-lg">
