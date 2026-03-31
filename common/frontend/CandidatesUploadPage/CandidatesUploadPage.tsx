@@ -12,6 +12,9 @@ import EmailInput from "../EmailInput/EmailInput";
 import PhoneInput from "../PhoneInput/PhoneInput";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
 import InputChips from "../InputChip/InputChip";
+import EducationList from "../EducationList/EducationList";
+import ExperienceList from "../ExperienceList/ExperienceList";
+import { IEducation, IExperience } from "@/models/candidate.model";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -19,6 +22,12 @@ const CandidatesUploadPage = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const [education, setEducation] = useState<IEducation[]>([]);
+  const [experience, setExperience] = useState<IExperience[]>([]);
+  const [enableErrors, setEnableErrors] = useState(false);
+  const [educationErrors, setEducationErrors] = useState<any[]>([]);
+  const [experienceErrors, setExperienceErrors] = useState<any[]>([]);
 
   const handleFilesChange = (selectedFiles: File[]) => setFiles(selectedFiles);
 
@@ -30,12 +39,15 @@ const CandidatesUploadPage = () => {
     try {
       setLoading(true);
       const response = await bulkParseCandidates({ resumes: files });
+      // Generate previewUrls only once here and store inside each candidate object
       const enriched = response.data.map((c: any, index: number) => ({
         ...c,
         file: files[index],
         previewUrl: URL.createObjectURL(files[index]),
         gender: c.gender || "",
-        skills: c.skills || [], // ✅ ensure skills array exists
+        skills: c.skills || [],
+        education: c.education || [],
+        experience: c.experience || [],
       }));
       setParsedCandidates(enriched);
     } catch (error) {
@@ -61,10 +73,48 @@ const CandidatesUploadPage = () => {
     }
   };
 
+  // ONLY revoke object URLs when files change or component unmounts,
+  // so preview URLs remain valid during edits and side panel open
   useEffect(() => {
-    return () =>
-      parsedCandidates.forEach((c) => URL.revokeObjectURL(c.previewUrl));
-  }, [parsedCandidates]);
+    return () => {
+      files.forEach((file) => {
+        if ((file as any).previewUrl) {
+          URL.revokeObjectURL((file as any).previewUrl);
+        }
+      });
+      // Also revoke from candidates just in case
+      parsedCandidates.forEach((c) => {
+        if (c.previewUrl) URL.revokeObjectURL(c.previewUrl);
+      });
+    };
+  }, [files]);
+
+  // Sync education and experience when candidate changes
+  useEffect(() => {
+    if (selectedCandidate) {
+      setEducation(selectedCandidate.education || []);
+      setExperience(selectedCandidate.experience || []);
+    }
+  }, [selectedCandidate]);
+
+  // Save changes locally & close side panel
+  const handleSaveCandidate = () => {
+    if (!selectedCandidate) return;
+
+    const updatedCandidate = {
+      ...selectedCandidate,
+      education,
+      experience,
+      // Keep previewUrl intact to avoid breaking iframe preview
+      previewUrl: selectedCandidate.previewUrl,
+    };
+
+    setParsedCandidates((prev) =>
+      prev.map((c) => (c.email === selectedCandidate.email ? updatedCandidate : c))
+    );
+
+    setSelectedCandidate(null);
+  };
 
   return (
     <section className="p-6">
@@ -79,7 +129,6 @@ const CandidatesUploadPage = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-3xl font-semibold">Upload Candidate Resumes</h1>
 
-        {/* STEP 1: Upload & Parse */}
         {!parsedCandidates.length && (
           <>
             <FileUploader
@@ -95,7 +144,6 @@ const CandidatesUploadPage = () => {
           </>
         )}
 
-        {/* STEP 2: Card View */}
         {parsedCandidates.length > 0 && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -116,7 +164,6 @@ const CandidatesUploadPage = () => {
           </>
         )}
 
-        {/* STEP 3: Side Panel */}
         <SidePanel
           isOpen={!!selectedCandidate}
           onClose={() => setSelectedCandidate(null)}
@@ -168,7 +215,6 @@ const CandidatesUploadPage = () => {
                 placeholder="Select Gender"
               />
 
-              {/* ✅ Skills Input Chips */}
               <InputChips
                 label="Skills"
                 value={selectedCandidate.skills || []}
@@ -178,11 +224,27 @@ const CandidatesUploadPage = () => {
                 placeholder="Type skill and press Enter"
               />
 
+              <EducationList
+                value={education}
+                onChange={setEducation}
+                errors={enableErrors ? educationErrors : []}
+              />
+              <ExperienceList
+                value={experience}
+                onChange={setExperience}
+                errors={enableErrors ? experienceErrors : []}
+              />
+
               <div className="h-[400px] border rounded overflow-hidden">
                 <iframe
                   src={selectedCandidate.previewUrl}
                   className="w-full h-full"
+                  title="Resume Preview"
                 />
+              </div>
+
+              <div className="mt-4">
+                <Button onClick={handleSaveCandidate}>Save Changes</Button>
               </div>
             </div>
           )}
