@@ -22,7 +22,7 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow max-w-sm flex flex-col justify-between h-full">
+    <div className="bg-white rounded-lg p-6 shadow max-w-sm flex flex-col justify-between h-full transition-shadow duration-300 hover:shadow-xl">
       {/* Top content */}
       <div className="space-y-4">
         {/* Header */}

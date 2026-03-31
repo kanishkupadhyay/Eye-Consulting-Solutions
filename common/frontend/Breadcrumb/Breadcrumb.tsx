@@ -26,7 +26,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, cssClasses = '' }) => {
         return (
           <div key={index} className="flex items-center">
             {item.href && !isLast ? (
-              <Link href={item.href} className="hover:text-blue-600 transition">
+              <Link href={item.href} className="hover:text-[#156eb7] transition">
                 {item.name}
               </Link>
             ) : (
