@@ -7,6 +7,7 @@ import CandidateRepository from "@/repositories/candidate.repository";
 import { Types } from "mongoose";
 import { checkIsValidEmail, getDecodedToken } from "@/common/backend/utils";
 import { IGetCandidatesRequest } from "@/common/backend/candidate.interface";
+import ResultSuccessMessages from "@/common/backend/success.messsage";
 
 export default class CandidateService {
   private s3Uploader = new S3Uploader();
@@ -54,6 +55,81 @@ export default class CandidateService {
     });
   };
 
+  public verifyCandidate = async (req: Request) => {
+    try {
+      const { email, phone } = await req.json();
+
+      if (!email) {
+        throw new Error(ResultErrorMessage.EmailIsRequired);
+      }
+
+      if (!checkIsValidEmail(email)) {
+        throw new Error(ResultErrorMessage.EmailIsNotValid);
+      }
+
+      if (!phone) {
+        throw new Error(ResultErrorMessage.PhoneNumberIsRequired);
+      }
+
+      if (phone.length !== 10) {
+        throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
+      }
+
+      const existingCandidate = await this.candidateRepository.findOne(
+        "email",
+        email,
+      );
+
+      if (existingCandidate) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: ResultErrorMessage.CandidateAlreadyExistsWithThisEmail,
+          },
+          { status: StatusCodes.CONFLICT },
+        );
+      }
+
+      const existingPhone = await this.candidateRepository.findOne(
+        "phone",
+        phone,
+      );
+
+      if (existingPhone) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              ResultErrorMessage.CandidateAlreadyExistsWithThisPhoneNumber,
+          },
+          { status: StatusCodes.CONFLICT },
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: ResultSuccessMessages.CandidateVerifiedSuccessfully,
+        }),
+        {
+          status: StatusCodes.OK,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    } catch (error: any) {
+      console.error("Verify Candidate Error:", error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: error.message,
+        }),
+        {
+          status: StatusCodes.INTERNAL_SERVER_ERROR,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+  };
+
   public uploadResume = async (req: Request) => {
     try {
       const authHeader = req.headers.get("Authorization");
@@ -82,6 +158,20 @@ export default class CandidateService {
 
       if (phone.length < 7 || phone.length > 15) {
         throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
+      }
+
+      // 🔹 Check if candidate already exists and delete
+      const existingCandidate = await this.candidateRepository.model.findOne({
+        $or: [{ email }, { phone }],
+      });
+
+      if (existingCandidate) {
+        await this.candidateRepository.model.deleteOne({
+          _id: existingCandidate._id,
+        });
+        console.log(
+          `Deleted existing candidate with email ${email} or phone ${phone}`,
+        );
       }
 
       const currentLocation = (
@@ -273,8 +363,8 @@ export default class CandidateService {
           data: candidate,
         }),
         {
-          status: StatusCodes.OK,
-          headers: { "Content-Type": "application/json" },
+        status: StatusCodes.OK,
+        headers: { "Content-Type": "application/json" },
         },
       );
     } catch (error: any) {

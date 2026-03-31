@@ -3,8 +3,10 @@
 import { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { FiTrash2, FiFileText, FiX, FiFile } from "react-icons/fi";
-import * as mammoth from "mammoth";
 import { FileUploaderProps, FileWithPreview } from "./FileUploader.Model";
+import { renderAsync } from "docx-preview";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
 const FileUploader: React.FC<FileUploaderProps> = ({
   multiple = true,
@@ -17,7 +19,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const [selectedFile, setSelectedFile] = useState<FileWithPreview | null>(
     null,
   );
-  const [docContent, setDocContent] = useState<string>("");
+  const [docxHtml, setDocxHtml] = useState<string>("");
 
   useEffect(() => {
     setError(errorMessage);
@@ -30,29 +32,41 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       // Check max files
       if (files.length + acceptedFiles.length > maxFiles) {
         setError(
-          `You can upload a maximum of ${maxFiles} file${maxFiles > 1 ? "s" : ""}.`,
+          `You can upload a maximum of ${maxFiles} file${
+            maxFiles > 1 ? "s" : ""
+          }.`,
         );
         return;
       }
 
-      // Filter valid file types
-      const validFiles = acceptedFiles
-        .filter((file) =>
-          [
+      const validFiles: FileWithPreview[] = [];
+
+      for (const file of acceptedFiles) {
+        if (
+          ![
             "application/pdf",
             "application/msword",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          ].includes(file.type),
-        )
-        .map((file) =>
+          ].includes(file.type)
+        ) {
+          setError("Only PDF, DOC, and DOCX files are allowed.");
+          continue;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+          setError(
+            `${file.name} is too large. Max allowed size is 2 MB.`,
+          );
+          continue;
+        }
+
+        validFiles.push(
           Object.assign(file, { preview: URL.createObjectURL(file) }),
         );
-
-      if (validFiles.length !== acceptedFiles.length) {
-        setError("Only PDF, DOC, and DOCX files are allowed.");
       }
 
-      // If single file mode, replace existing file
+      if (validFiles.length === 0) return;
+
       setFiles((prev) => {
         const newFiles = multiple ? [...prev, ...validFiles] : validFiles;
         onFilesChange?.(newFiles);
@@ -95,21 +109,20 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     }, 300);
   };
 
+  // Load DOCX preview
   useEffect(() => {
-    const loadDocx = async (file: FileWithPreview) => {
+    const loadDocxPreview = async (file: FileWithPreview) => {
       if (file.name?.endsWith(".docx")) {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const arrayBuffer = reader.result as ArrayBuffer;
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          setDocContent(result.value);
-        };
-        reader.readAsArrayBuffer(file);
+        const arrayBuffer = await file.arrayBuffer();
+        const container = document.createElement("div");
+        await renderAsync(arrayBuffer, container);
+        setDocxHtml(container.innerHTML);
       } else {
-        setDocContent("");
+        setDocxHtml("");
       }
     };
-    if (selectedFile) loadDocx(selectedFile);
+
+    if (selectedFile) loadDocxPreview(selectedFile);
   }, [selectedFile]);
 
   return (
@@ -126,8 +139,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           {isDragActive
             ? "Drop files here..."
             : multiple
-              ? `Drag & drop PDFs/DOCs/DOCXs, or click to select (max ${maxFiles})`
-              : "Drag & drop a PDF/DOC/DOCX, or click to select"}
+            ? `Drag & drop PDFs/DOCs/DOCXs, or click to select (max ${maxFiles})`
+            : "Drag & drop a PDF/DOC/DOCX, or click to select"}
         </p>
       </div>
 
@@ -141,8 +154,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         </h2>
       )}
 
-      {/* Remove All Button (only for multiple) */}
-      {files.length > 0 && multiple && (
+      {/* Remove All Button */}
+      {maxFiles !== 1 && files.length > 0 && multiple && (
         <div className="flex justify-end mb-2">
           <button
             onClick={removeAllFiles}
@@ -160,14 +173,12 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           {files.map((file, index) => (
             <div
               key={`${file.name}-${index}`}
+              onClick={() => setSelectedFile(file)}
               className={`flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm transition-all duration-300 ease-in-out
                 ${file.removing ? "opacity-0 scale-90" : "opacity-100 scale-100"}
                 hover:shadow-md hover:border-orange-500 cursor-pointer`}
             >
-              <div
-                className="flex items-center gap-3"
-                onClick={() => setSelectedFile(file)}
-              >
+              <div className="flex items-center gap-3">
                 {file.name?.endsWith(".pdf") ? (
                   <FiFile className="text-red-500 text-2xl" />
                 ) : (
@@ -184,7 +195,10 @@ const FileUploader: React.FC<FileUploaderProps> = ({
               </div>
 
               <button
-                onClick={() => removeFile(index)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  removeFile(index);
+                }}
                 className="text-red-500 hover:text-red-600"
               >
                 <FiTrash2 />
@@ -208,16 +222,29 @@ const FileUploader: React.FC<FileUploaderProps> = ({
               </button>
             </div>
 
-            {selectedFile.name?.endsWith(".pdf") ? (
+            {/* PDF */}
+            {selectedFile.name?.endsWith(".pdf") && (
               <iframe src={selectedFile.preview} className="flex-1 w-full" />
-            ) : selectedFile.name?.endsWith(".docx") ? (
-              <div className="flex-1 overflow-auto p-4 text-gray-800 whitespace-pre-wrap bg-gray-50 rounded">
-                {docContent || "Loading preview..."}
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                Preview not available
-              </div>
+            )}
+
+            {/* DOCX */}
+            {selectedFile.name?.endsWith(".docx") && (
+              <div
+                className="flex-1 overflow-auto p-4 bg-gray-50 rounded"
+                dangerouslySetInnerHTML={{
+                  __html: docxHtml || "Loading preview...",
+                }}
+              />
+            )}
+
+            {/* DOC */}
+            {selectedFile.name?.endsWith(".doc") && (
+              <iframe
+                src={`https://docs.google.com/gview?url=${encodeURIComponent(
+                  selectedFile.preview as string,
+                )}&embedded=true`}
+                className="flex-1 w-full"
+              />
             )}
           </div>
         </div>

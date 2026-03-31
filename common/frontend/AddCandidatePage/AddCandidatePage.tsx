@@ -16,6 +16,8 @@ import Breadcrumb from "../Breadcrumb/Breadcrumb";
 import EducationList from "../EducationList/EducationList";
 import ExperienceList from "../ExperienceList/ExperienceList";
 import { IEducation, IExperience } from "@/models/candidate.model";
+import verifyCandidate from "@/services/frontend/verify-candidate";
+import Dialog from "../Dialog/Dialog";
 
 type FileWithPreview = File & { preview?: string };
 
@@ -37,14 +39,8 @@ const AddCandidatePage = () => {
 
   const [education, setEducation] = useState<IEducation[]>([]);
   const [educationErrors, setEducationErrors] = useState<
-    {
-      degree?: string;
-      institute?: string;
-      startYear?: string;
-      endYear?: string;
-    }[]
+    { degree?: string; institute?: string; startYear?: string; endYear?: string }[]
   >([]);
-
   const [experience, setExperience] = useState<IExperience[]>([]);
   const [experienceErrors, setExperienceErrors] = useState<
     { company?: string; role?: string; startDate?: string; endDate?: string }[]
@@ -54,6 +50,11 @@ const AddCandidatePage = () => {
   const [resumeContent, setResumeContent] = useState("");
   const [enableErrors, setEnableErrors] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- Dialog states ---
+  const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
+  const [verifyMessage, setVerifyMessage] = useState("");
+  const [pendingCandidateData, setPendingCandidateData] = useState<any>(null);
 
   useEffect(() => {
     const loadDocx = async (file: FileWithPreview) => {
@@ -81,22 +82,17 @@ const AddCandidatePage = () => {
     if (!formData.name.trim()) errors.push("Name is required");
     if (!formData.email.trim()) errors.push("Email is required");
     if (!formData.phone.trim()) errors.push("Phone is required");
-    if (!formData.currentLocation.trim())
-      errors.push("Current location is required");
+    if (!formData.currentLocation.trim()) errors.push("Current location is required");
     if (!resume) errors.push("Resume is required");
-    if (formData.skills.length === 0)
-      errors.push("At least one skill is required");
+    if (formData.skills.length === 0) errors.push("At least one skill is required");
 
-    if (
-      formData.age &&
-      (Number(formData.age) < 18 || Number(formData.age) > 65)
-    )
+    if (formData.age && (Number(formData.age) < 18 || Number(formData.age) > 65))
       errors.push("Age must be between 18 and 65");
 
+    // --- Education validation ---
     if (education.length > 0) {
       education.forEach((edu, index) => {
         const e: (typeof educationErrors)[0] = {};
-
         const isEmpty =
           !edu.degree?.trim() &&
           !edu.institute?.trim() &&
@@ -110,16 +106,10 @@ const AddCandidatePage = () => {
 
         if (!edu.degree?.trim()) e.degree = "Degree is required";
         if (!edu.institute?.trim()) e.institute = "Institute is required";
-        if (edu.startYear === undefined || edu.startYear === null)
-          e.startYear = "Start Year is required";
-        if (edu.endYear === undefined || edu.endYear === null)
-          e.endYear = "End Year is required";
+        if (edu.startYear === undefined || edu.startYear === null) e.startYear = "Start Year is required";
+        if (edu.endYear === undefined || edu.endYear === null) e.endYear = "End Year is required";
 
-        if (
-          edu.startYear !== undefined &&
-          edu.endYear !== undefined &&
-          edu.startYear > edu.endYear
-        ) {
+        if (edu.startYear !== undefined && edu.endYear !== undefined && edu.startYear > edu.endYear) {
           e.endYear = "End Year must be after Start Year";
         }
 
@@ -127,25 +117,18 @@ const AddCandidatePage = () => {
       });
     }
 
+    // --- Experience validation ---
     let currentlyWorkingCount = 0;
-
     if (experience.length > 0) {
       experience.forEach((exp, index) => {
         const e: (typeof experienceErrors)[0] = {};
+        const isEmpty = !exp.company?.trim() && !exp.role?.trim() && !exp.startDate && !exp.endDate;
 
-        const isEmpty =
-          !exp.company?.trim() &&
-          !exp.role?.trim() &&
-          !exp.startDate &&
-          !exp.endDate;
-
-        // ✅ Skip empty row
         if (isEmpty) {
           expErrors[index] = {};
           return;
         }
 
-        // ❌ Partial → validate fully
         if (!exp.company?.trim()) e.company = "Company is required";
         if (!exp.role?.trim()) e.role = "Role is required";
         if (!exp.startDate) e.startDate = "Start Date is required";
@@ -155,19 +138,12 @@ const AddCandidatePage = () => {
 
         if (exp.currentlyWorking) {
           currentlyWorkingCount++;
-
-          if (exp.endDate) {
-            e.endDate = "End date should not be set if currently working";
-          }
+          if (exp.endDate) e.endDate = "End date should not be set if currently working";
         } else {
-          if (!exp.endDate) {
-            e.endDate = "End Date is required";
-          }
+          if (!exp.endDate) e.endDate = "End Date is required";
         }
 
-        if (start && end && start > end) {
-          e.endDate = "End Date must be after Start Date";
-        }
+        if (start && end && start > end) e.endDate = "End Date must be after Start Date";
 
         expErrors[index] = e;
       });
@@ -190,35 +166,58 @@ const AddCandidatePage = () => {
     );
   };
 
+  // --- Submit handler ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
-    try {
-      await addCandidate({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        age: formData.age ? Number(formData.age) : undefined,
-        experienceYears: formData.experienceYears
-          ? Number(formData.experienceYears)
-          : undefined,
-        experienceMonths: formData.experienceMonths
-          ? Number(formData.experienceMonths)
-          : undefined,
-        skills: formData.skills,
-        keywords: formData.keywords,
-        education,
-        experience,
-        resume: resume as File,
-        currentLocation: formData.currentLocation,
-        gender: formData.gender,
-      });
+    const candidateData = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      age: formData.age ? Number(formData.age) : undefined,
+      experienceYears: formData.experienceYears ? Number(formData.experienceYears) : undefined,
+      experienceMonths: formData.experienceMonths ? Number(formData.experienceMonths) : undefined,
+      skills: formData.skills,
+      keywords: formData.keywords,
+      education,
+      experience,
+      resume: resume as File,
+      currentLocation: formData.currentLocation,
+      gender: formData.gender,
+    };
 
+    try {
+      // --- Verify candidate ---
+      const verifyResult = await verifyCandidate({ email: formData.email, phone: formData.phone });
+
+      if (verifyResult.exists) {
+        setVerifyMessage(verifyResult.message);
+        setPendingCandidateData(candidateData);
+        setIsOverrideDialogOpen(true);
+      } else {
+        await addCandidate(candidateData);
+        router.push("/candidates");
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // --- Override confirm ---
+  const handleOverrideConfirm = async () => {
+    if (!pendingCandidateData) return;
+
+    setIsSubmitting(true);
+    try {
+      await addCandidate(pendingCandidateData);
+      setIsOverrideDialogOpen(false);
       router.push("/candidates");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -239,100 +238,80 @@ const AddCandidatePage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Candidate Info */}
-          <Input
-            label="Full Name"
-            placeholder="Enter full name"
-            cssClasses="py-2"
-            required={true}
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            errorMessage={
-              enableErrors && !formData.name ? "Name is required" : ""
-            }
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Full Name"
+              placeholder="Enter full name"
+              cssClasses="py-2"
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              errorMessage={enableErrors && !formData.name ? "Name is required" : ""}
+            />
 
-          <EmailInput
-            cssClasses="py-2"
-            required={true}
-            value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
-          />
+            <EmailInput
+              cssClasses="py-2"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
 
-          <PhoneInput
-            value={formData.phone}
-            cssClasses="py-2"
-            required={true}
-            onChange={(value) => setFormData({ ...formData, phone: value })}
-            error={
-              enableErrors && !formData.phone
-                ? "Phone is required"
-                : formData.phone.length && formData.phone.length < 10
+            <PhoneInput
+              value={formData.phone}
+              cssClasses="py-2"
+              required
+              onChange={(value) => setFormData({ ...formData, phone: value })}
+              error={
+                enableErrors && !formData.phone
+                  ? "Phone is required"
+                  : formData.phone.length && formData.phone.length < 10
                   ? "Phone must be at least 10 digits"
                   : ""
-            }
-          />
+              }
+            />
 
-          <NumberInput
-            label="Age"
-            placeholder="Enter age"
-            cssClasses="py-2"
-            value={formData.age}
-            onChange={(val) => setFormData({ ...formData, age: val })}
-            errorMessage={
-              enableErrors &&
-              formData.age !== "" &&
-              (Number(formData.age) < 18 || Number(formData.age) > 65)
-                ? "Age must be between 18 and 65"
-                : ""
-            }
-          />
+            <NumberInput
+              label="Age"
+              placeholder="Enter age"
+              cssClasses="py-2"
+              value={formData.age}
+              onChange={(val) => setFormData({ ...formData, age: val })}
+              errorMessage={
+                enableErrors &&
+                formData.age !== "" &&
+                (Number(formData.age) < 18 || Number(formData.age) > 65)
+                  ? "Age must be between 18 and 65"
+                  : ""
+              }
+            />
 
-          <SelectDropdown
-            label="Gender"
-            options={[
-              { label: "Male", value: "Male" },
-              { label: "Female", value: "Female" },
-            ]}
-            value={formData.gender}
-            onChange={(val) => setFormData({ ...formData, gender: val })}
-            placeholder="Select Gender"
-          />
+            <SelectDropdown
+              label="Gender"
+              options={[
+                { label: "Male", value: "Male" },
+                { label: "Female", value: "Female" },
+              ]}
+              value={formData.gender}
+              onChange={(val) => setFormData({ ...formData, gender: val })}
+              placeholder="Select Gender"
+            />
 
-          <Input
-            label="Current Location"
-            required={true}
-            placeholder="Enter location"
-            cssClasses="py-2"
-            errorMessage={
-              enableErrors && !formData.currentLocation
-                ? "Current location is required"
-                : ""
-            }
-            value={formData.currentLocation}
-            onChange={(e) =>
-              setFormData({ ...formData, currentLocation: e.target.value })
-            }
-          />
+            <Input
+              label="Current Location"
+              required
+              placeholder="Enter location"
+              cssClasses="py-2"
+              errorMessage={enableErrors && !formData.currentLocation ? "Current location is required" : ""}
+              value={formData.currentLocation}
+              onChange={(e) => setFormData({ ...formData, currentLocation: e.target.value })}
+            />
 
-          <div className="flex gap-4">
             <NumberInput
               label="Experience (Years)"
               placeholder="0"
               cssClasses="py-2"
               value={formData.experienceYears}
-              onChange={(val) =>
-                setFormData({ ...formData, experienceYears: val })
-              }
-              errorMessage={
-                enableErrors &&
-                (formData.experienceYears === "" ||
-                  Number(formData.experienceYears) < 0 ||
-                  Number(formData.experienceYears) > 50)
-                  ? "Years must be between 0 and 50"
-                  : ""
-              }
+              onChange={(val) => setFormData({ ...formData, experienceYears: val })}
             />
 
             <NumberInput
@@ -340,42 +319,20 @@ const AddCandidatePage = () => {
               placeholder="0"
               cssClasses="py-2"
               value={formData.experienceMonths}
-              onChange={(val) =>
-                setFormData({ ...formData, experienceMonths: val })
-              }
-              errorMessage={
-                enableErrors &&
-                (formData.experienceMonths === "" ||
-                  Number(formData.experienceMonths) < 0 ||
-                  Number(formData.experienceMonths) > 11)
-                  ? "Months must be between 0 and 11"
-                  : ""
-              }
+              onChange={(val) => setFormData({ ...formData, experienceMonths: val })}
             />
           </div>
 
           {/* Education & Experience Sections */}
-          <EducationList
-            value={education}
-            onChange={setEducation}
-            errors={enableErrors ? educationErrors : []}
-          />
-          <ExperienceList
-            value={experience}
-            onChange={setExperience}
-            errors={enableErrors ? experienceErrors : []}
-          />
+          <EducationList value={education} onChange={setEducation} errors={enableErrors ? educationErrors : []} />
+          <ExperienceList value={experience} onChange={setExperience} errors={enableErrors ? experienceErrors : []} />
 
           {/* Skills & Keywords */}
           <InputChips
             label="Skills"
             placeholder="Type and press Enter"
             value={formData.skills}
-            errorMessage={
-              enableErrors && formData.skills.length === 0
-                ? "At least one skill is required"
-                : ""
-            }
+            errorMessage={enableErrors && formData.skills.length === 0 ? "At least one skill is required" : ""}
             cssClasses="py-2"
             onChange={(val) => setFormData({ ...formData, skills: val })}
           />
@@ -396,13 +353,21 @@ const AddCandidatePage = () => {
 
           <Button loading={isSubmitting}>Add Candidate</Button>
         </form>
-
-        {resume && resume.name.endsWith(".docx") && (
-          <div className="mt-4 p-4 border rounded bg-gray-50 whitespace-pre-wrap text-gray-800">
-            {resumeContent || "Loading preview..."}
-          </div>
-        )}
       </div>
+
+      {/* --- Override Dialog --- */}
+      <Dialog
+        isOpen={isOverrideDialogOpen}
+        onCancel={() => setIsOverrideDialogOpen(false)}
+        onConfirm={handleOverrideConfirm}
+        title="Candidate Already Exists"
+        confirmText="Override"
+        cancelText="Cancel"
+        loading={isSubmitting}
+      >
+        <p>{verifyMessage}</p>
+        <p className="mt-2 text-gray-500">Do you want to override and add the candidate anyway?</p>
+      </Dialog>
     </section>
   );
 };

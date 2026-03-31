@@ -14,6 +14,10 @@ class CandidateController {
     return this.candidateService.uploadResume(req);
   };
 
+  public verifyCandidate = async (req: Request) => {
+    return this.candidateService.verifyCandidate(req);
+  }
+
   public getCandidatesCount = async () => {
     return this.candidateService.getCandidatesCount();
   };

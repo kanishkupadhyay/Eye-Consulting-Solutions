@@ -124,7 +124,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {user ? (
           <h1 className="bg-[#f4f1eb] px-6 pt-6 pb-2 text-2xl font-semibold text-gray-800">
-            Welcome, <span className="text-gray-900">{user?.firstName}</span>{" "}
+            Welcome,{" "}
+            <span className="text-orange-400">{user?.firstName}</span>{" "}
             <span
               className="inline-block origin-[70%_70%] animate-[wave_1.5s_ease-in-out_infinite]"
               style={{

@@ -18,15 +18,12 @@ const getInitials = (name: string) => {
   return initials.slice(0, 2).join("");
 };
 
-// Enhanced Skeleton Loader
 const CandidateSkeleton = () => {
   return (
     <section className="p-6">
       <div className="max-w-5xl mx-auto space-y-8 animate-pulse">
-        {/* Breadcrumb */}
         <div className="h-5 w-40 bg-gray-300 rounded" />
 
-        {/* Header */}
         <div className="flex flex-col md:flex-row gap-6 bg-white p-6 rounded-md shadow-md">
           <div className="w-24 h-24 rounded-full bg-gray-300" />
           <div className="flex-1 space-y-4">
@@ -37,44 +34,6 @@ const CandidateSkeleton = () => {
               <div className="h-6 w-24 bg-gray-300 rounded-full" />
               <div className="h-6 w-28 bg-gray-300 rounded-full" />
             </div>
-          </div>
-        </div>
-
-        {/* Skills */}
-        <div className="bg-white p-6 rounded-md shadow-md space-y-3">
-          <div className="h-6 w-28 bg-gray-300 rounded" />
-          <div className="flex flex-wrap gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-6 w-16 bg-gray-300 rounded-full" />
-            ))}
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-white rounded-md shadow-md">
-          <div className="flex border-b border-gray-300">
-            <div className="h-10 w-24 bg-gray-300 rounded-t-md" />
-            <div className="h-10 w-24 bg-gray-200 rounded-t-md ml-2" />
-          </div>
-          <div className="p-6 space-y-6">
-            {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-5 bg-gray-300 rounded w-full max-w-xs" />
-              ))}
-            </div>
-
-            {/* Experience & Education */}
-            {[...Array(2)].map((_, idx) => (
-              <div key={idx} className="border border-gray-300 rounded-xl bg-gray-50 p-5 animate-pulse">
-                <div className="h-6 w-40 bg-gray-300 rounded mb-4" />
-                <div className="space-y-3">
-                  {[...Array(2)].map((__, j) => (
-                    <div key={j} className="h-12 bg-gray-300 rounded-md" />
-                  ))}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -95,7 +54,10 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
         if (response.success) {
           setCandidate({
             ...response.data,
-            createdBy: response.data.createdBy?._id || response.data.createdBy || "",
+            createdBy:
+              response.data.createdBy?._id ||
+              response.data.createdBy ||
+              "",
           });
         }
       } finally {
@@ -134,12 +96,21 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
 
           <div className="flex-1 space-y-2">
             <h1 className="text-3xl font-bold">{candidate.name}</h1>
-            <p className="text-gray-500">{candidate.currentLocation || "-"}</p>
+
+            {/* 🔥 Updated Experience + Location Row */}
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <span>💼 {years}y {months}m</span>
+              <span>•</span>
+              <span>📍 {candidate.currentLocation || "N/A"}</span>
+            </div>
 
             <div className="flex flex-wrap gap-2">
-              <span className="bg-gray-100 px-3 py-1 rounded text-sm">{candidate.email}</span>
-              <span className="bg-gray-100 px-3 py-1 rounded text-sm">{candidate.phone}</span>
-              <span className="bg-gray-100 px-3 py-1 rounded text-sm">Exp: {years}y {months}m</span>
+              <span className="bg-gray-100 px-3 py-1 rounded text-sm">
+                {candidate.email}
+              </span>
+              <span className="bg-gray-100 px-3 py-1 rounded text-sm">
+                {candidate.phone}
+              </span>
             </div>
           </div>
         </div>
@@ -150,7 +121,12 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
             <h2 className="font-semibold mb-3">Skills</h2>
             <div className="flex flex-wrap gap-2">
               {candidate.skills.map((skill, i) => (
-                <span key={i} className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">{skill}</span>
+                <span
+                  key={i}
+                  className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm"
+                >
+                  {skill}
+                </span>
               ))}
             </div>
           </div>
@@ -160,13 +136,21 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
         <div className="bg-white rounded-md shadow-md">
           <div className="flex border-b border-gray-300">
             <button
-              className={`flex-1 py-3 ${activeTab === "details" ? "border-b-2 border-blue-500 text-blue-600" : ""}`}
+              className={`flex-1 py-3 ${
+                activeTab === "details"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : ""
+              }`}
               onClick={() => setActiveTab("details")}
             >
               Details
             </button>
             <button
-              className={`flex-1 py-3 ${activeTab === "resume" ? "border-b-2 border-blue-500 text-blue-600" : ""}`}
+              className={`flex-1 py-3 ${
+                activeTab === "resume"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : ""
+              }`}
               onClick={() => setActiveTab("resume")}
             >
               Resume
@@ -176,39 +160,58 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
           <div className="p-6 space-y-6">
             {activeTab === "details" && (
               <>
-                {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <p>Age: {candidate.age || "-"}</p>
                   <p>Gender: {candidate.gender || "-"}</p>
-                  <p>Defense Check: {candidate.defenseBackgroundCheck ? "Yes" : "No"}</p>
-                  <p>Created: {new Date(candidate.createdAt).toLocaleDateString()}</p>
+                  <p>
+                    Defense Check:{" "}
+                    {candidate.defenseBackgroundCheck ? "Yes" : "No"}
+                  </p>
+                  <p>
+                    Created:{" "}
+                    {new Date(candidate.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
 
-                {/* Experience */}
                 <ExpandableCard title="Experience">
                   <div className="space-y-4">
                     {[...candidate.experience]
-                      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+                      .sort(
+                        (a, b) =>
+                          new Date(b.startDate).getTime() -
+                          new Date(a.startDate).getTime()
+                      )
                       .map((exp, i) => (
                         <div
                           key={i}
                           className="p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 hover:shadow-lg transition"
                         >
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-800">{exp.role || "Role"}</h3>
+                            <h3 className="font-semibold text-gray-800">
+                              {exp.role || "Role"}
+                            </h3>
                             <span className="text-xs text-gray-500">
                               {new Date(exp.startDate).toLocaleDateString()} -{" "}
-                              {exp.currentlyWorking ? "Present" : exp.endDate ? new Date(exp.endDate).toLocaleDateString() : "-"}
+                              {exp.currentlyWorking
+                                ? "Present"
+                                : exp.endDate
+                                ? new Date(exp.endDate).toLocaleDateString()
+                                : "-"}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-500">{exp.company}</p>
-                          {exp.description && <p className="mt-2 text-gray-600 text-sm">{exp.description}</p>}
+                          <p className="text-sm text-gray-500">
+                            {exp.company}
+                          </p>
+                          {exp.description && (
+                            <p className="mt-2 text-gray-600 text-sm">
+                              {exp.description}
+                            </p>
+                          )}
                         </div>
                       ))}
                   </div>
                 </ExpandableCard>
 
-                {/* Education */}
                 <ExpandableCard title="Education">
                   <div className="space-y-4">
                     {candidate.education.map((edu, i) => (
@@ -220,9 +223,17 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
                           {edu.degree}
                           {edu.fieldOfStudy && ` - ${edu.fieldOfStudy}`}
                         </h3>
-                        <p className="text-sm text-gray-600">{edu.institute}</p>
-                        <p className="text-xs text-gray-500">{edu.startYear} - {edu.endYear}</p>
-                        {edu.grade && <p className="text-sm text-gray-700">Grade: {edu.grade}</p>}
+                        <p className="text-sm text-gray-600">
+                          {edu.institute}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {edu.startYear} - {edu.endYear}
+                        </p>
+                        {edu.grade && (
+                          <p className="text-sm text-gray-700">
+                            Grade: {edu.grade}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -230,7 +241,12 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
               </>
             )}
 
-            {activeTab === "resume" && <iframe src={candidate.resumeUrl} className="w-full h-[600px]" />}
+            {activeTab === "resume" && (
+              <iframe
+                src={candidate.resumeUrl}
+                className="w-full h-[600px]"
+              />
+            )}
           </div>
         </div>
       </div>

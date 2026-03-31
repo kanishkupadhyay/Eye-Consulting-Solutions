@@ -35,7 +35,9 @@ class ResultErrorMessage {
   public static readonly CandidateNotFound = "Candidate not found";
   public static readonly InvalidEducationFormat = "Invalid education format";
   public static readonly InvalidExperienceFormat = "Invalid experience format";
-  public static readonly OnlyOneJobCanBeMarkedAsCurrentlyWorking = "Only one job can be marked as currently working.";
+  public static readonly OnlyOneJobCanBeMarkedAsCurrentlyWorking = "Only one job can be marked as currently working";
+  public static readonly CandidateAlreadyExistsWithThisEmail = "Candidate already exists with this email";
+  public static readonly CandidateAlreadyExistsWithThisPhoneNumber = "Candidate already exists with this phone number";
 }
 
 export default ResultErrorMessage;

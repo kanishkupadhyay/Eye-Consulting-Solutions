@@ -6,6 +6,7 @@ class StatusCodes {
   public static readonly CREATED = 201;
   public static readonly FORBIDDEN = 403;
   public static readonly INTERNAL_SERVER_ERROR = 500;
+  public static readonly CONFLICT = 409;
 }
 
 export default StatusCodes;

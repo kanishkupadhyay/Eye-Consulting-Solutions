@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React from "react";
 import {
   CandidateDetailCardProps,
@@ -22,51 +22,54 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow space-y-4 max-w-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div
-            className="rounded-lg w-12 h-12 flex items-center justify-center font-bold text-white text-lg"
-            style={{ backgroundColor: getUniqueColor(candidate.name) }}
-          >
-            {getInitials(candidate.name)}
+    <div className="bg-white rounded-lg p-6 shadow max-w-sm flex flex-col justify-between h-full">
+      {/* Top content */}
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className="rounded-lg w-12 h-12 flex items-center justify-center font-bold text-white text-lg"
+              style={{ backgroundColor: getUniqueColor(candidate.name) }}
+            >
+              {getInitials(candidate.name)}
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg">{candidate.name}</h3>
+              <p className="text-gray-500 text-sm">
+                {getComputedCandidateExperience(candidate.experienceInMonths)}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-lg">{candidate.name}</h3>
-            <p className="text-gray-500 text-sm">
-              {getComputedCandidateExperience(candidate.experienceInMonths)}
-            </p>
-          </div>
-        </div>
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-            statusColors[getResumeStatus(candidate.createdAt)]
-          }`}
-        >
-          {getResumeStatus(candidate.createdAt)}
-        </span>
-      </div>
-
-      {/* Skills */}
-      <div className="flex flex-wrap gap-2">
-        {candidate.skills.slice(0, 6).map((skill: string, index: number) => (
           <span
-            key={index}
-            className="bg-gray-200 capitalize text-gray-700 text-xs px-3 py-1 rounded-full"
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+              statusColors[getResumeStatus(candidate.createdAt)]
+            }`}
           >
-            {skill}
+            {getResumeStatus(candidate.createdAt)}
           </span>
-        ))}
-        {candidate.skills.length > 6 && (
-          <span className="bg-gray-200 capitalize text-gray-700 text-xs px-3 py-1 rounded-full">
-            +{candidate.skills.length - 6} other
-          </span>
-        )}
+        </div>
+
+        {/* Skills */}
+        <div className="flex flex-wrap gap-2">
+          {candidate.skills.slice(0, 6).map((skill: string, index: number) => (
+            <span
+              key={index}
+              className="bg-gray-200 capitalize text-gray-700 text-xs px-3 py-1 rounded-full"
+            >
+              {skill}
+            </span>
+          ))}
+          {candidate.skills.length > 6 && (
+            <span className="bg-gray-200 capitalize text-gray-700 text-xs px-3 py-1 rounded-full">
+              +{candidate.skills.length - 6} other
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex gap-3">
+      {/* Buttons at the bottom */}
+      <div className="flex justify-between mt-4">
         <Link href={`/candidates/${candidate._id}`}>
           <button className="border border-gray-300 rounded px-4 py-2 text-sm hover:bg-gray-100">
             View Profile
