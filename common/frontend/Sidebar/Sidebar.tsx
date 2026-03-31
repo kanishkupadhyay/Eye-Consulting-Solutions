@@ -61,10 +61,10 @@ export default function Sidebar() {
       {/* 🔥 Sidebar */}
       <aside
         className={`overflow-auto fixed top-0 left-0 w-full md:w-64 h-screen bg-[#0B1220] text-white flex flex-col justify-between z-50 transform transition-transform duration-300
-        ${isOpen ? "translate-x-0" : "-translate-x-full"} 
-        md:translate-x-0`}
+  ${isOpen ? "translate-x-0" : "-translate-x-full"} 
+  md:translate-x-0`}
       >
-        {/* Top */}
+        {/* Top Section */}
         <div>
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-5 border-b border-gray-800">
@@ -98,6 +98,31 @@ export default function Sidebar() {
             </button>
           </div>
 
+          {/* ✅ User Info + Sign Out moved here */}
+          <div className="border-b border-gray-800 p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Avatar firstName={user?.firstName} lastName={user?.lastName} />
+                <div>
+                  <p className="text-sm font-medium">
+                    {user?.firstName} {user?.lastName}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {isAdmin ? "Admin" : "Sub user"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-300 hover:bg-red-500 hover:text-white transition"
+            >
+              <LogOut size={18} />
+              Sign Out
+            </button>
+          </div>
+
           {/* Navigation */}
           <NavSection
             title="Main"
@@ -112,11 +137,10 @@ export default function Sidebar() {
                 return true;
               })
               .map((item) => {
-                // 🔥 Inject dynamic badge here
                 if (item.href === "/candidates") {
                   return {
                     ...item,
-                    badge: candidateCount, // ✅ now a number
+                    badge: candidateCount,
                   };
                 }
                 return item;
@@ -124,34 +148,6 @@ export default function Sidebar() {
           />
 
           <NavSection title="Tools" items={toolsNav} />
-        </div>
-
-        {/* Bottom */}
-        <div className="border-t border-gray-800">
-          {/* Sign Out */}
-          <button
-            onClick={handleLogout}
-            className="mx-3 mt-3 flex w-[calc(100%-1.5rem)] items-center gap-3 px-4 py-3 rounded-lg text-sm text-gray-300 hover:bg-red-500 hover:text-white transition"
-          >
-            <LogOut size={18} />
-            Sign Out
-          </button>
-
-          {/* Profile */}
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar firstName={user?.firstName} lastName={user?.lastName} />
-
-              <div>
-                <p className="text-sm font-medium">
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {isAdmin ? "Admin" : "Sub user"}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </aside>
     </>
