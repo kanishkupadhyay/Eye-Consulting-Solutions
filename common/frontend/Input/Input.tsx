@@ -1,7 +1,16 @@
+'use client';
 import React from "react";
 import { IInputProps } from "./Input.Model";
 
-const Input = ({ label, cssClasses = '', value, onChange, onBlur, ...props }: IInputProps) => {
+const Input = ({
+  label,
+  cssClasses = "",
+  value,
+  required = false,
+  onChange,
+  onBlur,
+  ...props
+}: IInputProps) => {
   const emojiRegex = /\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,7 +35,9 @@ const Input = ({ label, cssClasses = '', value, onChange, onBlur, ...props }: II
   return (
     <div>
       {label && (
-        <label className="block text-sm text-gray-500 mb-1">{label}</label>
+        <label className="block text-sm text-gray-500 mb-1">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
       )}
 
       <input

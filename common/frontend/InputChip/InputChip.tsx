@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { IInputChipsProps } from "./InputChip.Model";
+import Input from "../Input/Input";
 
 const InputChips: React.FC<IInputChipsProps> = ({
   label,
@@ -10,6 +11,7 @@ const InputChips: React.FC<IInputChipsProps> = ({
   placeholder = "",
   errorMessage,
   cssClasses = "",
+  required = false,
 }) => {
   const [input, setInput] = useState("");
 
@@ -41,21 +43,17 @@ const InputChips: React.FC<IInputChipsProps> = ({
   return (
     <div>
       {label && (
-        <label className="block text-sm text-gray-500 mb-1">
-          {label}
-        </label>
+        <label className="block text-sm text-gray-500 mb-1">{label}</label>
       )}
 
       {/* ✅ SAME Input UI */}
-      <input
+      <Input
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
+        required={required}
         placeholder={placeholder}
-        className={`w-full bg-white border border-gray-200 rounded-lg p-4 text-sm
-        focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm ${
-          errorMessage ? "border-red-500" : ""
-        } ${cssClasses}`}
+        cssClasses={cssClasses}
       />
 
       {/* ✅ Chips BELOW input */}

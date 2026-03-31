@@ -1,3 +1,4 @@
+'use client';
 import { usePathname } from "next/navigation";
 import { INavSectionProps } from "./NavSection.Model";
 import Link from "next/link";

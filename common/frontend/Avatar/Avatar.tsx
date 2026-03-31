@@ -1,3 +1,4 @@
+'use client";'
 import { getUniqueColor } from "../utils";
 import { IAvatarProps } from "./Avatar.Model";
 

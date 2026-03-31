@@ -1,3 +1,4 @@
+'use client';
 import { IStatsCardProps, StatsCardType } from "./StatsCard.Model";
 
 const StatsCard = ({

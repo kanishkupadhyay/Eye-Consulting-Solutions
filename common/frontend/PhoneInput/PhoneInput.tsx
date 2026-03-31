@@ -10,6 +10,7 @@ export default function PhoneInput({
   error,
   maxLength = 10,
   cssClasses = "",
+  required = false,
 }: IPhoneInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let numericValue = e.target.value.replace(/\D/g, "");
@@ -25,6 +26,7 @@ export default function PhoneInput({
       label="Phone Number"
       placeholder="Enter your phone number"
       value={value}
+      required={required}
       errorMessage={error}
       cssClasses={cssClasses}
       onChange={handleChange}

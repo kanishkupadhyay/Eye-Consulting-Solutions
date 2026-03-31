@@ -84,7 +84,6 @@ export default class CandidateService {
         throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
       }
 
-      // 🔥 FIX: currentLocation validation (your issue)
       const currentLocation = (
         formData.get("currentLocation") as string
       )?.trim();
@@ -92,45 +91,37 @@ export default class CandidateService {
         throw new Error(ResultErrorMessage.CurrentLocationIsRequired);
       }
 
-      // 🔹 age
       const age = formData.get("age") ? Number(formData.get("age")) : undefined;
       if (age && (age < 18 || age > 65)) {
         throw new Error(ResultErrorMessage.AgeIsInvalid);
       }
 
-      // 🔹 gender
-      const gender = formData.get("gender") as "Male" | "Female";
-      if (gender && !["Male", "Female"].includes(gender)) {
-        throw new Error(ResultErrorMessage.GenderIsInvalid);
-      }
+      // const gender = formData.get("gender") as "Male" | "Female";
+      // if (gender && !["Male", "Female"].includes(gender)) {
+      //   throw new Error(ResultErrorMessage.GenderIsInvalid);
+      // }
 
-      // 🔹 experience
       const experienceYears = Number(formData.get("experienceYears") || 0);
-      if (experienceYears < 0) {
-        throw new Error(ResultErrorMessage.ExperienceYearsCannotBeNegative);
-      }
-      if (experienceYears > 50) {
+      if (experienceYears < 0 || experienceYears > 50) {
         throw new Error(ResultErrorMessage.ExperienceYearsCannotExceed50);
       }
 
       const experienceMonths = Number(formData.get("experienceMonths") || 0);
-      if (experienceMonths < 0) {
-        throw new Error(ResultErrorMessage.ExperienceMonthsCannotBeNegative);
-      }
-      if (experienceMonths >= 12) {
+      if (experienceMonths < 0 || experienceMonths > 11) {
         throw new Error(ResultErrorMessage.ExperienceMonthsCannotExceed11);
       }
 
-      // 🔹 skills
+      const experienceInMonths = experienceYears * 12 + experienceMonths;
+
+      // 🔹 skills / keywords
       const skills = formData.get("skills")
         ? JSON.parse(formData.get("skills") as string)
         : [];
 
-      if (!skills.length) {
+      if (!Array.isArray(skills) || !skills.length) {
         throw new Error(ResultErrorMessage.AtLeastOneSkillIsRequired);
       }
 
-      // 🔹 keywords
       const keywords = formData.get("keywords")
         ? JSON.parse(formData.get("keywords") as string)
         : [];
@@ -138,36 +129,114 @@ export default class CandidateService {
       const defenseBackgroundCheck =
         formData.get("defenseBackgroundCheck") === "true";
 
-      const experienceInMonths = experienceYears * 12 + experienceMonths;
+      let education = [];
+      try {
+        education = formData.get("education")
+          ? JSON.parse(formData.get("education") as string)
+          : [];
+      } catch {
+        throw new Error(ResultErrorMessage.InvalidEducationFormat);
+      }
 
-      // 🔹 resume file
+      if (!Array.isArray(education)) {
+        throw new Error(ResultErrorMessage.InvalidEducationFormat);
+      }
+
+      education.forEach((edu, index: number) => {
+        if (!edu.degree?.trim()) {
+          throw new Error(`Education[${index}] degree is required`);
+        }
+        if (!edu.institute?.trim()) {
+          throw new Error(`Education[${index}] institute is required`);
+        }
+        if (
+          edu.startYear &&
+          (edu.startYear < 1900 || edu.startYear > new Date().getFullYear())
+        ) {
+          throw new Error(`Education[${index}] startYear is invalid`);
+        }
+        if (
+          edu.endYear &&
+          (edu.endYear < 1900 || edu.endYear > new Date().getFullYear())
+        ) {
+          throw new Error(`Education[${index}] endYear is invalid`);
+        }
+        if (edu.startYear && edu.endYear && edu.startYear > edu.endYear) {
+          throw new Error(
+            `Education[${index}] startYear cannot be greater than endYear`,
+          );
+        }
+      });
+
+      let experience = [];
+      try {
+        experience = formData.get("experience")
+          ? JSON.parse(formData.get("experience") as string)
+          : [];
+      } catch {
+        throw new Error(ResultErrorMessage.InvalidExperienceFormat);
+      }
+
+      if (!Array.isArray(experience)) {
+        throw new Error(ResultErrorMessage.InvalidExperienceFormat);
+      }
+
+      experience.forEach((exp, index: number) => {
+        if (!exp.company?.trim()) {
+          throw new Error(`Experience[${index}] company is required`);
+        }
+        if (!exp.role?.trim()) {
+          throw new Error(`Experience[${index}] role is required`);
+        }
+        if (!exp.startDate) {
+          throw new Error(`Experience[${index}] startDate is required`);
+        }
+
+        const start = new Date(exp.startDate);
+        const end = exp.endDate ? new Date(exp.endDate) : null;
+
+        if (isNaN(start.getTime())) {
+          throw new Error(`Experience[${index}] startDate is invalid`);
+        }
+
+        if (end && isNaN(end.getTime())) {
+          throw new Error(`Experience[${index}] endDate is invalid`);
+        }
+
+        if (end && start > end) {
+          throw new Error(
+            `Experience[${index}] startDate cannot be after endDate`,
+          );
+        }
+      });
+
       const file = formData.get("resume") as File | null;
+
       if (!file) {
         throw new Error(ResultErrorMessage.NoResumeFilesProvided);
       }
 
-      let resumeUrl = "";
-      let resumeText = "";
-
       const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-      resumeText = await ResumeParser.parseText(fileBuffer, file.type);
+      const resumeText = await ResumeParser.parseText(fileBuffer, file.type);
 
-      resumeUrl = await this.s3Uploader.uploadFile(
+      const resumeUrl = await this.s3Uploader.uploadFile(
         fileBuffer,
         file.name,
         file.type,
       );
 
-      // 🔹 DB save
+      // 🔹 save candidate
       const candidate = await this.candidateRepository.create({
         name,
         email,
         phone,
         age,
-        gender,
+        gender: 'Male',
         currentLocation,
         experienceInMonths,
+        education,
+        experience,
         skills,
         keywords,
         defenseBackgroundCheck,
@@ -176,7 +245,6 @@ export default class CandidateService {
         createdBy: new Types.ObjectId(decoded.userId),
       });
 
-      // 🔹 success response
       return new Response(
         JSON.stringify({
           success: true,
@@ -190,7 +258,6 @@ export default class CandidateService {
     } catch (error: any) {
       console.error("Upload Resume Error:", error);
 
-      // 🔹 ALL validation errors come here as 400 (NOT 500)
       return new Response(
         JSON.stringify({
           success: false,

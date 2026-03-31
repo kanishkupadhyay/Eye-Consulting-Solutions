@@ -5,4 +5,5 @@ export interface IInputChipsProps {
   placeholder?: string;
   errorMessage?: string;
   cssClasses?: string;
+  required?: boolean;
 }

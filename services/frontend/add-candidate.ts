@@ -1,5 +1,6 @@
 import { Notification } from "@/common/frontend/notification";
 import { getTokenFromLocalStorage } from "@/common/frontend/utils";
+import { IEducation, IExperience } from "@/models/candidate.model";
 
 interface IAddCandidateParams {
   name: string;
@@ -8,47 +9,83 @@ interface IAddCandidateParams {
   age?: number;
   experienceYears?: number;
   experienceMonths?: number;
+  experience: IExperience[];
   skills?: string[];
   keywords?: string[];
   resume: File;
   currentLocation: string;
+  education: IEducation[];
+  gender?: string;
 }
 
 export default async function addCandidate(params: IAddCandidateParams) {
   const token = getTokenFromLocalStorage();
-
   const url = "/api/resume/upload";
 
   const formData = new FormData();
 
-  formData.append("resume", params.resume);
-  formData.append("name", params.name);
-  formData.append("email", params.email);
-  formData.append("phone", params.phone);
-  formData.append("currentLocation", params.currentLocation);
+  // 🔹 Clean file name to avoid illegal characters
+  const cleanFile = new File(
+    [params.resume],
+    params.resume.name.replace(/[^\w.\-]/g, "_"),
+    { type: params.resume.type }
+  );
+  formData.append("resume", cleanFile);
+
+  formData.append("name", params.name.trim());
+  formData.append("email", params.email.trim());
+  formData.append("phone", params.phone.trim());
+  formData.append("currentLocation", params.currentLocation.trim());
+
   if (params.age !== undefined) formData.append("age", params.age.toString());
   if (params.experienceYears !== undefined)
     formData.append("experienceYears", params.experienceYears.toString());
   if (params.experienceMonths !== undefined)
     formData.append("experienceMonths", params.experienceMonths.toString());
   if (params.skills) formData.append("skills", JSON.stringify(params.skills));
-  if (params.keywords)
-    formData.append("keywords", JSON.stringify(params.keywords));
+  if (params.keywords) formData.append("keywords", JSON.stringify(params.keywords));
+  if (params.gender) formData.append("gender", params.gender);
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  });
+  // 🔹 Ensure education years are numbers
+  const cleanEducation = params.education.map((edu) => ({
+    ...edu,
+    startYear: Number(edu.startYear),
+    endYear: Number(edu.endYear),
+    degree: edu.degree.trim(),
+    institute: edu.institute.trim(),
+    fieldOfStudy: edu.fieldOfStudy?.trim() || "",
+    grade: edu.grade?.trim() || "",
+  }));
+  formData.append("education", JSON.stringify(cleanEducation));
 
-  if (!res.ok) {
-    const errorText: { message: string } = await res.json();
-    Notification.error(errorText.message);
-    throw new Error(errorText.message);
+  // 🔹 Ensure experience dates are ISO strings and required fields are trimmed
+  const cleanExperience = params.experience.map((exp) => ({
+    company: exp.company.trim(),
+    role: exp.role.trim(),
+    startDate: new Date(exp.startDate).toISOString(),
+    endDate: exp.endDate ? new Date(exp.endDate).toISOString() : null,
+    description: exp.description?.trim() || "",
+  }));
+  formData.append("experience", JSON.stringify(cleanExperience));
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorText: { message: string } = await res.json();
+      Notification.error(errorText.message);
+      throw new Error(errorText.message);
+    }
+    Notification.success("Candidate added successfully!");
+    return await res.json();
+  } catch (error: any) {
+    console.error("Add Candidate Error:", error);
+    throw error;
   }
-  Notification.success("Candidate added successfully!");
-
-  return await res.json();
 }

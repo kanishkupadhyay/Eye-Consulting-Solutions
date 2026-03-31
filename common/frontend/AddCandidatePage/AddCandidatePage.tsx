@@ -13,6 +13,9 @@ import FileUploader from "../FileUploader/FileUploader";
 import InputChips from "../InputChip/InputChip";
 import addCandidate from "@/services/frontend/add-candidate";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
+import EducationList from "../EducationList/EducationList";
+import ExperienceList from "../ExperienceList/ExperienceList";
+import { IEducation, IExperience } from "@/models/candidate.model";
 
 type FileWithPreview = File & { preview?: string };
 
@@ -26,11 +29,26 @@ const AddCandidatePage = () => {
     age: "",
     gender: "",
     currentLocation: "",
-    experienceYears: "0",
-    experienceMonths: "1",
+    experienceYears: "1",
+    experienceMonths: "0",
     skills: [] as string[],
     keywords: [] as string[],
   });
+
+  const [education, setEducation] = useState<IEducation[]>([]);
+  const [educationErrors, setEducationErrors] = useState<
+    {
+      degree?: string;
+      institute?: string;
+      startYear?: string;
+      endYear?: string;
+    }[]
+  >([]);
+
+  const [experience, setExperience] = useState<IExperience[]>([]);
+  const [experienceErrors, setExperienceErrors] = useState<
+    { company?: string; role?: string; startDate?: string; endDate?: string }[]
+  >([]);
 
   const [resume, setResume] = useState<FileWithPreview | null>(null);
   const [resumeContent, setResumeContent] = useState("");
@@ -57,11 +75,17 @@ const AddCandidatePage = () => {
 
   const validateForm = () => {
     const errors: string[] = [];
+    const eduErrors: typeof educationErrors = [];
+    const expErrors: typeof experienceErrors = [];
 
     if (!formData.name.trim()) errors.push("Name is required");
     if (!formData.email.trim()) errors.push("Email is required");
     if (!formData.phone.trim()) errors.push("Phone is required");
+    if (!formData.currentLocation.trim())
+      errors.push("Current location is required");
     if (!resume) errors.push("Resume is required");
+    if (formData.skills.length === 0)
+      errors.push("At least one skill is required");
 
     if (
       formData.age &&
@@ -69,21 +93,50 @@ const AddCandidatePage = () => {
     )
       errors.push("Age must be between 18 and 65");
 
-    const years = Number(formData.experienceYears || 0);
-    const months = Number(formData.experienceMonths || 0);
+    // Education validation
+    if (education.length === 0) {
+      errors.push("At least one education entry is required");
+    }
+    education.forEach((edu, index) => {
+      const e: (typeof educationErrors)[0] = {};
+      if (!edu.degree.trim()) e.degree = "Degree is required";
+      if (!edu.institute.trim()) e.institute = "Institute is required";
+      if (edu.startYear === undefined || edu.startYear === null)
+        e.startYear = "Start Year is required";
+      if (edu.endYear === undefined || edu.endYear === null)
+        e.endYear = "End Year is required";
+      if (
+        edu.startYear !== undefined &&
+        edu.endYear !== undefined &&
+        edu.startYear > edu.endYear
+      )
+        e.endYear = "End Year must be after Start Year";
+      eduErrors[index] = e;
+    });
 
-    if (isNaN(years) || years < 0 || years > 50)
-      errors.push("Experience years must be between 0 and 50");
-
-    if (isNaN(months) || months < 0 || months > 11)
-      errors.push("Experience months must be between 0 and 11");
+    // Experience validation
+    if (experience.length === 0) {
+      errors.push("At least one experience entry is required");
+    }
+    experience.forEach((exp, index) => {
+      const e: (typeof experienceErrors)[0] = {};
+      if (!exp.company.trim()) e.company = "Company is required";
+      if (!exp.role.trim()) e.role = "Role is required";
+      if (!exp.startDate) e.startDate = "Start Date is required";
+      if (exp.startDate && exp.endDate && exp.startDate > exp.endDate)
+        e.endDate = "End Date must be after Start Date";
+      expErrors[index] = e;
+    });
 
     setEnableErrors(true);
+    setEducationErrors(eduErrors);
+    setExperienceErrors(expErrors);
 
-    if (errors.length) {
-      return false;
-    }
-    return true;
+    return (
+      errors.length === 0 &&
+      eduErrors.every((e) => Object.keys(e).length === 0) &&
+      expErrors.every((e) => Object.keys(e).length === 0)
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,8 +159,11 @@ const AddCandidatePage = () => {
           : undefined,
         skills: formData.skills,
         keywords: formData.keywords,
+        education,
+        experience,
         resume: resume,
         currentLocation: formData.currentLocation,
+        gender: formData.gender,
       });
 
       router.push("/candidates");
@@ -131,20 +187,20 @@ const AddCandidatePage = () => {
         <h1 className="text-3xl font-semibold">Add Candidate</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Candidate Info */}
           <Input
             label="Full Name"
             placeholder="Enter full name"
             cssClasses="py-2"
+            required={true}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            errorMessage={
-              enableErrors && !formData.name ? "Name is required" : ""
-            }
+            errorMessage={enableErrors && !formData.name ? "Name is required" : ""}
           />
 
           <EmailInput
             cssClasses="py-2"
-            required
+            required={true}
             value={formData.email}
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
@@ -154,13 +210,14 @@ const AddCandidatePage = () => {
           <PhoneInput
             value={formData.phone}
             cssClasses="py-2"
+            required={true}
             onChange={(value) => setFormData({ ...formData, phone: value })}
             error={
               enableErrors && !formData.phone
                 ? "Phone is required"
                 : formData.phone.length && formData.phone.length < 10
-                  ? "Phone must be at least 10 digits"
-                  : ""
+                ? "Phone must be at least 10 digits"
+                : ""
             }
           />
 
@@ -182,8 +239,8 @@ const AddCandidatePage = () => {
           <SelectDropdown
             label="Gender"
             options={[
-              { label: "Male", value: "male" },
-              { label: "Female", value: "female" },
+              { label: "Male", value: "Male" },
+              { label: "Female", value: "Female" },
             ]}
             value={formData.gender}
             onChange={(val) => setFormData({ ...formData, gender: val })}
@@ -192,6 +249,7 @@ const AddCandidatePage = () => {
 
           <Input
             label="Current Location"
+            required={true}
             placeholder="Enter location"
             cssClasses="py-2"
             errorMessage={
@@ -201,10 +259,7 @@ const AddCandidatePage = () => {
             }
             value={formData.currentLocation}
             onChange={(e) =>
-              setFormData({
-                ...formData,
-                currentLocation: e.target.value,
-              })
+              setFormData({ ...formData, currentLocation: e.target.value })
             }
           />
 
@@ -215,10 +270,7 @@ const AddCandidatePage = () => {
               cssClasses="py-2"
               value={formData.experienceYears}
               onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  experienceYears: val,
-                })
+                setFormData({ ...formData, experienceYears: val })
               }
               errorMessage={
                 enableErrors &&
@@ -236,10 +288,7 @@ const AddCandidatePage = () => {
               cssClasses="py-2"
               value={formData.experienceMonths}
               onChange={(val) =>
-                setFormData({
-                  ...formData,
-                  experienceMonths: val,
-                })
+                setFormData({ ...formData, experienceMonths: val })
               }
               errorMessage={
                 enableErrors &&
@@ -252,7 +301,19 @@ const AddCandidatePage = () => {
             />
           </div>
 
-          {/* ✅ Skills Chips */}
+          {/* Education & Experience Sections */}
+          <EducationList
+            value={education}
+            onChange={setEducation}
+            errors={enableErrors ? educationErrors : []}
+          />
+          <ExperienceList
+            value={experience}
+            onChange={setExperience}
+            errors={enableErrors ? experienceErrors : []}
+          />
+
+          {/* Skills & Keywords */}
           <InputChips
             label="Skills"
             placeholder="Type and press Enter"
@@ -266,7 +327,6 @@ const AddCandidatePage = () => {
             onChange={(val) => setFormData({ ...formData, skills: val })}
           />
 
-          {/* ✅ Keywords Chips */}
           <InputChips
             label="Keywords"
             cssClasses="py-2"
