@@ -48,7 +48,7 @@ const EducationList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
   return (
     <div className="space-y-4">
       <label className="mb-1 text-sm font-medium text-gray-500">
-        Education <span className="text-red-500">*</span>
+        Education
       </label>
 
       {value.length === 0 && (
@@ -135,8 +135,12 @@ const EducationList: React.FC<Props> = ({ value, onChange, errors = [] }) => {
       ))}
 
       {/* Add button */}
-      <Button type="button" className="!w-auto p-2 text-[12px]" onClick={addItem}>
-        <PlusCircle size={16}/> Add Education
+      <Button
+        type="button"
+        className="!w-auto p-2 text-[12px]"
+        onClick={addItem}
+      >
+        <PlusCircle size={16} /> Add Education
       </Button>
     </div>
   );

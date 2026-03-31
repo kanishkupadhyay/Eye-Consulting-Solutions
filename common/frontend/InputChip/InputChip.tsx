@@ -43,7 +43,7 @@ const InputChips: React.FC<IInputChipsProps> = ({
   return (
     <div>
       {label && (
-        <label className="block text-sm text-gray-500 mb-1">{label}</label>
+        <label className="block text-sm text-gray-500 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
       )}
 
       {/* ✅ SAME Input UI */}
