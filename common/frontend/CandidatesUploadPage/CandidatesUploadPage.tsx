@@ -158,8 +158,8 @@ const CandidatesUploadPage = () => {
               <SelectDropdown
                 label="Gender"
                 options={[
-                  { label: "Male", value: "male" },
-                  { label: "Female", value: "female" },
+                  { label: "Male", value: "Male" },
+                  { label: "Female", value: "Female" },
                 ]}
                 value={selectedCandidate.gender || ""}
                 onChange={(val) =>

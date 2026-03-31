@@ -1,3 +1,4 @@
+'use client';
 import React from "react";
 import {
   CandidateDetailCardProps,
@@ -14,7 +15,6 @@ import { Download } from "lucide-react";
 const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   candidate,
 }) => {
-  // Get initials from name
   const getInitials = (name: string) => {
     const names = name.split(" ");
     if (names.length === 1) return names[0].substring(0, 2).toUpperCase();

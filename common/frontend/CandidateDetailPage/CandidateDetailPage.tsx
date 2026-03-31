@@ -6,6 +6,7 @@ import getCandidateById from "@/services/frontend/get-candidate";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
 import NotFound from "../NotFound/NotFound";
 import { getUniqueColor } from "../utils";
+import ExpandableCard from "../ExpandableCard/ExpandableCard";
 
 interface CandidateDetailPageProps {
   candidateId: string;
@@ -17,47 +18,62 @@ const getInitials = (name: string) => {
   return initials.slice(0, 2).join("");
 };
 
-// Fixed Skeleton Loader
+// Enhanced Skeleton Loader
 const CandidateSkeleton = () => {
   return (
     <section className="p-6">
-      <div className="max-w-5xl mx-auto space-y-6 animate-pulse">
-        {/* Breadcrumb Skeleton */}
-        <div className="h-5 bg-gray-300 w-1/3 rounded" />
+      <div className="max-w-5xl mx-auto space-y-8 animate-pulse">
+        {/* Breadcrumb */}
+        <div className="h-5 w-40 bg-gray-300 rounded" />
 
-        {/* Header Skeleton */}
-        <div className="flex flex-col items-center md:items-start md:flex-row gap-6 bg-white p-6 rounded-md shadow-md">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row gap-6 bg-white p-6 rounded-md shadow-md">
           <div className="w-24 h-24 rounded-full bg-gray-300" />
-          <div className="flex-1 flex flex-col gap-3 w-full text-center md:text-left">
-            <div className="h-6 bg-gray-300 w-1/3 rounded" />
-            <div className="h-4 bg-gray-200 w-1/4 rounded" />
-            <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-2">
-              {Array.from({ length: 5 }).map((_, idx) => (
-                <div key={idx} className="h-6 w-20 bg-gray-200 rounded-md" />
-              ))}
+          <div className="flex-1 space-y-4">
+            <div className="h-8 w-3/5 bg-gray-300 rounded" />
+            <div className="h-5 w-1/4 bg-gray-200 rounded" />
+            <div className="flex flex-wrap gap-3">
+              <div className="h-6 w-24 bg-gray-300 rounded-full" />
+              <div className="h-6 w-24 bg-gray-300 rounded-full" />
+              <div className="h-6 w-28 bg-gray-300 rounded-full" />
             </div>
           </div>
         </div>
 
-        {/* Skills Skeleton */}
-        <div className="bg-white p-6 rounded-md shadow-md">
-          <div className="h-5 bg-gray-300 w-24 mb-4 rounded" />
+        {/* Skills */}
+        <div className="bg-white p-6 rounded-md shadow-md space-y-3">
+          <div className="h-6 w-28 bg-gray-300 rounded" />
           <div className="flex flex-wrap gap-3">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="h-6 w-20 bg-gray-200 rounded-xl" />
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-6 w-16 bg-gray-300 rounded-full" />
             ))}
           </div>
         </div>
 
-        {/* Tabs Skeleton */}
+        {/* Tabs */}
         <div className="bg-white rounded-md shadow-md">
-          <div className="border-b border-gray-200 flex">
-            <div className="flex-1 h-10 bg-gray-200" />
-            <div className="flex-1 h-10 bg-gray-200" />
+          <div className="flex border-b">
+            <div className="h-10 w-24 bg-gray-300 rounded-t-md" />
+            <div className="h-10 w-24 bg-gray-200 rounded-t-md ml-2" />
           </div>
-          <div className="p-6 space-y-4">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="h-4 bg-gray-200 rounded w-full" />
+          <div className="p-6 space-y-6">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-5 bg-gray-300 rounded w-full max-w-xs" />
+              ))}
+            </div>
+
+            {/* Experience & Education */}
+            {[...Array(2)].map((_, idx) => (
+              <div key={idx} className="border border-gray-300 rounded-xl bg-gray-50 p-5 animate-pulse">
+                <div className="h-6 w-40 bg-gray-300 rounded mb-4" />
+                <div className="space-y-3">
+                  {[...Array(2)].map((__, j) => (
+                    <div key={j} className="h-12 bg-gray-300 rounded-md" />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -79,11 +95,9 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
         if (response.success) {
           setCandidate({
             ...response.data,
-            createdBy:
-              response.data.createdBy?._id || response.data.createdBy || "",
+            createdBy: response.data.createdBy?._id || response.data.createdBy || "",
           });
         }
-      } catch (err: any) {
       } finally {
         setLoading(false);
       }
@@ -109,35 +123,23 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
       />
 
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Candidate Header */}
-        <div className="flex flex-col items-center md:items-start md:flex-row gap-6 bg-white p-6 rounded-md shadow-md">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row gap-6 bg-white p-6 rounded-md shadow-md">
           <div
-            className="w-24 h-24 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-500 text-white text-3xl font-bold"
+            className="w-24 h-24 flex items-center justify-center rounded-full text-white text-3xl font-bold"
             style={{ backgroundColor: getUniqueColor(candidate.name) }}
           >
             {getInitials(candidate.name)}
           </div>
 
-          <div className="flex-1 flex flex-col gap-3 text-center md:text-left">
+          <div className="flex-1 space-y-2">
             <h1 className="text-3xl font-bold">{candidate.name}</h1>
             <p className="text-gray-500">{candidate.currentLocation || "-"}</p>
 
-            <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-2">
-              <div className="bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold">
-                {candidate.email}
-              </div>
-              <div className="bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold">
-                {candidate.phone}
-              </div>
-              <div className="bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold">
-                Age: {candidate.age || "-"}
-              </div>
-              <div className="bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold">
-                Gender: {candidate.gender || "-"}
-              </div>
-              <div className="bg-gray-100 px-4 py-2 rounded-md text-sm font-semibold">
-                Experience: {years} yr {months} mo
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="bg-gray-100 px-3 py-1 rounded text-sm">{candidate.email}</span>
+              <span className="bg-gray-100 px-3 py-1 rounded text-sm">{candidate.phone}</span>
+              <span className="bg-gray-100 px-3 py-1 rounded text-sm">Exp: {years}y {months}m</span>
             </div>
           </div>
         </div>
@@ -145,18 +147,10 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
         {/* Skills */}
         {candidate.skills.length > 0 && (
           <div className="bg-white p-6 rounded-md shadow-md">
-            <h2 className="text-lg font-semibold mb-4">Skills</h2>
-            <div className="flex flex-wrap gap-3">
-              {candidate.skills.map((skill, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gradient-to-r from-blue-400 to-blue-600 text-white px-4 py-2 rounded-xl text-center font-semibold text-sm shadow-md hover:scale-105 transform transition-all"
-                >
-                  {skill
-                    .split(" ")
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ")}
-                </div>
+            <h2 className="font-semibold mb-3">Skills</h2>
+            <div className="flex flex-wrap gap-2">
+              {candidate.skills.map((skill, i) => (
+                <span key={i} className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">{skill}</span>
               ))}
             </div>
           </div>
@@ -164,72 +158,79 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
 
         {/* Tabs */}
         <div className="bg-white rounded-md shadow-md">
-          <div className="border-b border-gray-200 flex">
+          <div className="flex border-b">
             <button
-              className={`flex-1 text-center py-3 font-medium transition ${
-                activeTab === "details"
-                  ? "border-b-4 border-blue-500 text-blue-600 bg-blue-50"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
+              className={`flex-1 py-3 ${activeTab === "details" ? "border-b-2 border-blue-500 text-blue-600" : ""}`}
               onClick={() => setActiveTab("details")}
             >
               Details
             </button>
             <button
-              className={`flex-1 text-center py-3 font-medium transition ${
-                activeTab === "resume"
-                  ? "border-b-4 border-blue-500 text-blue-600 bg-blue-50"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
+              className={`flex-1 py-3 ${activeTab === "resume" ? "border-b-2 border-blue-500 text-blue-600" : ""}`}
               onClick={() => setActiveTab("resume")}
             >
               Resume
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 space-y-6">
             {activeTab === "details" && (
-              <div className="space-y-4 text-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <p>
-                  <strong>Defense Background Check:</strong>{" "}
-                  {candidate.defenseBackgroundCheck ? "Yes" : "No"}
-                </p>
-                <p>
-                  <strong>Created At:</strong>{" "}
-                  {new Date(candidate.createdAt).toLocaleDateString()}
-                </p>
-                <p>
-                  <strong>Updated At:</strong>{" "}
-                  {new Date(candidate.updatedAt).toLocaleDateString()}
-                </p>
-                <p>
-                  <strong>Current Location:</strong>{" "}
-                  {candidate.currentLocation || "-"}
-                </p>
-                <p>
-                  <strong>Experience:</strong> {years} yr {months} mo
-                </p>
-                <p>
-                  <strong>Skills Count:</strong> {candidate.skills.length}
-                </p>
-              </div>
+              <>
+                {/* Basic Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <p>Age: {candidate.age || "-"}</p>
+                  <p>Gender: {candidate.gender || "-"}</p>
+                  <p>Defense Check: {candidate.defenseBackgroundCheck ? "Yes" : "No"}</p>
+                  <p>Created: {new Date(candidate.createdAt).toLocaleDateString()}</p>
+                </div>
+
+                {/* Experience */}
+                <ExpandableCard title="Experience">
+                  <div className="space-y-4">
+                    {[...candidate.experience]
+                      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+                      .map((exp, i) => (
+                        <div
+                          key={i}
+                          className="p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 hover:shadow-lg transition"
+                        >
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-gray-800">{exp.role || "Role"}</h3>
+                            <span className="text-xs text-gray-500">
+                              {new Date(exp.startDate).toLocaleDateString()} -{" "}
+                              {exp.currentlyWorking ? "Present" : exp.endDate ? new Date(exp.endDate).toLocaleDateString() : "-"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500">{exp.company}</p>
+                          {exp.description && <p className="mt-2 text-gray-600 text-sm">{exp.description}</p>}
+                        </div>
+                      ))}
+                  </div>
+                </ExpandableCard>
+
+                {/* Education */}
+                <ExpandableCard title="Education">
+                  <div className="space-y-4">
+                    {candidate.education.map((edu, i) => (
+                      <div
+                        key={i}
+                        className="p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-green-50 via-green-100 to-green-50 hover:shadow-lg transition"
+                      >
+                        <h3 className="font-semibold text-gray-800">
+                          {edu.degree}
+                          {edu.fieldOfStudy && ` - ${edu.fieldOfStudy}`}
+                        </h3>
+                        <p className="text-sm text-gray-600">{edu.institute}</p>
+                        <p className="text-xs text-gray-500">{edu.startYear} - {edu.endYear}</p>
+                        {edu.grade && <p className="text-sm text-gray-700">Grade: {edu.grade}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </ExpandableCard>
+              </>
             )}
 
-            {activeTab === "resume" && (
-              <div className="relative">
-                {candidate.resumeUrl ? (
-                  <iframe
-                    src={candidate.resumeUrl}
-                    className="w-full h-[600px] border rounded-md"
-                    title="Candidate Resume"
-                  />
-                ) : (
-                  <div className="text-gray-500 text-center py-20">
-                    Resume not available
-                  </div>
-                )}
-              </div>
-            )}
+            {activeTab === "resume" && <iframe src={candidate.resumeUrl} className="w-full h-[600px]" />}
           </div>
         </div>
       </div>

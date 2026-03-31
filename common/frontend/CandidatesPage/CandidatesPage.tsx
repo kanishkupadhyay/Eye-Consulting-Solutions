@@ -6,7 +6,6 @@ import getCandidates from "@/services/frontend/get-candidates";
 import { ICandidate } from "@/models/candidate.model";
 import CandidateSkeleton from "./CandidateSkeleton";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
-import { getComputedCandidateExperience } from "../utils";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;

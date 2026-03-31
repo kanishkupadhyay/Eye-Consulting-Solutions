@@ -33,6 +33,8 @@ class ResultErrorMessage {
   public static readonly ExperienceMonthsCannotExceed11 = "Experience months cannot exceed 11";
   public static readonly AtLeastOneSkillIsRequired = "At least one skill is required";
   public static readonly CandidateNotFound = "Candidate not found";
+  public static readonly InvalidEducationFormat = "Invalid education format";
+  public static readonly InvalidExperienceFormat = "Invalid experience format";
 }
 
 export default ResultErrorMessage;

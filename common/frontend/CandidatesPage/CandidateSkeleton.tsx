@@ -1,3 +1,5 @@
+'use client';
+
 const CandidateSkeleton = () => {
   return (
     <div className="p-4 border border-gray-300 rounded shadow animate-pulse bg-gray-100">
