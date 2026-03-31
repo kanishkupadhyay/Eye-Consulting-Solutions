@@ -73,24 +73,30 @@ const CandidatesPage = () => {
       {/* Breadcrumb on top */}
       <Breadcrumb items={breadcrumbItems} />
 
-      {/* Candidate list grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {candidates.map((candidate) => (
-          <CandidateDetailCard
-            key={candidate._id as unknown as string}
-            candidate={candidate}
-          />
-        ))}
-
-        {/* Skeletons */}
-        {loading &&
-          Array.from({ length: 12 }).map((_, idx) => (
-            <CandidateSkeleton key={idx} />
+      {/* Candidate list grid or empty message */}
+      {candidates.length === 0 && !loading && !error ? (
+        <div className="text-gray-500 text-center col-span-full">
+          No candidates have been added yet
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {candidates.map((candidate) => (
+            <CandidateDetailCard
+              key={candidate._id as unknown as string}
+              candidate={candidate}
+            />
           ))}
 
-        {/* Error message */}
-        {error && <div className="text-red-500 col-span-full">{error}</div>}
-      </div>
+          {/* Skeletons */}
+          {loading &&
+            Array.from({ length: 12 }).map((_, idx) => (
+              <CandidateSkeleton key={idx} />
+            ))}
+
+          {/* Error message */}
+          {error && <div className="text-red-500 col-span-full">{error}</div>}
+        </div>
+      )}
     </div>
   );
 };
