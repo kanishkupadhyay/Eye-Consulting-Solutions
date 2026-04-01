@@ -46,11 +46,11 @@ const InputChips: React.FC<IInputChipsProps> = ({
         <label className="block text-sm text-gray-500 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
       )}
 
-      {/* ✅ SAME Input UI */}
       <Input
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
+        errorMessage={errorMessage}
         required={required}
         placeholder={placeholder}
         cssClasses={cssClasses}
@@ -75,10 +75,6 @@ const InputChips: React.FC<IInputChipsProps> = ({
             </span>
           ))}
         </div>
-      )}
-
-      {errorMessage && (
-        <p className="text-red-500 text-xs mt-1">{errorMessage}</p>
       )}
     </div>
   );

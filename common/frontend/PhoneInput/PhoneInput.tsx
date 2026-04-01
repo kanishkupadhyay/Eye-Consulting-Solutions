@@ -1,31 +1,38 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Input from "../Input/Input";
 import { IPhoneInputProps } from "./PhoneInput.Model";
 
 export default function PhoneInput({
-  value,
+  value = "",
   onChange,
   error,
   maxLength = 10,
   cssClasses = "",
   required = false,
 }: IPhoneInputProps) {
+  const [internalValue, setInternalValue] = useState("");
+
+  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let numericValue = e.target.value.replace(/\D/g, "");
-    if (numericValue.length > maxLength) {
-      numericValue = numericValue.slice(0, maxLength);
-    }
+    if (numericValue.length > maxLength) numericValue = numericValue.slice(0, maxLength);
+    setInternalValue(numericValue);
     onChange(numericValue);
   };
+
+  // Compute display value: prefer parent value cleaned, fallback to internal typing
+  const displayValue = value
+    ? value.replace(/\D/g, "").slice(0, maxLength)
+    : internalValue;
 
   return (
     <Input
       type="text"
       label="Phone Number"
       placeholder="Enter your phone number"
-      value={value}
+      value={displayValue}
       required={required}
       errorMessage={error}
       cssClasses={cssClasses}
