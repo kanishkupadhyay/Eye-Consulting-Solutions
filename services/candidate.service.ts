@@ -438,52 +438,58 @@ export default class CandidateService {
       // ✅ Process candidates
       const processedCandidates = await Promise.all(
         candidatesInput.map(async (c: any, index: number) => {
-          index = index + 1;
           const name = c.name?.trim();
-          if (!name) throw new Error(`Candidate[${index}] name is required`);
+          if (!name)
+            throw new Error(`Candidate[${index + 1}] name is required`);
 
           const email = c.email?.trim();
-          if (!email) throw new Error(`Candidate[${index}] email is required`);
+          if (!email)
+            throw new Error(`Candidate[${index + 1}] email is required`);
           if (!checkIsValidEmail(email))
-            throw new Error(`Candidate[${index}] email is invalid`);
+            throw new Error(`Candidate[${index + 1}] email is invalid`);
 
           const phone = c.phone?.trim();
-          if (!phone) throw new Error(`Candidate[${index}] phone is required`);
+          if (!phone)
+            throw new Error(`Candidate[${index + 1}] phone is required`);
           if (phone.length !== 10)
-            throw new Error(`Candidate[${index}] phone is invalid`);
+            throw new Error(`Candidate[${index + 1}] phone is invalid`);
 
           const currentLocation = c.currentLocation?.trim();
           if (!currentLocation)
-            throw new Error(`Candidate[${index}] currentLocation is required`);
+            throw new Error(
+              `Candidate[${index + 1}] currentLocation is required`,
+            );
 
           const file = files[index];
           if (!file)
-            throw new Error(`Candidate[${index}] resume file is required`);
+            throw new Error(`Candidate[${index + 1}] resume file is required`);
 
           const age = Number(c.age || 0);
           if (age && (age < 18 || age > 65))
-            throw new Error(`Candidate[${index}] age is invalid`);
+            throw new Error(`Candidate[${index + 1}] age is invalid`);
 
           const gender = c.gender;
           if (gender && !["Male", "Female"].includes(gender))
-            throw new Error(`Candidate[${index}] gender is invalid`);
+            throw new Error(`Candidate[${index + 1}] gender is invalid`);
 
           const experienceYears = Number(c.experienceYears || 0);
           const experienceMonths = Number(c.experienceMonths || 0);
           if (experienceYears < 0 || experienceYears > 50)
             throw new Error(
-              `Candidate[${index}] experienceYears cannot exceed 50`,
+              `Candidate[${index + 1}] experienceYears cannot exceed 50`,
             );
           if (experienceMonths < 0 || experienceMonths > 11)
             throw new Error(
-              `Candidate[${index}] experienceMonths cannot exceed 11`,
+              `Candidate[${index + 1}] experienceMonths cannot exceed 11`,
             );
 
           const experienceInMonths = experienceYears * 12 + experienceMonths;
 
           const skills = Array.isArray(c.skills) ? c.skills : [];
           if (!skills.length)
-            throw new Error(`Candidate[${index}] must have at least one skill`);
+            throw new Error(
+              `Candidate[${index + 1}] must have at least one skill`,
+            );
 
           const keywords = Array.isArray(c.keywords) ? c.keywords : [];
           const defenseBackgroundCheck = c.defenseBackgroundCheck === true;
@@ -492,26 +498,26 @@ export default class CandidateService {
           education.forEach((edu: any, i: number) => {
             if (!edu.degree?.trim())
               throw new Error(
-                `Candidate[${index}] Education[${i}] degree required`,
+                `Candidate[${index + 1}] Education[${i}] degree required`,
               );
             if (!edu.institute?.trim())
               throw new Error(
-                `Candidate[${index}] Education[${i}] institute required`,
+                `Candidate[${index + 1}] Education[${i}] institute required`,
               );
             if (
               edu.startYear &&
               (edu.startYear < 1900 || edu.startYear > new Date().getFullYear())
             )
               throw new Error(
-                `Candidate[${index}] Education[${i}] startYear invalid`,
+                `Candidate[${index + 1}] Education[${i}] startYear invalid`,
               );
             if (edu.endYear && edu.endYear < 1900)
               throw new Error(
-                `Candidate[${index}] Education[${i}] endYear invalid`,
+                `Candidate[${index + 1}] Education[${i}] endYear invalid`,
               );
             if (edu.startYear && edu.endYear && edu.startYear > edu.endYear)
               throw new Error(
-                `Candidate[${index}] Education[${i}] startYear cannot be after endYear`,
+                `Candidate[${index + 1}] Education[${i}] startYear cannot be after endYear`,
               );
           });
 
@@ -520,47 +526,47 @@ export default class CandidateService {
           experience.forEach((exp: any, i: number) => {
             if (!exp.company?.trim())
               throw new Error(
-                `Candidate[${index}] Experience[${i}] company required`,
+                `Candidate[${index + 1}] Experience[${i}] company required`,
               );
             if (!exp.role?.trim())
               throw new Error(
-                `Candidate[${index}] Experience[${i}] role required`,
+                `Candidate[${index + 1}] Experience[${i}] role required`,
               );
             if (!exp.startDate)
               throw new Error(
-                `Candidate[${index}] Experience[${i}] startDate required`,
+                `Candidate[${index + 1}] Experience[${i}] startDate required`,
               );
 
             const start = new Date(exp.startDate);
             const end = exp.endDate ? new Date(exp.endDate) : null;
             if (isNaN(start.getTime()))
               throw new Error(
-                `Candidate[${index}] Experience[${i}] startDate invalid`,
+                `Candidate[${index + 1}] Experience[${i}] startDate invalid`,
               );
             if (exp.currentlyWorking) {
               currentlyWorkingCount++;
               if (exp.endDate)
                 throw new Error(
-                  `Candidate[${index}] Experience[${i}] endDate should not exist if currentlyWorking is true`,
+                  `Candidate[${index + 1}] Experience[${i}] endDate should not exist if currentlyWorking is true`,
                 );
             } else {
               if (!exp.endDate)
                 throw new Error(
-                  `Candidate[${index}] Experience[${i}] endDate required if not currently working`,
+                  `Candidate[${index + 1}] Experience[${i}] endDate required if not currently working`,
                 );
             }
             if (end && isNaN(end.getTime()))
               throw new Error(
-                `Candidate[${index}] Experience[${i}] endDate invalid`,
+                `Candidate[${index + 1}] Experience[${i}] endDate invalid`,
               );
             if (end && start > end)
               throw new Error(
-                `Candidate[${index}] Experience[${i}] startDate cannot be after endDate`,
+                `Candidate[${index + 1}] Experience[${i}] startDate cannot be after endDate`,
               );
           });
           if (currentlyWorkingCount > 1)
             throw new Error(
-              `Candidate[${index}] only one job can be currentlyWorking`,
+              `Candidate[${index + 1}] only one job can be currentlyWorking`,
             );
 
           // ✅ Parse and upload resume
@@ -579,7 +585,7 @@ export default class CandidateService {
             name,
             email,
             phone,
-            age,
+            ...(age && { age }),
             gender,
             currentLocation,
             experienceInMonths,

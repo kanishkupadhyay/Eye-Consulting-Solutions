@@ -80,6 +80,7 @@ const CandidatesUploadPage = () => {
       const response = await bulkParseCandidates({ resumes: files });
       const enriched = response.data.map((c: any, index: number) => ({
         ...c,
+        id: index + 1,
         file: files[index],
         previewUrl: URL.createObjectURL(files[index]),
         gender: c.gender || "",
@@ -130,7 +131,7 @@ const CandidatesUploadPage = () => {
         resume: c.file,
         currentLocation: c.currentLocation,
         education: c.education,
-        gender: c.gender,
+        ...(c.gender && { gender: c.gender }),
       }));
 
       const response = await addCandidatesBulk(candidatesToUpload);
@@ -225,8 +226,18 @@ const CandidatesUploadPage = () => {
       fErrors.currentLocation = "Current Location is required";
       hasError = true;
     }
-    if (!selectedCandidate?.phone?.trim()) {
+    if (selectedCandidate?.phone) {
+      selectedCandidate.phone =
+        selectedCandidate.phone.trim().replace(/\D/g, "").slice(0, 10) || "";
+    }
+    if (!selectedCandidate?.phone) {
       fErrors.phone = "Phone is required";
+      hasError = true;
+    } else if (
+      selectedCandidate?.phone.length &&
+      selectedCandidate?.phone.length !== 10
+    ) {
+      fErrors.phone = "Phone number should be 10 digits";
       hasError = true;
     }
     if (!selectedCandidate?.skills?.length) {
@@ -287,7 +298,7 @@ const CandidatesUploadPage = () => {
     if (!validateCandidate()) {
       setParsedCandidates((prev) =>
         prev.map((c) =>
-          c.email === selectedCandidate.email ? { ...c, hasError: true } : c,
+          c.id === selectedCandidate.id ? { ...c, hasError: true } : c,
         ),
       );
       return;
@@ -300,11 +311,8 @@ const CandidatesUploadPage = () => {
       previewUrl: selectedCandidate.previewUrl,
       hasError: false,
     };
-
     setParsedCandidates((prev) =>
-      prev.map((c) =>
-        c.email === selectedCandidate.email ? updatedCandidate : c,
-      ),
+      prev.map((c) => (c.id === selectedCandidate.id ? updatedCandidate : c)),
     );
 
     setSelectedCandidate(null);
@@ -369,13 +377,13 @@ const CandidatesUploadPage = () => {
                 <ParsedCandidateCard
                   key={index}
                   index={index}
-                  onDelete={(c) => {
+                  onDelete={(c: any) => {
                     setParsedCandidates((prev) =>
-                      prev.filter((p) => p.email !== c.email),
+                      prev.filter((p) => p.id !== c.id),
                     );
 
                     // Close side panel if deleted candidate is open
-                    if (selectedCandidate?.email === c.email) {
+                    if (selectedCandidate?.id === c.id) {
                       setSelectedCandidate(null);
                     }
                   }}
