@@ -6,29 +6,16 @@ import NavSection from "../NavSection/NavSection";
 import { mainNav, toolsNav } from "./SideBar.Data";
 import { useEffect, useState } from "react";
 import Avatar from "../Avatar/Avatar";
-import getCandidatesCount from "@/services/frontend/candidates-count";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [candidateCount, setCandidateCount] = useState<number>(0);
 
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, totalCandidateCount, setCandidateCount } = useAuth();
 
   useEffect(() => {
-    // 🔥 Fetch candidate count
-    const fetchCount = async () => {
-      try {
-        const res = await getCandidatesCount();
-        // API returns { success: true, data: { count: number } }
-        setCandidateCount(res.data.count);
-      } catch (err) {
-        console.error("Failed to fetch candidate count", err);
-      }
-    };
-
-    fetchCount();
+    setCandidateCount();
   }, []);
 
   const handleLogout = async () => {
@@ -140,7 +127,7 @@ export default function Sidebar() {
                 if (item.href === "/candidates") {
                   return {
                     ...item,
-                    badge: candidateCount,
+                    badge: totalCandidateCount,
                   };
                 }
                 return item;

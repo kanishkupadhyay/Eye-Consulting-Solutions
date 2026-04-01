@@ -19,6 +19,7 @@ import { renderAsync } from "docx-preview";
 import addCandidatesBulk from "@/services/frontend/bulk-add-candidate";
 import { Notification } from "../notification";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -34,6 +35,7 @@ const CandidatesUploadPage = () => {
   const [experienceErrors, setExperienceErrors] = useState<any[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const router = useRouter();
+  const { setCandidateCount } = useAuth();
 
   const [docxHtml, setDocxHtml] = useState<string>("");
 
@@ -134,6 +136,7 @@ const CandidatesUploadPage = () => {
 
       console.log("Bulk upload response:", response);
       if (response.success) {
+        setCandidateCount();
         router.push("/candidates");
         setParsedCandidates([]);
         setFiles([]);
