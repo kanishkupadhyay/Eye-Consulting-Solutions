@@ -177,7 +177,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             >
               <div className="flex items-center gap-3">
                 {file.name?.endsWith(".pdf") ? (
-                  <FiFile className="text-red-500 text-2xl" />
+                  <FiFile className="text-blue-500 text-2xl" />
                 ) : (
                   <FiFileText className="text-blue-500 text-2xl" />
                 )}

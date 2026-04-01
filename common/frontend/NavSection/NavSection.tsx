@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { usePathname } from "next/navigation";
 import { INavSectionProps } from "./NavSection.Model";
 import Link from "next/link";
@@ -21,9 +21,10 @@ const NavSection = ({ title, items }: INavSectionProps) => {
               key={item.name}
               href={item.href}
               className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm transition
-                ${isActive
-                  ? "bg-orange-500 text-white"
-                  : "text-gray-300 hover:bg-gray-800"
+                ${
+                  isActive
+                    ? "bg-orange-500 text-white"
+                    : "text-gray-300 hover:bg-gray-800"
                 }`}
             >
               <div className="flex items-center gap-3">
@@ -32,7 +33,9 @@ const NavSection = ({ title, items }: INavSectionProps) => {
               </div>
 
               {item.badge && (
-                <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">
+                <span
+                  className={`bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full ${isActive ? "!bg-[#156eb7]" : ""}`}
+                >
                   {item.badge}
                 </span>
               )}

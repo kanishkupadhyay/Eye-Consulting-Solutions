@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import FileUploader from "../FileUploader/FileUploader";
 import Button from "../Button/Button";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
@@ -20,6 +20,7 @@ import addCandidatesBulk from "@/services/frontend/bulk-add-candidate";
 import { Notification } from "../notification";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { ArrowLeft } from "lucide-react";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -205,11 +206,11 @@ const CandidatesUploadPage = () => {
     };
   }, [selectedCandidate?.file]);
 
-  const validateCandidate = () => {
+  const validateCandidate = useCallback(() => {
     let hasError = false;
     const fErrors: { [key: string]: string } = {};
     if (!selectedCandidate?.name?.trim()) {
-      fErrors.name = "Name is required";
+      fErrors.name = "Full Name is required";
       hasError = true;
     }
     if (!selectedCandidate?.currentLocation?.trim()) {
@@ -279,7 +280,7 @@ const CandidatesUploadPage = () => {
     setFieldErrors(fErrors);
 
     return !hasError;
-  };
+  }, [selectedCandidate, education, experience]);
 
   const handleSaveCandidate = () => {
     if (!selectedCandidate) return;
@@ -309,6 +310,13 @@ const CandidatesUploadPage = () => {
     setSelectedCandidate(null);
   };
 
+  useEffect(() => {
+    if (selectedCandidate) {
+      setEnableErrors(true);
+      validateCandidate();
+    }
+  }, [selectedCandidate, validateCandidate]);
+
   return (
     <section className="p-6">
       <Breadcrumb
@@ -320,6 +328,18 @@ const CandidatesUploadPage = () => {
       />
 
       <div className="max-w-6xl mx-auto space-y-6">
+        {parsedCandidates.length ? (
+          <button
+            className="flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 text-gray-800 font-semibold hover:bg-orange-100 hover:text-orange-500 transition-all shadow-sm"
+            onClick={() => {
+              setParsedCandidates([]);
+              setFiles([]);
+            }}
+          >
+            <ArrowLeft className="w-4 h-4" strokeWidth={2} />
+            Back
+          </button>
+        ) : null}
         <h1 className="text-3xl font-semibold">Upload Candidate Resumes</h1>
 
         {!parsedCandidates.length && (
@@ -348,8 +368,8 @@ const CandidatesUploadPage = () => {
               {parsedCandidates.map((candidate, index) => (
                 <ParsedCandidateCard
                   key={index}
+                  index={index}
                   onDelete={(c) => {
-                    // Remove candidate from state
                     setParsedCandidates((prev) =>
                       prev.filter((p) => p.email !== c.email),
                     );
@@ -463,6 +483,7 @@ const CandidatesUploadPage = () => {
                 label="Skills"
                 value={selectedCandidate.skills || []}
                 required
+                cssClasses="py-2"
                 onChange={(val) =>
                   setSelectedCandidate({ ...selectedCandidate, skills: val })
                 }
@@ -485,13 +506,13 @@ const CandidatesUploadPage = () => {
               <div className="h-[400px] border rounded overflow-hidden">
                 {selectedCandidate.file.name.endsWith(".pdf") && (
                   <iframe
-                    src={selectedCandidate.previewUrl}
+                    src={selectedCandidate?.previewUrl}
                     className="w-full h-full"
                     title="Resume Preview"
                   />
                 )}
 
-                {selectedCandidate.file.name.endsWith(".docx") && (
+                {selectedCandidate?.file?.name.endsWith(".docx") && (
                   <div
                     className="w-full h-full overflow-auto p-2 bg-gray-50"
                     dangerouslySetInnerHTML={{
