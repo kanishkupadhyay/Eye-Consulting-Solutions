@@ -390,19 +390,25 @@ export default class CandidateService {
       const decoded = getDecodedToken(token);
 
       const formData = await req.formData();
-      const resumesData = formData.get("resumes"); // assume JSON array of candidates
 
+      const resumesData = formData.get("resumes");
       if (!resumesData) {
         throw new Error(ResultErrorMessage.NoResumeFilesProvided);
       }
 
       const candidatesInput = JSON.parse(resumesData as string);
-
-      if (!Array.isArray(candidatesInput) || !candidatesInput.length) {
+      if (!Array.isArray(candidatesInput) || !candidatesInput.length)
         throw new Error("Resumes data must be a non-empty array");
+
+      // ✅ Get all files from frontend
+      const files = formData.getAll("files") as File[];
+      if (files.length !== candidatesInput.length) {
+        throw new Error(
+          `Number of uploaded files (${files.length}) does not match number of candidates (${candidatesInput.length})`,
+        );
       }
 
-      // 1️⃣ Collect emails and phones to delete existing candidates in one query
+      // Delete existing candidates by email/phone
       const emails = candidatesInput
         .map((c: any) => c.email?.trim())
         .filter(Boolean);
@@ -414,7 +420,7 @@ export default class CandidateService {
         $or: [{ email: { $in: emails } }, { phone: { $in: phones } }],
       });
 
-      // 2️⃣ Process candidates in parallel
+      // ✅ Process candidates
       const processedCandidates = await Promise.all(
         candidatesInput.map(async (c: any, index: number) => {
           const name = c.name?.trim();
@@ -434,7 +440,11 @@ export default class CandidateService {
           if (!currentLocation)
             throw new Error(`Candidate[${index}] currentLocation is required`);
 
-          const age = c.age ? Number(c.age) : undefined;
+          const file = files[index];
+          if (!file)
+            throw new Error(`Candidate[${index}] resume file is required`);
+
+          const age = Number(c.age || 0);
           if (age && (age < 18 || age > 65))
             throw new Error(`Candidate[${index}] age is invalid`);
 
@@ -537,18 +547,17 @@ export default class CandidateService {
               `Candidate[${index}] only one job can be currentlyWorking`,
             );
 
-          const file = c.resumeFile as File | undefined;
-          let resumeUrl = "";
-          let resumeText = "";
-          if (file) {
-            const fileBuffer = Buffer.from(await file.arrayBuffer());
-            resumeText = await ResumeParser.parseText(fileBuffer, file.type);
-            resumeUrl = await this.s3Uploader.uploadFile(
-              fileBuffer,
-              file.name,
-              file.type,
-            );
-          }
+          // ✅ Parse and upload resume
+          const fileBuffer = Buffer.from(await file.arrayBuffer());
+          const resumeText = await ResumeParser.parseText(
+            fileBuffer,
+            file.type,
+          );
+          const resumeUrl = await this.s3Uploader.uploadFile(
+            fileBuffer,
+            file.name,
+            file.type,
+          );
 
           return {
             name,
@@ -581,18 +590,19 @@ export default class CandidateService {
         },
       );
     } catch (error: any) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : "Unknown error";
+
       console.error("Upload Bulk Resumes Error:", error);
 
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: error.message,
-        }),
-        {
-          status: StatusCodes.BAD_REQUEST,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return new Response(JSON.stringify({ success: false, message }), {
+        status: StatusCodes.BAD_REQUEST,
+        headers: { "Content-Type": "application/json" },
+      });
     }
   };
 
