@@ -22,7 +22,7 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow max-w-sm flex flex-col justify-between h-full transition-shadow duration-300 hover:shadow-xl">
+    <div className="bg-white rounded-lg p-6 shadow max-w-sm max-h-[280px] min-h-[280px] flex flex-col justify-between h-full transition-shadow duration-300 hover:shadow-xl">
       {/* Top content */}
       <div className="space-y-4">
         {/* Header */}
@@ -55,7 +55,7 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
           {candidate.skills.slice(0, 6).map((skill: string, index: number) => (
             <span
               key={index}
-              className="bg-gray-200 capitalize text-gray-700 text-xs px-3 py-1 rounded-full"
+              className="bg-gray-200 max-w-[100px] truncate capitalize text-gray-700 text-xs px-3 py-1 rounded-full"
             >
               {skill}
             </span>

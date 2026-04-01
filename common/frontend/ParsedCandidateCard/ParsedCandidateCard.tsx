@@ -1,7 +1,8 @@
 "use client";
 import React from "react";
+import { Trash2 } from "lucide-react";
 
-const ParsedCandidateCard = ({ candidate, onClick }: any) => {
+const ParsedCandidateCard = ({ candidate, onClick, onDelete }: any) => {
   const getInitials = (name: string) => {
     if (!name) return "NA";
     const names = name.split(" ");
@@ -18,16 +19,26 @@ const ParsedCandidateCard = ({ candidate, onClick }: any) => {
         candidate.hasError ? "border-red-500" : "border-gray-200"
       } rounded-2xl p-5 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]`}
     >
+      {/* Delete Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent card click
+          if (onDelete) onDelete(candidate);
+        }}
+        className="absolute top-2 right-2 z-20 w-6 h-6 flex items-center justify-center text-white bg-red-500 rounded-full hover:bg-red-600 transition"
+        title="Delete Candidate"
+      >
+        <Trash2 size={16} />
+      </button>
+
       {/* Glow effect */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-r from-blue-500/10 to-purple-500/10" />
 
       {/* Header */}
       <div className="flex items-center gap-3 relative z-10">
-        {/* Avatar */}
         <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg bg-gradient-to-r from-blue-500 to-purple-500 shadow-md">
           {getInitials(candidate.name)}
         </div>
-
         <div className="flex flex-col truncate">
           <h3 className="font-semibold text-lg text-gray-800 truncate max-w-[180px]">
             {candidate.name || "Unknown"}
@@ -36,8 +47,6 @@ const ParsedCandidateCard = ({ candidate, onClick }: any) => {
             {candidate.email || "No email"}
           </p>
         </div>
-
-        {/* Parsed / Error badge */}
         <span
           className={`ml-auto text-xs px-3 py-1 rounded-full font-medium ${
             candidate.hasError
@@ -75,7 +84,9 @@ const ParsedCandidateCard = ({ candidate, onClick }: any) => {
             </span>
           )}
         </div>
-        <span className="opacity-0 group-hover:opacity-100 transition">Click to view →</span>
+        <span className="opacity-0 group-hover:opacity-100 transition">
+          Click to view →
+        </span>
       </div>
     </div>
   );
