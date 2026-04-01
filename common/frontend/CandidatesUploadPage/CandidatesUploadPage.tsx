@@ -34,7 +34,31 @@ const CandidatesUploadPage = () => {
   // DOCX preview HTML
   const [docxHtml, setDocxHtml] = useState<string>("");
 
-  const handleFilesChange = (selectedFiles: File[]) => setFiles(selectedFiles);
+  // --- Handle Files Change ---
+  const handleFilesChange = (selectedFiles: File[]) => {
+    setFiles(selectedFiles);
+  };
+
+  // --- Generate DOCX Preview ---
+  useEffect(() => {
+    const generateDocxPreviews = async () => {
+      if (!selectedCandidate?.file) return;
+      const file = selectedCandidate.file;
+      if (file.name.endsWith(".docx")) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const container = document.createElement("div");
+          await renderAsync(arrayBuffer, container);
+          setDocxHtml(container.innerHTML);
+        } catch {
+          setDocxHtml("<p>Failed to load DOCX preview.</p>");
+        }
+      } else {
+        setDocxHtml("");
+      }
+    };
+    generateDocxPreviews();
+  }, [selectedCandidate]);
 
   const handleParseResumes = async () => {
     if (!files.length) return;
@@ -75,55 +99,8 @@ const CandidatesUploadPage = () => {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      files.forEach((file) => {
-        if ((file as any).previewUrl) URL.revokeObjectURL((file as any).previewUrl);
-      });
-      parsedCandidates.forEach((c) => {
-        if (c.previewUrl) URL.revokeObjectURL(c.previewUrl);
-      });
-    };
-  }, [files, parsedCandidates]);
-
-  useEffect(() => {
-    if (selectedCandidate) {
-      setEducation(selectedCandidate.education || []);
-      setExperience(selectedCandidate.experience || []);
-      setEnableErrors(false);
-      setEducationErrors([]);
-      setExperienceErrors([]);
-      setFieldErrors({});
-    }
-  }, [selectedCandidate]);
-
-  useEffect(() => {
-    const loadDocxPreview = async () => {
-      if (!selectedCandidate?.file) return;
-
-      const file = selectedCandidate.file;
-      if (file.name.endsWith(".docx")) {
-        try {
-          const arrayBuffer = await file.arrayBuffer();
-          const container = document.createElement("div");
-          await renderAsync(arrayBuffer, container);
-          setDocxHtml(container.innerHTML);
-        } catch (error) {
-          console.error("Error rendering DOCX preview:", error);
-          setDocxHtml("Failed to load DOCX preview.");
-        }
-      } else {
-        setDocxHtml("");
-      }
-    };
-
-    loadDocxPreview();
-  }, [selectedCandidate]);
-
-  // --- Validation function ---
   const validateCandidate = () => {
     let hasError = false;
-
     const fErrors: { [key: string]: string } = {};
     if (!selectedCandidate?.name?.trim()) {
       fErrors.name = "Name is required";
@@ -181,9 +158,9 @@ const CandidatesUploadPage = () => {
     if (currentJobCount > 1) hasError = true;
 
     setEnableErrors(true);
+    setFieldErrors(fErrors);
     setEducationErrors(eduErrs);
     setExperienceErrors(expErrs);
-    setFieldErrors(fErrors);
 
     return !hasError;
   };
@@ -223,7 +200,7 @@ const CandidatesUploadPage = () => {
           <>
             <FileUploader multiple maxFiles={50} onFilesChange={handleFilesChange} />
             <div className="mt-4">
-              <Button onClick={handleParseResumes} disabled={loading}>
+              <Button onClick={handleParseResumes} disabled={!files.length || loading}>
                 {loading ? "Parsing..." : "Parse Resumes"}
               </Button>
             </div>
