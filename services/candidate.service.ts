@@ -438,6 +438,7 @@ export default class CandidateService {
       // ✅ Process candidates
       const processedCandidates = await Promise.all(
         candidatesInput.map(async (c: any, index: number) => {
+          index = index + 1;
           const name = c.name?.trim();
           if (!name) throw new Error(`Candidate[${index}] name is required`);
 

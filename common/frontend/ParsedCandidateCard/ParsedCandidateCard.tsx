@@ -2,14 +2,12 @@
 import React from "react";
 import { Trash2 } from "lucide-react";
 
-const ParsedCandidateCard = ({ candidate, onClick, onDelete }: any) => {
+const ParsedCandidateCard = ({ candidate, onClick, onDelete, index }: any) => {
   const getInitials = (name: string) => {
     if (!name) return "NA";
     const names = name.split(" ");
     if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-    return (
-      names[0].charAt(0).toUpperCase() + names[1].charAt(0).toUpperCase()
-    );
+    return names[0].charAt(0).toUpperCase() + names[1].charAt(0).toUpperCase();
   };
 
   return (
@@ -19,6 +17,11 @@ const ParsedCandidateCard = ({ candidate, onClick, onDelete }: any) => {
         candidate.hasError ? "border-red-500" : "border-gray-200"
       } rounded-2xl p-5 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]`}
     >
+      {/* Index Badge */}
+      <span className="absolute top-2 left-2 z-20 px-2 py-1 text-xs font-semibold bg-gray-200 text-gray-700 rounded-full">
+        #{index + 1}
+      </span>
+
       {/* Delete Button */}
       <button
         onClick={(e) => {
@@ -40,10 +43,10 @@ const ParsedCandidateCard = ({ candidate, onClick, onDelete }: any) => {
           {getInitials(candidate.name)}
         </div>
         <div className="flex flex-col truncate">
-          <h3 className="font-semibold text-lg text-gray-800 truncate max-w-[180px]">
+          <h3 className="font-semibold text-lg text-gray-800 truncate max-w-[150px]">
             {candidate.name || "Unknown"}
           </h3>
-          <p className="text-xs text-gray-500 truncate max-w-[180px]">
+          <p className="text-xs text-gray-500 truncate max-w-[150px]">
             {candidate.email || "No email"}
           </p>
         </div>
