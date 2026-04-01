@@ -54,9 +54,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         }
 
         if (file.size > MAX_FILE_SIZE) {
-          setError(
-            `${file.name} is too large. Max allowed size is 2 MB.`,
-          );
+          setError(`${file.name} is too large. Max allowed size is 2 MB.`);
           continue;
         }
 
@@ -138,8 +136,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           {isDragActive
             ? "Drop files here..."
             : multiple
-            ? `Drag & drop PDFs/DOCs/DOCXs, or click to select (max ${maxFiles})`
-            : "Drag & drop a PDF/DOC/DOCX, or click to select"}
+              ? `Drag & drop PDFs/DOCXs, or click to select (max ${maxFiles})`
+              : "Drag & drop a PDF/DOCX, or click to select"}
         </p>
       </div>
 

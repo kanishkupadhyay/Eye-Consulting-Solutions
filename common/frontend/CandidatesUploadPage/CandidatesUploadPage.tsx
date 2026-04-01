@@ -34,7 +34,6 @@ const CandidatesUploadPage = () => {
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const [docxHtml, setDocxHtml] = useState<string>("");
-  const [docxPreviews, setDocxPreviews] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const generateDocxPreviews = async () => {
@@ -51,17 +50,14 @@ const CandidatesUploadPage = () => {
           }
         }
       }
-      setDocxPreviews(previews);
     };
     if (files.length) generateDocxPreviews();
-    else setDocxPreviews({});
   }, [files]);
 
   const handleFilesChange = (selectedFiles: File[]) => {
     setFiles(selectedFiles);
   };
 
-  // Helper: check if a candidate has errors (used for card border)
   const checkCandidateErrors = (candidate: any) => {
     if (!candidate.name?.trim()) return true;
     if (!candidate.email?.trim()) return true;
@@ -87,7 +83,6 @@ const CandidatesUploadPage = () => {
         experience: c.experience || [],
       }));
 
-      // Add hasError flag for cards
       const withErrorFlag = enriched.map((c) => ({
         ...c,
         hasError: checkCandidateErrors(c),
@@ -105,7 +100,6 @@ const CandidatesUploadPage = () => {
   const handleUploadAll = async () => {
     if (!parsedCandidates.length) return;
 
-    // 🔹 Check if all candidates are valid
     const invalidCandidates = parsedCandidates.filter((c) => c.hasError);
     if (invalidCandidates.length) {
       Notification.error(
@@ -117,7 +111,6 @@ const CandidatesUploadPage = () => {
     try {
       setUploading(true);
 
-      // Prepare candidates data for bulk upload
       const candidatesToUpload = parsedCandidates.map((c) => ({
         name: c.name,
         email: c.email,
@@ -134,12 +127,10 @@ const CandidatesUploadPage = () => {
         gender: c.gender,
       }));
 
-      // 🔹 Call the bulk upload API
       const response = await addCandidatesBulk(candidatesToUpload);
 
       console.log("Bulk upload response:", response);
 
-      // Clear state
       setParsedCandidates([]);
       setFiles([]);
     } catch (error) {
@@ -151,15 +142,11 @@ const CandidatesUploadPage = () => {
 
   useEffect(() => {
     return () => {
-      files.forEach((file) => {
-        if ((file as any).previewUrl)
-          URL.revokeObjectURL((file as any).previewUrl);
-      });
       parsedCandidates.forEach((c) => {
         if (c.previewUrl) URL.revokeObjectURL(c.previewUrl);
       });
     };
-  }, [files, parsedCandidates]);
+  }, [parsedCandidates]);
 
   useEffect(() => {
     if (selectedCandidate) {
@@ -172,10 +159,21 @@ const CandidatesUploadPage = () => {
     }
   }, [selectedCandidate]);
 
+  // ✅ FIXED PREVIEW LOGIC
   useEffect(() => {
-    const loadDocxPreview = async () => {
+    const loadPreview = async () => {
       if (!selectedCandidate?.file) return;
+
       const file = selectedCandidate.file;
+
+      // 🔥 regenerate preview URL every time (fix PDF break)
+      const freshPreviewUrl = URL.createObjectURL(file);
+
+      setSelectedCandidate((prev: any) => ({
+        ...prev,
+        previewUrl: freshPreviewUrl,
+      }));
+
       if (file.name.endsWith(".docx")) {
         try {
           const arrayBuffer = await file.arrayBuffer();
@@ -185,10 +183,19 @@ const CandidatesUploadPage = () => {
         } catch {
           setDocxHtml("Failed to load DOCX preview.");
         }
-      } else setDocxHtml("");
+      } else {
+        setDocxHtml("");
+      }
     };
-    loadDocxPreview();
-  }, [selectedCandidate]);
+
+    loadPreview();
+
+    return () => {
+      if (selectedCandidate?.previewUrl) {
+        URL.revokeObjectURL(selectedCandidate.previewUrl);
+      }
+    };
+  }, [selectedCandidate?.file]);
 
   const validateCandidate = () => {
     let hasError = false;
@@ -265,7 +272,6 @@ const CandidatesUploadPage = () => {
   const handleSaveCandidate = () => {
     if (!selectedCandidate) return;
     if (!validateCandidate()) {
-      // update card error immediately
       setParsedCandidates((prev) =>
         prev.map((c) =>
           c.email === selectedCandidate.email ? { ...c, hasError: true } : c,
@@ -279,7 +285,7 @@ const CandidatesUploadPage = () => {
       education,
       experience,
       previewUrl: selectedCandidate.previewUrl,
-      hasError: false, // reset error on successful save
+      hasError: false,
     };
 
     setParsedCandidates((prev) =>
@@ -398,6 +404,19 @@ const CandidatesUploadPage = () => {
                   setSelectedCandidate({ ...selectedCandidate, gender: val })
                 }
                 placeholder="Select Gender"
+              />
+              <Input
+                label="Age"
+                cssClasses="py-2"
+                type="number"
+                placeholder="Enter age"
+                value={selectedCandidate.age || ""}
+                onChange={(e) =>
+                  setSelectedCandidate({
+                    ...selectedCandidate,
+                    age: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
               />
               {/* --- Current Location Input --- */}
               <Input

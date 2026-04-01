@@ -18,65 +18,68 @@ interface IAddCandidateParams {
   gender?: string;
 }
 
-export default async function addCandidatesBulk(candidates: IAddCandidateParams[]) {
+export default async function addCandidatesBulk(
+  candidates: IAddCandidateParams[]
+) {
   const token = getTokenFromLocalStorage();
   const url = "/api/resume/bulk";
 
   const formData = new FormData();
 
-  // Prepare JSON array for metadata
-  const candidatesMetadata = candidates.map((c, index) => {
-    return {
-      ...c,
-      education: c.education.map(e => ({
-        ...e,
-        startYear: Number(e.startYear),
-        endYear: Number(e.endYear),
-      })),
-      experience: c.experience.map(exp => ({
-        ...exp,
-        startDate: new Date(exp.startDate).toISOString(),
-        endDate: exp.currentlyWorking
-          ? null
-          : exp.endDate
-          ? new Date(exp.endDate).toISOString()
-          : null,
-      })),
-      // This is the key the backend will look for
-      resumeFile: `resumeFile-${index}`,
-    };
-  });
+  const metadata = candidates.map((c) => ({
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    age: c.age,
+    experienceYears: c.experienceYears,
+    experienceMonths: c.experienceMonths,
+    skills: c.skills,
+    keywords: c.keywords,
+    currentLocation: c.currentLocation,
+    gender: c.gender,
+    education: c.education.map((e) => ({
+      ...e,
+      startYear: Number(e.startYear),
+      endYear: Number(e.endYear),
+    })),
+    experience: c.experience.map((exp) => ({
+      ...exp,
+      startDate: new Date(exp.startDate).toISOString(),
+      endDate: exp.currentlyWorking
+        ? null
+        : exp.endDate
+        ? new Date(exp.endDate).toISOString()
+        : null,
+    })),
+  }));
 
-  // Append JSON array as a string
-  formData.append("resumes", JSON.stringify(candidatesMetadata));
+  formData.append("resumes", JSON.stringify(metadata));
 
-  // Append each resume file with a key backend expects
-  candidates.forEach((c, index) => {
-    const cleanFile = new File(
-      [c.resume],
-      c.resume.name.replace(/[^\w.\-]/g, "_"),
-      { type: c.resume.type }
-    );
-    formData.append(`resumeFile-${index}`, cleanFile);
+  // ✅ ALL FILES SAME KEY
+  candidates.forEach((c) => {
+    formData.append("files", c.resume);
   });
 
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: formData,
     });
 
+    const data = await res.json();
+
     if (!res.ok) {
-      const errorText: { message: string } = await res.json();
-      Notification.error(errorText.message);
-      throw new Error(errorText.message);
+      throw new Error(data.message || "Upload failed");
     }
 
     Notification.success("All candidates uploaded successfully!");
-    return await res.json();
+    return data;
   } catch (error: any) {
     console.error("Bulk Candidate Upload Error:", error);
+    Notification.error(error.message || "Something went wrong");
     throw error;
   }
 }
