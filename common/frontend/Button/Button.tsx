@@ -4,11 +4,13 @@ import React from "react";
 
 type Props = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
+  loadingText?: string;
 };
 
 export default function Button({
   children,
   loading = false,
+  loadingText = "Loading...",
   className = "",
   ...props
 }: Props) {
@@ -45,7 +47,7 @@ export default function Button({
               d="M4 12a8 8 0 018-8v8H4z"
             />
           </svg>
-          Loading...
+         {loadingText}
         </span>
       ) : (
         children

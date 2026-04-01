@@ -14,45 +14,60 @@ export default class CandidateService {
   private candidateRepository = new CandidateRepository();
 
   public parseResumes = async (req: Request) => {
-    const formData = await req.formData();
+    try {
+      const formData = await req.formData();
+      const uploadedFiles = Array.from(formData.values()).filter(
+        (value): value is File => value instanceof File,
+      );
 
-    const uploadedFiles = Array.from(formData.values()).filter(
-      (value): value is File => value instanceof File,
-    );
+      if (!uploadedFiles.length) {
+        return NextResponse.json(
+          { success: false, message: ResultErrorMessage.NoResumeFilesProvided },
+          { status: StatusCodes.BAD_REQUEST },
+        );
+      }
 
-    if (!uploadedFiles.length) {
+      const results = [];
+
+      for (const file of uploadedFiles) {
+        try {
+          const fileBuffer = Buffer.from(await file.arrayBuffer());
+          const text = await ResumeParser.parseText(fileBuffer, file.type);
+
+          results.push({
+            name: ResumeParser.extractName(text),
+            email: ResumeParser.extractEmail(text),
+            phone: ResumeParser.extractPhone(text),
+            gender: ResumeParser.extractGender(text),
+            skills: ResumeParser.extractSkills(text),
+            resumeUrl: file.name,
+          });
+        } catch (fileErr) {
+          console.warn(`Failed to parse file ${file.name}:`, fileErr);
+          // Push empty/default values instead of failing
+          results.push({
+            name: "",
+            email: "",
+            phone: "",
+            gender: "",
+            skills: [],
+            resumeUrl: file.name,
+          });
+        }
+      }
+
+      return NextResponse.json({ success: true, data: results });
+    } catch (err) {
+      console.error("Error parsing resumes:", err);
       return NextResponse.json(
-        { success: false, message: ResultErrorMessage.NoResumeFilesProvided },
-        { status: StatusCodes.BAD_REQUEST },
+        {
+          success: false,
+          message: "An error occurred while parsing resumes",
+          error: (err as Error).message,
+        },
+        { status: StatusCodes.INTERNAL_SERVER_ERROR },
       );
     }
-
-    const results = [];
-
-    for (const file of uploadedFiles) {
-      const fileBuffer = Buffer.from(await file.arrayBuffer());
-
-      // Parse text
-      const text = await ResumeParser.parseText(fileBuffer, file.type);
-
-      const candidateData = {
-        name: ResumeParser.extractName(text),
-        email: ResumeParser.extractEmail(text),
-        phone: ResumeParser.extractPhone(text),
-        gender: ResumeParser.extractGender(text),
-        skills: ResumeParser.extractSkills(text),
-
-        // Return file reference instead of uploading
-        resumeUrl: file.name, // or you can pass a temp URL if frontend sends one
-      };
-
-      results.push(candidateData);
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: results,
-    });
   };
 
   public verifyCandidate = async (req: Request) => {

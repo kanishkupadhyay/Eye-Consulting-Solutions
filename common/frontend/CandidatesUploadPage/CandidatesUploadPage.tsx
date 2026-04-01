@@ -18,6 +18,7 @@ import { IEducation, IExperience } from "@/models/candidate.model";
 import { renderAsync } from "docx-preview";
 import addCandidatesBulk from "@/services/frontend/bulk-add-candidate";
 import { Notification } from "../notification";
+import { useRouter } from "next/navigation";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -32,6 +33,7 @@ const CandidatesUploadPage = () => {
   const [educationErrors, setEducationErrors] = useState<any[]>([]);
   const [experienceErrors, setExperienceErrors] = useState<any[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const router = useRouter();
 
   const [docxHtml, setDocxHtml] = useState<string>("");
 
@@ -88,6 +90,7 @@ const CandidatesUploadPage = () => {
         hasError: checkCandidateErrors(c),
       }));
 
+      setEnableErrors(true);
       setParsedCandidates(withErrorFlag);
       validateCandidate();
     } catch (error) {
@@ -130,9 +133,11 @@ const CandidatesUploadPage = () => {
       const response = await addCandidatesBulk(candidatesToUpload);
 
       console.log("Bulk upload response:", response);
-
-      setParsedCandidates([]);
-      setFiles([]);
+      if (response.success) {
+        router.push("/candidates");
+        setParsedCandidates([]);
+        setFiles([]);
+      }
     } catch (error) {
       console.error("Error uploading candidates:", error);
     } finally {
@@ -210,6 +215,10 @@ const CandidatesUploadPage = () => {
     }
     if (!selectedCandidate?.email?.trim()) {
       fErrors.email = "Email is required";
+      hasError = true;
+    }
+    if (!selectedCandidate?.currentLocation?.trim()) {
+      fErrors.currentLocation = "Current Location is required";
       hasError = true;
     }
     if (!selectedCandidate?.phone?.trim()) {
@@ -321,8 +330,10 @@ const CandidatesUploadPage = () => {
               <Button
                 onClick={handleParseResumes}
                 disabled={!files.length || loading}
+                loading={loading}
+                loadingText="Parsing... please wait"
               >
-                {loading ? "Parsing... please wait" : "Parse Resumes"}
+                Parse Resume
               </Button>
             </div>
           </>
@@ -334,6 +345,17 @@ const CandidatesUploadPage = () => {
               {parsedCandidates.map((candidate, index) => (
                 <ParsedCandidateCard
                   key={index}
+                  onDelete={(c) => {
+                    // Remove candidate from state
+                    setParsedCandidates((prev) =>
+                      prev.filter((p) => p.email !== c.email),
+                    );
+
+                    // Close side panel if deleted candidate is open
+                    if (selectedCandidate?.email === c.email) {
+                      setSelectedCandidate(null);
+                    }
+                  }}
                   candidate={candidate}
                   onClick={() => setSelectedCandidate(candidate)}
                 />
@@ -424,6 +446,7 @@ const CandidatesUploadPage = () => {
                 cssClasses="py-2"
                 placeholder="Enter current location"
                 required
+                errorMessage={enableErrors ? fieldErrors.currentLocation : ""}
                 value={selectedCandidate.currentLocation || ""}
                 onChange={(e) =>
                   setSelectedCandidate({

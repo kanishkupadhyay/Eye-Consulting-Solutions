@@ -5,18 +5,25 @@ export default class ResumeParser {
     fileBuffer: Buffer,
     mimeType: string,
   ): Promise<string> {
-    if (mimeType === "application/pdf") {
-      const { default: pdfParse } = await import("pdf-parse/lib/pdf-parse.js");
-      const data = await pdfParse(fileBuffer);
-      return data.text;
-    } else if (
-      mimeType ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      mimeType === "application/msword"
-    ) {
-      const result = await mammoth.extractRawText({ buffer: fileBuffer });
-      return result.value;
+    try {
+      if (mimeType === "application/pdf") {
+        const { default: pdfParse } =
+          await import("pdf-parse/lib/pdf-parse.js");
+        const data = await pdfParse(fileBuffer);
+        return data?.text || "";
+      } else if (
+        mimeType ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        mimeType === "application/msword"
+      ) {
+        const result = await mammoth.extractRawText({ buffer: fileBuffer });
+        return result?.value || "";
+      }
+    } catch (err) {
+      console.warn("Failed to parse file:", err);
+      return "";
     }
+
     return "";
   }
 
