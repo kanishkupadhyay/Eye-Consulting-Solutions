@@ -83,7 +83,7 @@ const CandidatesUploadPage = () => {
         experience: c.experience || [],
       }));
 
-      const withErrorFlag = enriched.map((c) => ({
+      const withErrorFlag = enriched.map((c: any) => ({
         ...c,
         hasError: checkCandidateErrors(c),
       }));
