@@ -6,6 +6,8 @@ import getCandidates from "@/services/frontend/get-candidates";
 import { ICandidate } from "@/models/candidate.model";
 import CandidateSkeleton from "./CandidateSkeleton";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
+import { Sliders } from "lucide-react";
+import Dialog from "../Dialog/Dialog";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
@@ -14,7 +16,6 @@ interface CandidateWithExtras extends ICandidate {
 }
 
 const breadcrumbItems = [{ name: "Candidates", href: "/candidates" }];
-
 const LIMIT = 20;
 
 const CandidatesPage = () => {
@@ -23,6 +24,16 @@ const CandidatesPage = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    keywords: "",
+    experience: "",
+    age: "",
+    currentLocation: "",
+    gender: "",
+    defenceBackground: false,
+  });
 
   const loadedIds = useRef(new Set<string>());
   const observer = useRef<IntersectionObserver | null>(null);
@@ -62,12 +73,10 @@ const CandidatesPage = () => {
     }
   }, [page, hasMore, loading]);
 
-  // Fetch on page change
   useEffect(() => {
     fetchCandidates();
   }, [fetchCandidates]);
 
-  // Intersection Observer for infinite scroll
   useEffect(() => {
     if (loading) return;
 
@@ -91,32 +100,115 @@ const CandidatesPage = () => {
       {/* Breadcrumb */}
       <Breadcrumb items={breadcrumbItems} />
 
+      {/* Top bar with filter button */}
+      <div className="flex justify-between items-center max-w-6xl mx-auto">
+        <h2 className="text-2xl font-semibold">Candidates</h2>
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          className="flex items-center gap-1 bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-md transition text-white"
+          title="Filter Candidates"
+        >
+          <Sliders className="w-4 h-4" />
+          Filter
+        </button>
+      </div>
+
+      {/* Candidates Grid */}
       {candidates.length === 0 && !loading && !error ? (
         <div className="text-gray-500 text-center col-span-full">
           No candidates have been added yet
         </div>
       ) : (
         <div className="max-w-6xl mx-auto space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {candidates.map((candidate) => (
-            <CandidateDetailCard
-              key={candidate._id as unknown as string}
-              candidate={candidate}
-            />
-          ))}
-
-          {loading &&
-            Array.from({ length: 12 }).map((_, idx) => (
-              <CandidateSkeleton key={idx} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {candidates.map((candidate) => (
+              <CandidateDetailCard
+                key={candidate._id as unknown as string}
+                candidate={candidate}
+              />
             ))}
 
-          {error && <div className="text-red-500 col-span-full">{error}</div>}
-        </div>
+            {loading &&
+              Array.from({ length: 12 }).map((_, idx) => (
+                <CandidateSkeleton key={idx} />
+              ))}
+
+            {error && <div className="text-red-500 col-span-full">{error}</div>}
+          </div>
         </div>
       )}
 
-      {/* Invisible div to trigger lazy loading */}
       <div ref={bottomRef} className="h-1"></div>
+
+      {/* Filter Dialog */}
+      <Dialog
+        isOpen={isFilterOpen}
+        onCancel={() => setIsFilterOpen(false)}
+        onConfirm={() => {}}
+        title="Filter Candidates"
+        confirmText="Apply"
+        cancelText="Cancel"
+      >
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Keywords"
+            className="w-full border px-3 py-2 rounded-md"
+            value={filterOptions.keywords}
+            onChange={(e) =>
+              setFilterOptions({ ...filterOptions, keywords: e.target.value })
+            }
+          />
+          <input
+            type="number"
+            placeholder="Experience (Years)"
+            className="w-full border px-3 py-2 rounded-md"
+            value={filterOptions.experience}
+            onChange={(e) =>
+              setFilterOptions({ ...filterOptions, experience: e.target.value })
+            }
+          />
+          <input
+            type="number"
+            placeholder="Age"
+            className="w-full border px-3 py-2 rounded-md"
+            value={filterOptions.age}
+            onChange={(e) =>
+              setFilterOptions({ ...filterOptions, age: e.target.value })
+            }
+          />
+          <input
+            type="text"
+            placeholder="Current Location"
+            className="w-full border px-3 py-2 rounded-md"
+            value={filterOptions.currentLocation}
+            onChange={(e) =>
+              setFilterOptions({ ...filterOptions, currentLocation: e.target.value })
+            }
+          />
+          <select
+            className="w-full border px-3 py-2 rounded-md"
+            value={filterOptions.gender}
+            onChange={(e) =>
+              setFilterOptions({ ...filterOptions, gender: e.target.value })
+            }
+          >
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={filterOptions.defenceBackground}
+              onChange={(e) =>
+                setFilterOptions({ ...filterOptions, defenceBackground: e.target.checked })
+              }
+            />
+            Defence Background
+          </label>
+        </div>
+      </Dialog>
     </div>
   );
 };
