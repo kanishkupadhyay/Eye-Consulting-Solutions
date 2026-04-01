@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import getCandidatesCount from "@/services/frontend/candidates-count";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 
 interface User {
   id: string;
@@ -17,6 +24,8 @@ interface AuthContextType {
   loading: boolean; // 👈 important
   login: (user: User, token: string) => void;
   logout: () => void;
+  totalCandidateCount: number;
+  setCandidateCount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,7 +33,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // 👈 start true
+  const [loading, setLoading] = useState(true);
+  const [totalCandidateCount, setTotalCandidateCount] = useState<number>(0);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -44,6 +54,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("token", authToken);
   };
 
+  const setCandidateCount = async (): Promise<void> => {
+    try {
+      const res = await getCandidatesCount();
+      // API returns { success: true, data: { count: number } }
+      setTotalCandidateCount(res.data.count);
+    } catch (err) {
+      console.error("Failed to fetch candidate count", err);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -53,7 +73,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        totalCandidateCount,
+        setCandidateCount,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
