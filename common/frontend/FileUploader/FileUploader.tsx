@@ -81,7 +81,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     multiple,
     accept: {
       "application/pdf": [".pdf"],
-      "application/msword": [".doc"],
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         [".docx"],
     },
@@ -234,16 +233,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                 dangerouslySetInnerHTML={{
                   __html: docxHtml || "Loading preview...",
                 }}
-              />
-            )}
-
-            {/* DOC */}
-            {selectedFile.name?.endsWith(".doc") && (
-              <iframe
-                src={`https://docs.google.com/gview?url=${encodeURIComponent(
-                  selectedFile.preview as string,
-                )}&embedded=true`}
-                className="flex-1 w-full"
               />
             )}
           </div>

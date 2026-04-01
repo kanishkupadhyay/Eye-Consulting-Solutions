@@ -6,13 +6,17 @@ const ParsedCandidateCard = ({ candidate, onClick }: any) => {
     if (!name) return "NA";
     const names = name.split(" ");
     if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
-    return names[0].charAt(0).toUpperCase() + names[1].charAt(0).toUpperCase();
+    return (
+      names[0].charAt(0).toUpperCase() + names[1].charAt(0).toUpperCase()
+    );
   };
 
   return (
     <div
       onClick={onClick}
-      className="group cursor-pointer relative bg-white/70 backdrop-blur-md border border-gray-200 rounded-2xl p-5 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]"
+      className={`group cursor-pointer relative bg-white/70 backdrop-blur-md border ${
+        candidate.hasError ? "border-red-500" : "border-gray-200"
+      } rounded-2xl p-5 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]`}
     >
       {/* Glow effect */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-r from-blue-500/10 to-purple-500/10" />
@@ -33,9 +37,15 @@ const ParsedCandidateCard = ({ candidate, onClick }: any) => {
           </p>
         </div>
 
-        {/* Parsed badge */}
-        <span className="ml-auto text-xs px-3 py-1 rounded-full bg-green-100 text-green-600 font-medium">
-          Parsed
+        {/* Parsed / Error badge */}
+        <span
+          className={`ml-auto text-xs px-3 py-1 rounded-full font-medium ${
+            candidate.hasError
+              ? "bg-red-100 text-red-600"
+              : "bg-green-100 text-green-600"
+          }`}
+        >
+          {candidate.hasError ? "Error" : "Parsed"}
         </span>
       </div>
 
@@ -59,9 +69,9 @@ const ParsedCandidateCard = ({ candidate, onClick }: any) => {
       <div className="mt-4 flex justify-between items-center text-xs text-gray-400 relative z-10">
         <div className="flex flex-col">
           <span>{candidate.phone || "No phone"}</span>
-          {candidate.skills?.length < 1 && (
+          {candidate.hasError && (
             <span className="text-red-500 text-xs italic mt-0.5">
-              Add skills for better matching
+              Form has errors
             </span>
           )}
         </div>

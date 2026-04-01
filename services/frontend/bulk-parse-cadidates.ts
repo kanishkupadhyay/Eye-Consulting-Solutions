@@ -4,7 +4,7 @@ import { getTokenFromLocalStorage } from "@/common/frontend/utils";
 export default async function bulkParseCandidates(params: { resumes: File[] }) {
   const token = getTokenFromLocalStorage();
 
-  const url = "/api/resume/bulk";
+  const url = "/api/resume/bulk/parse";
 
   const formData = new FormData();
 

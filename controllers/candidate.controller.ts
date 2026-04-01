@@ -6,13 +6,17 @@ class CandidateController {
 
   constructor() {}
 
-  public uploadResumes = async (req: Request) => {
-    return this.candidateService.uploadResumes(req);
+  public parseResumes = async (req: Request) => {
+    return this.candidateService.parseResumes(req);
   };
 
   public uploadResume = async (req: Request) => {
     return this.candidateService.uploadResume(req);
   };
+
+  public uploadBulkResumes = async (req: Request) => {
+    return this.candidateService.uploadBulkResumes(req);
+  }
 
   public verifyCandidate = async (req: Request) => {
     return this.candidateService.verifyCandidate(req);
