@@ -13,6 +13,7 @@ import TopLoader from "../TopLoader/TopLoader";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false); // New: dropdown state
+  const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for outside click
   const { user } = useAuth();
@@ -67,6 +68,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleSearchClick = () => {
+    const url = new URL(window.location.href);
+    if (!searchTerm.trim()) {
+      url.searchParams.delete("search");
+      window.history.pushState({}, "", url);
+      return;
+    }
+
+    // Set or update the query parameter
+    url.searchParams.set("search", searchTerm.trim());
+    // Update the URL without reloading the page
+    window.history.pushState({}, "", url);
+  };
+
   return (
     <div className="min-h-screen">
       {user && <Sidebar />}
@@ -81,7 +100,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <>
                   {headerActions.length > 0 && (
                     <>
-                      <HeaderSearch onSearch={(val) => console.log(val)} />
+                      <HeaderSearch
+                        onClickSearch={handleSearchClick}
+                        onSearch={(val) => handleSearchChange(val)}
+                      />
                       <div
                         className="relative inline-block text-left"
                         ref={dropdownRef}

@@ -354,7 +354,6 @@ const CandidatesUploadPage = () => {
           <>
             <FileUploader
               multiple
-              maxFiles={50}
               onFilesChange={handleFilesChange}
             />
             <div className="mt-4">
