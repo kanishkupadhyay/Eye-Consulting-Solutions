@@ -7,7 +7,7 @@ import CandidateRepository from "@/repositories/candidate.repository";
 import { Types } from "mongoose";
 import { checkIsValidEmail, getDecodedToken } from "@/common/backend/utils";
 import { IGetCandidatesRequest } from "@/common/backend/candidate.interface";
-import ResultSuccessMessages from "@/common/backend/success.messsage";
+import ResultSuccessMessages from "@/common/backend/success.message";
 
 export default class CandidateService {
   private s3Uploader = new S3Uploader();
