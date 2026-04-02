@@ -11,7 +11,6 @@ interface IAddCandidateParams {
   experienceMonths?: number;
   experience: IExperience[];
   skills?: string[];
-  keywords?: string[];
   resume: File;
   currentLocation: string;
   education: IEducation[];
@@ -43,8 +42,6 @@ export default async function addCandidate(params: IAddCandidateParams) {
   if (params.experienceMonths !== undefined)
     formData.append("experienceMonths", params.experienceMonths.toString());
   if (params.skills) formData.append("skills", JSON.stringify(params.skills));
-  if (params.keywords)
-    formData.append("keywords", JSON.stringify(params.keywords));
   if (params.gender) formData.append("gender", params.gender);
 
   // 🔹 Ensure education years are numbers

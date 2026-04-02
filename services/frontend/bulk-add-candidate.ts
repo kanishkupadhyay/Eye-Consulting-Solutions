@@ -11,7 +11,6 @@ interface IAddCandidateParams {
   experienceMonths?: number;
   experience: IExperience[];
   skills?: string[];
-  keywords?: string[];
   resume: File;
   currentLocation: string;
   education: IEducation[];
@@ -34,7 +33,6 @@ export default async function addCandidatesBulk(
     experienceYears: c.experienceYears,
     experienceMonths: c.experienceMonths,
     skills: c.skills,
-    keywords: c.keywords,
     currentLocation: c.currentLocation,
     gender: c.gender,
     education: c.education.map((e) => ({
