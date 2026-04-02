@@ -7,7 +7,6 @@ import EmailInput from "../EmailInput/EmailInput";
 import Button from "../Button/Button";
 import NumberInput from "../NumberInput/NumberInput";
 import { useRouter } from "next/navigation";
-import * as mammoth from "mammoth";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
 import FileUploader from "../FileUploader/FileUploader";
 import InputChips from "../InputChip/InputChip";
@@ -19,6 +18,9 @@ import { IEducation, IExperience } from "@/models/candidate.model";
 import verifyCandidate from "@/services/frontend/verify-candidate";
 import Dialog from "../Dialog/Dialog";
 import { useAuth } from "@/context/AuthContext";
+import { IStateListResponse } from "@/common/backend/state.interfaces";
+import getIndianStates from "@/services/frontend/get-indian-states";
+import getCitiesByState from "@/services/frontend/get-cities-by-state";
 
 type FileWithPreview = File & { preview?: string };
 
@@ -31,11 +33,14 @@ const AddCandidatePage = () => {
     phone: "",
     age: "",
     gender: "",
-    currentLocation: "",
+    state: "",
+    city: "",
     experienceYears: "1",
     experienceMonths: "0",
     skills: [] as string[],
   });
+  const [indianStates, setIndianStates] = useState<IStateListResponse[]>([]);
+  const [cities, setCities] = useState<IStateListResponse[]>([]);
 
   const [education, setEducation] = useState<IEducation[]>([]);
   const [educationErrors, setEducationErrors] = useState<
@@ -80,6 +85,37 @@ const AddCandidatePage = () => {
     if (resume) loadDocx(resume);
   }, [resume]);
 
+  useEffect(() => {
+    // --- Fetch Indian states ---
+    const fetchStates = async () => {
+      try {
+        const states = await getIndianStates();
+        setIndianStates(states);
+      } catch (error) {
+        console.error("Error fetching states:", error);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!formData.state) {
+        setCities([]);
+        return;
+      }
+      try {
+        const res = await getCitiesByState(formData.state); // pass state ObjectId
+        setCities(res);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      }
+    };
+
+    fetchCities();
+  }, [formData.state]);
+
   const validateForm = () => {
     const errors: string[] = [];
     const eduErrors: typeof educationErrors = [];
@@ -88,8 +124,8 @@ const AddCandidatePage = () => {
     if (!formData.name.trim()) errors.push("Name is required");
     if (!formData.email.trim()) errors.push("Email is required");
     if (!formData.phone.trim()) errors.push("Phone is required");
-    if (!formData.currentLocation.trim())
-      errors.push("Current location is required");
+    if (!formData.state.trim()) errors.push("State is required");
+    if (!formData.city.trim()) errors.push("City is required");
     if (!resume) errors.push("Resume is required");
     if (formData.skills.length === 0)
       errors.push("At least one skill is required");
@@ -211,7 +247,8 @@ const AddCandidatePage = () => {
       education,
       experience,
       resume: resume as File,
-      currentLocation: formData.currentLocation,
+      state: formData.state,
+      city: formData.city,
       gender: formData.gender,
     };
 
@@ -282,7 +319,6 @@ const AddCandidatePage = () => {
                 enableErrors && !formData.name ? "Name is required" : ""
               }
             />
-
             <EmailInput
               cssClasses="py-2"
               required
@@ -291,7 +327,6 @@ const AddCandidatePage = () => {
                 setFormData({ ...formData, email: e.target.value })
               }
             />
-
             <PhoneInput
               value={formData.phone}
               cssClasses="py-2"
@@ -305,7 +340,6 @@ const AddCandidatePage = () => {
                     : ""
               }
             />
-
             <NumberInput
               label="Age"
               placeholder="Enter age"
@@ -320,7 +354,6 @@ const AddCandidatePage = () => {
                   : ""
               }
             />
-
             <SelectDropdown
               label="Gender"
               options={[
@@ -331,23 +364,43 @@ const AddCandidatePage = () => {
               onChange={(val) => setFormData({ ...formData, gender: val })}
               placeholder="Select Gender"
             />
-
-            <Input
-              label="Current Location"
-              required
-              placeholder="Enter location"
-              cssClasses="py-2"
+            <SelectDropdown
+              label="State"
+              required={true}
+              searchable={true}
               errorMessage={
-                enableErrors && !formData.currentLocation
-                  ? "Current location is required"
-                  : ""
+                enableErrors && !formData.state ? "State is required" : ""
               }
-              value={formData.currentLocation}
-              onChange={(e) =>
-                setFormData({ ...formData, currentLocation: e.target.value })
-              }
+              options={indianStates?.map((state) => ({
+                label: state.name,
+                value: state.id,
+              }))}
+              value={formData.state}
+              onChange={(val) => {
+                setFormData({ ...formData, state: val, city: "" }); // reset city
+              }}
+              placeholder="Select State"
             />
-
+            {formData.state && (
+              <SelectDropdown
+                label="City"
+                required={true}
+                searchable={true}
+                errorMessage={
+                  enableErrors && !formData.city ? "City is required" : ""
+                }
+                options={cities?.map((city) => ({
+                  label: city.name,
+                  value: city.id,
+                }))}
+                value={formData.city}
+                onChange={(val) => setFormData({ ...formData, city: val })}
+                placeholder={
+                  formData.state ? "Select City" : "Select State first"
+                }
+                disabled={!formData.state} // disable until state selected
+              />
+            )}
             <NumberInput
               label="Experience (Years)"
               placeholder="0"
@@ -357,7 +410,6 @@ const AddCandidatePage = () => {
                 setFormData({ ...formData, experienceYears: val })
               }
             />
-
             <NumberInput
               label="Experience (Months)"
               placeholder="0"

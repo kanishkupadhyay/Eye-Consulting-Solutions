@@ -8,10 +8,13 @@ import { Types } from "mongoose";
 import { checkIsValidEmail, getDecodedToken } from "@/common/backend/utils";
 import { IGetCandidatesRequest } from "@/common/backend/candidate.interface";
 import ResultSuccessMessages from "@/common/backend/success.message";
+import StateRepository from "@/repositories/state.repository";
 
 export default class CandidateService {
   private s3Uploader = new S3Uploader();
   private candidateRepository = new CandidateRepository();
+  private stateRepository = new StateRepository();
+  private cityRepository = new StateRepository();
 
   public parseResumes = async (req: Request) => {
     try {
@@ -175,6 +178,34 @@ export default class CandidateService {
         throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
       }
 
+      const state = (formData.get("state") as string)?.trim();
+      if (!state) {
+        throw new Error(ResultErrorMessage.StateIsRequired);
+      }
+
+      const isValidState = await this.stateRepository.checkIfFieldAlreadyExists(
+        "name",
+        state,
+      );
+
+      if (!isValidState) {
+        throw new Error(ResultErrorMessage.InvalidState);
+      }
+
+      const city = (formData.get("city") as string)?.trim();
+      if (!city) {
+        throw new Error(ResultErrorMessage.CityIsRequired);
+      }
+
+      const isValidCity = await this.cityRepository.model.findOne({
+        name: city,
+        state: new Types.ObjectId(state),
+      });
+
+      if (!isValidCity) {
+        throw new Error(ResultErrorMessage.InvalidCity);
+      }
+
       // 🔹 Check if candidate already exists and delete
       const existingCandidate = await this.candidateRepository.model.findOne({
         $or: [{ email }, { phone }],
@@ -187,13 +218,6 @@ export default class CandidateService {
         console.log(
           `Deleted existing candidate with email ${email} or phone ${phone}`,
         );
-      }
-
-      const currentLocation = (
-        formData.get("currentLocation") as string
-      )?.trim();
-      if (!currentLocation) {
-        throw new Error(ResultErrorMessage.CurrentLocationIsRequired);
       }
 
       const age = formData.get("age") ? Number(formData.get("age")) : undefined;
@@ -356,7 +380,8 @@ export default class CandidateService {
         phone,
         age,
         gender,
-        currentLocation,
+        state: new Types.ObjectId(state),
+        city: new Types.ObjectId(city),
         experienceInMonths,
         education,
         experience,
@@ -729,24 +754,29 @@ export default class CandidateService {
   public getCandidateById = async (id: string | null) => {
     try {
       if (!id) throw new Error(ResultErrorMessage.UserIdIsRequired);
-      const candidate = await this.candidateRepository.findById(id);
-      if (!candidate) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: ResultErrorMessage.CandidateNotFound,
-          }),
-          {
-            status: StatusCodes.NOT_FOUND,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
+      let candidateDoc = await this.candidateRepository.findById(id);
+
+      if (!candidateDoc) {
+        throw new Error(ResultErrorMessage.CandidateNotFound);
       }
 
-      return new Response(JSON.stringify({ success: true, data: candidate }), {
-        status: StatusCodes.OK,
-        headers: { "Content-Type": "application/json" },
+      // Populate state and city on the retrieved document
+      candidateDoc = await candidateDoc.populate({
+        path: "state",
+        select: "name",
       });
+      candidateDoc = await candidateDoc.populate({
+        path: "city",
+        select: "name",
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, data: candidateDoc }),
+        {
+          status: StatusCodes.OK,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     } catch (error: any) {
       return new Response(
         JSON.stringify({ success: false, message: error.message }),

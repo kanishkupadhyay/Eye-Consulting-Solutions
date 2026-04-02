@@ -25,7 +25,8 @@ export interface ICandidate extends Document {
   phone: string;
   age?: number;
   gender?: "Male" | "Female";
-  currentLocation?: string;
+  state: Types.ObjectId;
+  city: Types.ObjectId;
   experienceInMonths?: number;
   education: IEducation[];
   experience: IExperience[];
@@ -76,10 +77,17 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
       enum: ["Male", "Female"],
       index: true,
     },
-    currentLocation: {
-      type: String,
-      trim: true,
+    state: {
+      type: Schema.Types.ObjectId,
+      ref: "State",
       index: true,
+      required: true,
+    },
+    city: {
+      type: Schema.Types.ObjectId,
+      ref: "City",
+      index: true,
+      required: true,
     },
     experienceInMonths: {
       type: Number,
@@ -100,9 +108,6 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
       default: [],
     },
 
-    /* =========================
-       Experience
-    ========================= */
     experience: {
       type: [
         {
@@ -154,8 +159,8 @@ CandidateSchema.index({
   resumeText: "text",
 });
 
-// Compound index
-CandidateSchema.index({ currentLocation: 1, experienceInMonths: -1 });
+// Compound index for filtering by location & experience
+CandidateSchema.index({ state: 1, city: 1, experienceInMonths: -1 });
 
 // Experience search
 CandidateSchema.index({ "experience.company": 1 });

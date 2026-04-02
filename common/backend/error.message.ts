@@ -26,7 +26,10 @@ class ResultErrorMessage {
   public static readonly NameIsRequired = "Name is required";
   public static readonly AgeIsInvalid = "Age must be between 18 and 65";
   public static readonly GenderIsInvalid = "Gender is invalid";
-  public static readonly CurrentLocationIsRequired = "Current location is required";
+  public static readonly StateIsRequired = "State is required";
+  public static readonly CityIsRequired = "City is required";
+  public static readonly InvalidState = "Invalid state";
+  public static readonly InvalidCity = "Invalid city";
   public static readonly ExperienceYearsCannotBeNegative = "Experience years cannot be negative";
   public static readonly ExperienceYearsCannotExceed50 = "Experience years cannot exceed 50";
   public static readonly ExperienceMonthsCannotBeNegative = "Experience months cannot be negative";
