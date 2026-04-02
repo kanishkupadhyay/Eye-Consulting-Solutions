@@ -201,7 +201,7 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
               <span>•</span>
               <span>
                 📍{" "}
-                {`${candidate.city?.name}, ${candidate.state?.name}` || "N/A"}
+                {`${(candidate as any).city?.name}, ${(candidate as any).state?.name}` || "N/A"}
               </span>
               <span>🎂 {candidate.age || "N/A"} yrs</span>
               <span>•</span>

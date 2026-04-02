@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import FileUploader from "../FileUploader/FileUploader";
 import Button from "../Button/Button";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
-import bulkParseCandidates from "@/services/frontend/bulk-parse-cadidates";
+import bulkParseCandidates from "@/services/frontend/bulk-parse-candidates";
 import ParsedCandidateCard from "../ParsedCandidateCard/ParsedCandidateCard";
 import SidePanel from "../SidePanel/SidePanel";
 import Input from "../Input/Input";
@@ -21,6 +21,8 @@ import { Notification } from "../notification";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ArrowLeft } from "lucide-react";
+import getIndianStates from "@/services/frontend/get-indian-states";
+import getCitiesByState from "@/services/frontend/get-cities-by-state";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -28,6 +30,10 @@ const CandidatesUploadPage = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [indianStates, setIndianStates] = useState<
+    { name: string; id: string }[]
+  >([]);
+  const [cities, setCities] = useState<{ name: string; id: string }[]>([]);
 
   const [education, setEducation] = useState<IEducation[]>([]);
   const [experience, setExperience] = useState<IExperience[]>([]);
@@ -68,7 +74,9 @@ const CandidatesUploadPage = () => {
     if (!candidate.email?.trim()) return true;
     if (!candidate.phone?.trim()) return true;
     if (!candidate.skills?.length) return true;
-    if (!candidate.currentLocation?.trim()) return true;
+    if (!candidate.state?.trim()) return true;
+    if (!candidate.city?.trim()) return true;
+    if (candidate.city.trim() && !candidate.state.trim()) return true;
     return false;
   };
 
@@ -128,7 +136,8 @@ const CandidatesUploadPage = () => {
         experience: c.experience,
         skills: c.skills,
         resume: c.file,
-        currentLocation: c.currentLocation,
+        state: c.state,
+        city: c.city,
         education: c.education,
         ...(c.gender && { gender: c.gender }),
       }));
@@ -206,6 +215,37 @@ const CandidatesUploadPage = () => {
     };
   }, [selectedCandidate?.file]);
 
+  useEffect(() => {
+    // --- Fetch Indian states ---
+    const fetchStates = async () => {
+      try {
+        const states = await getIndianStates();
+        setIndianStates(states);
+      } catch (error) {
+        console.error("Error fetching states:", error);
+      }
+    };
+
+    fetchStates();
+  }, []);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!selectedCandidate?.state) {
+        setCities([]);
+        return;
+      }
+      try {
+        const res = await getCitiesByState(selectedCandidate.state); // pass state ObjectId
+        setCities(res);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      }
+    };
+
+    fetchCities();
+  }, [selectedCandidate?.state]);
+
   const validateCandidate = useCallback(() => {
     let hasError = false;
     const fErrors: { [key: string]: string } = {};
@@ -213,16 +253,16 @@ const CandidatesUploadPage = () => {
       fErrors.name = "Full Name is required";
       hasError = true;
     }
-    if (!selectedCandidate?.currentLocation?.trim()) {
-      fErrors.currentLocation = "Current Location is required";
+    if (!selectedCandidate?.state?.trim()) {
+      fErrors.state = "State is required";
+      hasError = true;
+    }
+    if (!selectedCandidate?.city?.trim()) {
+      fErrors.city = "City is required";
       hasError = true;
     }
     if (!selectedCandidate?.email?.trim()) {
       fErrors.email = "Email is required";
-      hasError = true;
-    }
-    if (!selectedCandidate?.currentLocation?.trim()) {
-      fErrors.currentLocation = "Current Location is required";
       hasError = true;
     }
     if (selectedCandidate?.phone) {
@@ -351,10 +391,7 @@ const CandidatesUploadPage = () => {
 
         {!parsedCandidates.length && (
           <>
-            <FileUploader
-              multiple
-              onFilesChange={handleFilesChange}
-            />
+            <FileUploader multiple onFilesChange={handleFilesChange} />
             <div className="mt-4">
               <Button
                 onClick={handleParseResumes}
@@ -469,21 +506,41 @@ const CandidatesUploadPage = () => {
                   })
                 }
               />
-              {/* --- Current Location Input --- */}
-              <Input
-                label="Current Location"
-                cssClasses="py-2"
-                placeholder="Enter current location"
-                required
-                errorMessage={enableErrors ? fieldErrors.currentLocation : ""}
-                value={selectedCandidate.currentLocation || ""}
-                onChange={(e) =>
-                  setSelectedCandidate({
-                    ...selectedCandidate,
-                    currentLocation: e.target.value,
-                  })
+              {/* --- State Dropdown --- */}
+              <SelectDropdown
+                label="State"
+                options={indianStates.map((state) => ({
+                  label: state.name,
+                  value: state.id,
+                }))}
+                required={true}
+                searchable={true}
+                value={selectedCandidate.state || ""}
+                onChange={(val) =>
+                  setSelectedCandidate({ ...selectedCandidate, state: val })
                 }
+                placeholder="Select State"
+                errorMessage={enableErrors ? fieldErrors.state : ""}
               />
+              {/* --- City Dropdown --- */}
+
+              {selectedCandidate.state ? (
+                <SelectDropdown
+                  label="City"
+                  searchable={true}
+                  required={true}
+                  options={cities.map((city) => ({
+                    label: city.name,
+                    value: city.id,
+                  }))}
+                  value={selectedCandidate.city || ""}
+                  onChange={(val) =>
+                    setSelectedCandidate({ ...selectedCandidate, city: val })
+                  }
+                  placeholder="Select City"
+                  errorMessage={enableErrors ? fieldErrors.city : ""}
+                />
+              ) : null}
 
               <InputChips
                 label="Skills"
