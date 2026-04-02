@@ -52,7 +52,24 @@ const CandidatesPage = () => {
 
   const loadedIds = useRef(new Set<string>());
   const observer = useRef<IntersectionObserver | null>(null);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // ✅ LAST ITEM REF (FIX)
+  const lastCandidateRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loading) return;
+
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage((prev) => prev + 1);
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore],
+  );
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,7 +115,7 @@ const CandidatesPage = () => {
           );
 
           setCandidates(newCandidates);
-          setHasMore(newCandidates.length === LIMIT);
+          setHasMore(newCandidates.length < (response.total || 0));
         } else {
           setError("Failed to load candidates");
         }
@@ -110,7 +127,7 @@ const CandidatesPage = () => {
     })();
   }, [searchParams]);
 
-  // Fetch candidates from API
+  // Fetch more candidates
   const fetchCandidates = useCallback(async () => {
     if (!hasMore || loading) return;
 
@@ -138,8 +155,11 @@ const CandidatesPage = () => {
             return true;
           });
 
-        setCandidates((prev) => [...prev, ...newCandidates]);
-        setHasMore(newCandidates.length === LIMIT);
+        setCandidates((prev) => {
+          const updated = [...prev, ...newCandidates];
+          setHasMore(updated.length < (response.total || 0));
+          return updated;
+        });
       } else {
         setError("Failed to load candidates");
       }
@@ -148,33 +168,14 @@ const CandidatesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, hasMore, loading, filterOptions]);
+  }, [page, filterOptions, hasMore, loading]);
 
-  // Fetch on mount and whenever filters/page change
+  // ✅ FIX: Only fetch if page > 1 (no duplicate first fetch)
   useEffect(() => {
+    if (page === 1) return;
     fetchCandidates();
-  }, [fetchCandidates]);
+  }, [page]);
 
-  // Infinite scroll observer
-  useEffect(() => {
-    if (loading) return;
-
-    if (observer.current) observer.current.disconnect();
-
-    observer.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage((prev) => prev + 1);
-      }
-    });
-
-    if (bottomRef.current) observer.current.observe(bottomRef.current);
-
-    return () => {
-      if (observer.current) observer.current.disconnect();
-    };
-  }, [loading, hasMore]);
-
-  // Apply filters → update URL
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
 
@@ -211,7 +212,7 @@ const CandidatesPage = () => {
             Filter
           </Button>
 
-          {Object.entries(filterOptions).some(([key, value]) => {
+          {Object.entries(filterOptions).some(([_, value]) => {
             if (Array.isArray(value)) return value.length > 0;
             if (typeof value === "boolean") return value;
             return value !== "";
@@ -248,14 +249,30 @@ const CandidatesPage = () => {
         </div>
       ) : (
         <div className="max-w-6xl mx-auto space-y-6">
-          <h6>Total ({candidates.length})</h6>
+          <h6>
+            Total <span className="text-orange-500">({candidates.length})</span>
+          </h6>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {candidates.map((candidate, index) => (
-              <CandidateDetailCard
-                key={`${candidate._id as unknown as string}-${index}`}
-                candidate={candidate}
-              />
-            ))}
+            {candidates.map((candidate, index) => {
+              if (index === candidates.length - 1) {
+                return (
+                  <div
+                    ref={lastCandidateRef}
+                    key={`${candidate._id as unknown as string}-${index}`}
+                  >
+                    <CandidateDetailCard candidate={candidate} />
+                  </div>
+                );
+              }
+
+              return (
+                <CandidateDetailCard
+                  key={`${candidate._id as unknown as string}-${index}`}
+                  candidate={candidate}
+                />
+              );
+            })}
 
             {loading &&
               Array.from({ length: 12 }).map((_, idx) => (
@@ -266,8 +283,6 @@ const CandidatesPage = () => {
           </div>
         </div>
       )}
-
-      <div ref={bottomRef} className="h-1"></div>
 
       <Dialog
         isOpen={isFilterOpen}

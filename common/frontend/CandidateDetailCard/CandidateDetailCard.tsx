@@ -90,4 +90,4 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   );
 };
 
-export default CandidateDetailCard;
+export default React.memo(CandidateDetailCard);
