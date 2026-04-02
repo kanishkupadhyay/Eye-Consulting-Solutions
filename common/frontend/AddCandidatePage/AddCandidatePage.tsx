@@ -35,7 +35,6 @@ const AddCandidatePage = () => {
     experienceYears: "1",
     experienceMonths: "0",
     skills: [] as string[],
-    keywords: [] as string[],
   });
 
   const [education, setEducation] = useState<IEducation[]>([]);
@@ -209,7 +208,6 @@ const AddCandidatePage = () => {
         ? Number(formData.experienceMonths)
         : undefined,
       skills: formData.skills,
-      keywords: formData.keywords,
       education,
       experience,
       resume: resume as File,
@@ -383,7 +381,7 @@ const AddCandidatePage = () => {
             errors={enableErrors ? experienceErrors : []}
           />
 
-          {/* Skills & Keywords */}
+          {/* Skills */}
           <InputChips
             label="Skills"
             required
@@ -396,14 +394,6 @@ const AddCandidatePage = () => {
             }
             cssClasses="py-2"
             onChange={(val) => setFormData({ ...formData, skills: val })}
-          />
-
-          <InputChips
-            label="Keywords"
-            cssClasses="py-2"
-            placeholder="Type and press Enter"
-            value={formData.keywords}
-            onChange={(val) => setFormData({ ...formData, keywords: val })}
           />
 
           <FileUploader

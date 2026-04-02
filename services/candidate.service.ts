@@ -218,7 +218,7 @@ export default class CandidateService {
 
       const experienceInMonths = experienceYears * 12 + experienceMonths;
 
-      // 🔹 skills / keywords
+      // 🔹 skills
       const skills = formData.get("skills")
         ? JSON.parse(formData.get("skills") as string)
         : [];
@@ -226,10 +226,6 @@ export default class CandidateService {
       if (!Array.isArray(skills) || !skills.length) {
         throw new Error(ResultErrorMessage.AtLeastOneSkillIsRequired);
       }
-
-      const keywords = formData.get("keywords")
-        ? JSON.parse(formData.get("keywords") as string)
-        : [];
 
       const defenseBackgroundCheck =
         formData.get("defenseBackgroundCheck") === "true";
@@ -365,7 +361,6 @@ export default class CandidateService {
         education,
         experience,
         skills,
-        keywords,
         defenseBackgroundCheck,
         resumeUrl,
         resumeText,
@@ -491,7 +486,6 @@ export default class CandidateService {
               `Candidate[${index + 1}] must have at least one skill`,
             );
 
-          const keywords = Array.isArray(c.keywords) ? c.keywords : [];
           const defenseBackgroundCheck = c.defenseBackgroundCheck === true;
 
           const education = Array.isArray(c.education) ? c.education : [];
@@ -592,7 +586,6 @@ export default class CandidateService {
             education,
             experience,
             skills,
-            keywords,
             defenseBackgroundCheck,
             resumeUrl,
             resumeText,
@@ -679,7 +672,6 @@ export default class CandidateService {
           { phone: { $regex: search, $options: "i" } },
           { currentLocation: { $regex: search, $options: "i" } },
           { skills: { $regex: search, $options: "i" } },
-          { keywords: { $regex: search, $options: "i" } },
         ];
       }
 

@@ -127,7 +127,6 @@ const CandidatesUploadPage = () => {
         experienceMonths: c.experienceMonths,
         experience: c.experience,
         skills: c.skills,
-        keywords: c.keywords,
         resume: c.file,
         currentLocation: c.currentLocation,
         education: c.education,

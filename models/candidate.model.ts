@@ -30,7 +30,6 @@ export interface ICandidate extends Document {
   education: IEducation[];
   experience: IExperience[];
   skills: string[];
-  keywords: string[];
   defenseBackgroundCheck?: boolean;
   resumeUrl: string;
   resumeText?: string;
@@ -125,13 +124,6 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
         lowercase: true,
       },
     ],
-    keywords: [
-      {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-    ],
     defenseBackgroundCheck: {
       type: Boolean,
       default: false,
@@ -159,7 +151,6 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
 CandidateSchema.index({
   name: "text",
   skills: "text",
-  keywords: "text",
   resumeText: "text",
 });
 

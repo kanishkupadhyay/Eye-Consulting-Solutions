@@ -7,7 +7,6 @@ export interface ICandidate {
   currentLocation?: string;
   experienceInMonths?: number;
   skills: string[];
-  keywords: string[];
   defenseBackgroundCheck?: boolean;
   resumeUrl: string;
   resumeText?: string;
