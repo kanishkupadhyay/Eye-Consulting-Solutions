@@ -66,7 +66,7 @@ const Dialog = ({
               <div className="mt-6 flex justify-end gap-3">
                 <Button
                   onClick={onCancel}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+                  className="bg-orange-400 hover:bg-orange-500 text-gray-800 px-4 py-2 rounded-lg"
                   disabled={loading}
                 >
                   {cancelText}

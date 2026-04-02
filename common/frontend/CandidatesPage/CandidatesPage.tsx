@@ -8,6 +8,10 @@ import CandidateSkeleton from "./CandidateSkeleton";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
 import { Sliders } from "lucide-react";
 import Dialog from "../Dialog/Dialog";
+import NumberInput from "../NumberInput/NumberInput";
+import SelectDropdown from "../SelectDropdown/SelectDropdown";
+import Input from "../Input/Input";
+import InputChips from "../InputChip/InputChip";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
@@ -26,9 +30,20 @@ const CandidatesPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filterOptions, setFilterOptions] = useState({
-    keywords: "",
-    experience: "",
+  const [filterOptions, setFilterOptions] = useState<{
+    keywords: string[];
+    skills: string[];
+    experienceYears: string;
+    experienceMonths: string;
+    age: string;
+    currentLocation: string;
+    gender: string;
+    defenceBackground: boolean;
+  }>({
+    keywords: [],
+    skills: [],
+    experienceYears: "",
+    experienceMonths: "",
     age: "",
     currentLocation: "",
     gender: "",
@@ -150,59 +165,99 @@ const CandidatesPage = () => {
         cancelText="Cancel"
       >
         <div className="space-y-4">
-          <input
-            type="text"
-            placeholder="Keywords"
-            className="w-full border px-3 py-2 rounded-md"
+          <InputChips
+            label="Skills"
+            cssClasses="py-2"
+            placeholder="Add a skill and press Enter"
+            value={filterOptions.skills}
+            onChange={(val) =>
+              setFilterOptions({
+                ...filterOptions,
+                skills: [...val],
+              })
+            }
+          />
+          <InputChips
+            label="Keywords"
+            cssClasses="py-2"
+            placeholder="Add a keyword and press Enter"
             value={filterOptions.keywords}
-            onChange={(e) =>
-              setFilterOptions({ ...filterOptions, keywords: e.target.value })
+            onChange={(val) =>
+              setFilterOptions({
+                ...filterOptions,
+                keywords: [...val],
+              })
             }
           />
-          <input
-            type="number"
-            placeholder="Experience (Years)"
-            className="w-full border px-3 py-2 rounded-md"
-            value={filterOptions.experience}
-            onChange={(e) =>
-              setFilterOptions({ ...filterOptions, experience: e.target.value })
+
+          <SelectDropdown
+            label="Experience (Years)"
+            placeholder="Select Years"
+            options={[...Array(40).keys()].map((num) => ({
+              label: (num + 1).toString(),
+              value: (num + 1).toString(),
+            }))}
+            value={filterOptions.experienceYears}
+            onChange={(val) =>
+              setFilterOptions({ ...filterOptions, experienceYears: val })
             }
           />
-          <input
-            type="number"
-            placeholder="Age"
-            className="w-full border px-3 py-2 rounded-md"
+
+          <SelectDropdown
+            label="Experience (Months)"
+            placeholder="Select Months"
+            options={[...Array(12).keys()].map((num) => ({
+              label: (num + 1).toString(),
+              value: (num + 1).toString(),
+            }))}
+            value={filterOptions.experienceMonths}
+            onChange={(val) =>
+              setFilterOptions({ ...filterOptions, experienceMonths: val })
+            }
+          />
+
+          <NumberInput
+            label="Age"
+            cssClasses="py-2"
+            placeholder="Enter Age"
             value={filterOptions.age}
-            onChange={(e) =>
-              setFilterOptions({ ...filterOptions, age: e.target.value })
-            }
+            onChange={(val) => setFilterOptions({ ...filterOptions, age: val })}
           />
-          <input
+          <Input
             type="text"
-            placeholder="Current Location"
+            label="Current Location"
+            placeholder="Enter Current Location"
             className="w-full border px-3 py-2 rounded-md"
             value={filterOptions.currentLocation}
             onChange={(e) =>
-              setFilterOptions({ ...filterOptions, currentLocation: e.target.value })
+              setFilterOptions({
+                ...filterOptions,
+                currentLocation: e.target.value,
+              })
             }
           />
-          <select
-            className="w-full border px-3 py-2 rounded-md"
+          <SelectDropdown
+            label="Gender"
+            placeholder="Select Gender"
+            options={[
+              { label: "Male", value: "Male" },
+              { label: "Female", value: "Female" },
+            ]}
             value={filterOptions.gender}
-            onChange={(e) =>
-              setFilterOptions({ ...filterOptions, gender: e.target.value })
+            onChange={(val) =>
+              setFilterOptions({ ...filterOptions, gender: val })
             }
-          >
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
+          />
+
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
               checked={filterOptions.defenceBackground}
               onChange={(e) =>
-                setFilterOptions({ ...filterOptions, defenceBackground: e.target.checked })
+                setFilterOptions({
+                  ...filterOptions,
+                  defenceBackground: e.target.checked,
+                })
               }
             />
             Defence Background
