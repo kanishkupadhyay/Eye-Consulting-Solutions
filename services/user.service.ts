@@ -10,7 +10,7 @@ import {
   IUserRegisterRequest,
 } from "@/common/backend/user.interfaces";
 import UserFactory from "@/factories/user.factory";
-import ResultSuccessMessages from "@/common/backend/success.messsage";
+import ResultSuccessMessages from "@/common/backend/success.message";
 import { EmailService } from "@/common/backend/email.service";
 import { User } from "@/models/user.model";
 import OtpService from "./otp.service";
