@@ -21,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 import { IStateListResponse } from "@/common/backend/state.interfaces";
 import getIndianStates from "@/services/frontend/get-indian-states";
 import getCitiesByState from "@/services/frontend/get-cities-by-state";
+import mammoth from "mammoth";
 
 type FileWithPreview = File & { preview?: string };
 

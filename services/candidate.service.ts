@@ -9,12 +9,13 @@ import { checkIsValidEmail, getDecodedToken } from "@/common/backend/utils";
 import { IGetCandidatesRequest } from "@/common/backend/candidate.interface";
 import ResultSuccessMessages from "@/common/backend/success.message";
 import StateRepository from "@/repositories/state.repository";
+import CityRepository from "@/repositories/city.repository";
 
 export default class CandidateService {
   private s3Uploader = new S3Uploader();
   private candidateRepository = new CandidateRepository();
   private stateRepository = new StateRepository();
-  private cityRepository = new StateRepository();
+  private cityRepository = new CityRepository();
 
   public parseResumes = async (req: Request) => {
     try {
@@ -474,11 +475,27 @@ export default class CandidateService {
           if (phone.length !== 10)
             throw new Error(`Candidate[${index + 1}] phone is invalid`);
 
-          const currentLocation = c.currentLocation?.trim();
-          if (!currentLocation)
-            throw new Error(
-              `Candidate[${index + 1}] currentLocation is required`,
-            );
+          const stateId = c.state;
+          if (!stateId)
+            throw new Error(`Candidate[${index + 1}] state is required`);
+
+          // Check if state exists by ID
+          const isValidState =
+            await this.stateRepository.model.findById(stateId);
+          if (!isValidState)
+            throw new Error(`Candidate[${index + 1}] state is invalid`);
+
+          const cityId = c.city;
+          if (!cityId)
+            throw new Error(`Candidate[${index + 1}] city is required`);
+
+          // Check if city exists by ID and belongs to the given state
+          const isValidCity = await this.cityRepository.model.findOne({
+            _id: cityId,
+            state: stateId,
+          });
+          if (!isValidCity)
+            throw new Error(`Candidate[${index + 1}] city is invalid`);
 
           const file = files[index];
           if (!file)
@@ -606,7 +623,8 @@ export default class CandidateService {
             phone,
             ...(age && { age }),
             gender,
-            currentLocation,
+            state: new Types.ObjectId(stateId),
+            city: new Types.ObjectId(cityId),
             experienceInMonths,
             education,
             experience,
