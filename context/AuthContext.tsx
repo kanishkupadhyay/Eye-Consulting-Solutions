@@ -26,6 +26,8 @@ interface AuthContextType {
   logout: () => void;
   totalCandidateCount: number;
   setCandidateCount: () => Promise<void>;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalCandidateCount, setTotalCandidateCount] = useState<number>(0);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -82,6 +85,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setCandidateCount,
         login,
         logout,
+        searchQuery,
+        setSearchQuery,
       }}
     >
       {children}

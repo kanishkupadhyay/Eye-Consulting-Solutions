@@ -12,6 +12,8 @@ import NumberInput from "../NumberInput/NumberInput";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
 import Input from "../Input/Input";
 import InputChips from "../InputChip/InputChip";
+import { useRouter, useSearchParams } from "next/navigation";
+import Button from "../Button/Button";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
@@ -31,7 +33,6 @@ const CandidatesPage = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<{
-    keywords: string[];
     skills: string[];
     experienceYears: string;
     experienceMonths: string;
@@ -40,7 +41,6 @@ const CandidatesPage = () => {
     gender: string;
     defenceBackground: boolean;
   }>({
-    keywords: [],
     skills: [],
     experienceYears: "",
     experienceMonths: "",
@@ -110,6 +110,55 @@ const CandidatesPage = () => {
     };
   }, [loading, hasMore]);
 
+  const router = useRouter();
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setFilterOptions((prev) => ({
+      ...prev,
+      skills: searchParams.get("skills")?.split(",") || [],
+      experienceYears: searchParams.get("experienceYears") || "",
+      experienceMonths: searchParams.get("experienceMonths") || "",
+      age: searchParams.get("age") || "",
+      currentLocation: searchParams.get("currentLocation") || "",
+      gender: searchParams.get("gender") || "",
+      defenceBackground: searchParams.get("defenceBackground") === "true",
+    }));
+  }, []);
+
+  const handleApplyFilters = () => {
+    // Build query params from filterOptions
+    const params = new URLSearchParams();
+
+    if (filterOptions.skills.length > 0) {
+      params.set("skills", filterOptions.skills.join(","));
+    }
+    if (filterOptions.experienceYears) {
+      params.set("experienceYears", filterOptions.experienceYears);
+    }
+    if (filterOptions.experienceMonths) {
+      params.set("experienceMonths", filterOptions.experienceMonths);
+    }
+    if (filterOptions.age) {
+      params.set("age", filterOptions.age);
+    }
+    if (filterOptions.currentLocation) {
+      params.set("currentLocation", filterOptions.currentLocation);
+    }
+    if (filterOptions.gender) {
+      params.set("gender", filterOptions.gender);
+    }
+    if (filterOptions.defenceBackground) {
+      params.set("defenceBackground", "true");
+    }
+
+    // Update URL without page reload
+    router.replace(`/candidates?${params.toString()}`, { scroll: false });
+
+    setIsFilterOpen(false);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
@@ -118,14 +167,14 @@ const CandidatesPage = () => {
       {/* Top bar with filter button */}
       <div className="flex justify-between items-center max-w-6xl mx-auto">
         <h2 className="text-2xl font-semibold">Candidates</h2>
-        <button
+        <Button
           onClick={() => setIsFilterOpen(true)}
-          className="flex items-center gap-1 bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-md transition text-white"
+          className="max-w-[86px] !py-2"
           title="Filter Candidates"
         >
           <Sliders className="w-4 h-4" />
           Filter
-        </button>
+        </Button>
       </div>
 
       {/* Candidates Grid */}
@@ -159,7 +208,7 @@ const CandidatesPage = () => {
       <Dialog
         isOpen={isFilterOpen}
         onCancel={() => setIsFilterOpen(false)}
-        onConfirm={() => {}}
+        onConfirm={handleApplyFilters}
         title="Filter Candidates"
         confirmText="Apply"
         cancelText="Cancel"
@@ -174,18 +223,6 @@ const CandidatesPage = () => {
               setFilterOptions({
                 ...filterOptions,
                 skills: [...val],
-              })
-            }
-          />
-          <InputChips
-            label="Keywords"
-            cssClasses="py-2"
-            placeholder="Add a keyword and press Enter"
-            value={filterOptions.keywords}
-            onChange={(val) =>
-              setFilterOptions({
-                ...filterOptions,
-                keywords: [...val],
               })
             }
           />

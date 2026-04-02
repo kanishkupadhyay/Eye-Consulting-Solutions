@@ -1,8 +1,9 @@
 "use client";
 
 import { Search, SearchIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "../Button/Button";
+import { useSearchParams } from "next/navigation";
 
 export function HeaderSearch({
   onSearch,
@@ -12,6 +13,11 @@ export function HeaderSearch({
   onClickSearch?: () => void;
 }) {
   const [searchValue, setSearchValue] = useState("");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setSearchValue(searchParams.get("search") || "");
+  }, []);
 
   return (
     <div className="flex items-center gap-2">
@@ -32,7 +38,6 @@ export function HeaderSearch({
 
       {/* Search button outside input */}
       <Button
-        disabled={!searchValue.trim()}
         onClick={() => onClickSearch?.()}
         className="flex items-center justify-center px-4 py-2"
       >

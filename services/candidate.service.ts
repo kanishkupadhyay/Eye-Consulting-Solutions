@@ -662,6 +662,7 @@ export default class CandidateService {
         page = 1,
         limit = 10,
         search,
+        gender,
         sortBy = "createdAt",
         sortOrder = "desc",
       } = body;
@@ -680,6 +681,17 @@ export default class CandidateService {
           { skills: { $regex: search, $options: "i" } },
           { keywords: { $regex: search, $options: "i" } },
         ];
+      }
+
+      if (gender) {
+        const normalizedGender =
+          gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+
+        if (["Male", "Female"].includes(normalizedGender)) {
+          filter.gender = normalizedGender;
+        } else {
+          throw new Error(ResultErrorMessage.GenderIsInvalid);
+        }
       }
 
       // Sorting - map sortOrder to 1 or -1

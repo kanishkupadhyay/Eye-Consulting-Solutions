@@ -1,3 +1,4 @@
+import ResultErrorMessage from "@/common/backend/error.message";
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface IEducation {
@@ -63,7 +64,7 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
       trim: true,
       match: [
         /^(\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}$/,
-        "Please enter a valid phone number",
+        ResultErrorMessage.PhoneNumberIsInvalid,
       ],
     },
     age: {
@@ -74,6 +75,7 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
     gender: {
       type: String,
       enum: ["Male", "Female"],
+      index: true,
     },
     currentLocation: {
       type: String,

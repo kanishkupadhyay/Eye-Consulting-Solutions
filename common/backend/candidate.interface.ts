@@ -4,4 +4,5 @@ export interface IGetCandidatesRequest {
   search?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  gender?: 'Male' | 'Female';
 }
