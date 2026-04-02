@@ -199,7 +199,10 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
                 💼 {years}y {months}m
               </span>
               <span>•</span>
-              <span>📍 {candidate.currentLocation || "N/A"}</span>
+              <span>
+                📍{" "}
+                {`${candidate.city?.name}, ${candidate.state?.name}` || "N/A"}
+              </span>
               <span>🎂 {candidate.age || "N/A"} yrs</span>
               <span>•</span>
 
@@ -232,7 +235,10 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
                 <div className="flex gap-2">
                   <a href={`tel:${candidate.phone}`}>
                     <button className="flex items-center gap-[10px] border border-gray-300 px-3 py-1.5 rounded-md text-sm hover:bg-gray-50">
-                      <FaPhoneAlt size={12} className="animate-bounce text-teal-500" />
+                      <FaPhoneAlt
+                        size={12}
+                        className="animate-bounce text-teal-500"
+                      />
                       Call candidate
                     </button>
                   </a>

@@ -12,7 +12,8 @@ interface IAddCandidateParams {
   experience: IExperience[];
   skills?: string[];
   resume: File;
-  currentLocation: string;
+  state: string;
+  city: string;
   education: IEducation[];
   gender?: string;
 }
@@ -34,7 +35,8 @@ export default async function addCandidate(params: IAddCandidateParams) {
   formData.append("name", params.name.trim());
   formData.append("email", params.email.trim());
   formData.append("phone", params.phone.trim());
-  formData.append("currentLocation", params.currentLocation.trim());
+  formData.append("state", params.state.trim());
+  formData.append("city", params.city.trim());
 
   if (params.age !== undefined) formData.append("age", params.age.toString());
   if (params.experienceYears !== undefined)
