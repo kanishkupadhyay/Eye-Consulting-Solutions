@@ -696,6 +696,7 @@ export default class CandidateService {
         gender,
         state,
         city,
+        defenseBackgroundCheck,
         sortBy = "createdAt",
         sortOrder = "desc",
       } = body;
@@ -740,6 +741,10 @@ export default class CandidateService {
           throw new Error(ResultErrorMessage.InvalidCity);
         }
         filter.city = new Types.ObjectId(city);
+      }
+
+      if (defenseBackgroundCheck !== undefined) {
+        filter.defenseBackgroundCheck = defenseBackgroundCheck;
       }
 
       // Sorting - map sortOrder to 1 or -1
