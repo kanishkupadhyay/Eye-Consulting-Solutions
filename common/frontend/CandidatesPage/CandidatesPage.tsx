@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import CandidateDetailCard from "../CandidateDetailCard/CandidateDetailCard";
 import getCandidates from "@/services/frontend/get-candidates";
 import { ICandidate } from "@/models/candidate.model";
@@ -8,12 +8,12 @@ import CandidateSkeleton from "./CandidateSkeleton";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
 import { CrossIcon, Sliders } from "lucide-react";
 import Dialog from "../Dialog/Dialog";
-import NumberInput from "../NumberInput/NumberInput";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../Button/Button";
 import getCitiesByState from "@/services/frontend/get-cities-by-state";
 import { useAuth } from "@/context/AuthContext";
+import RangeSlider from "../RangeSlider/RangeSlider";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
@@ -42,7 +42,7 @@ const CandidatesPage = () => {
     state: { id: string; name: string } | null;
     city: { id: string; name: string } | null;
     gender: string;
-    defenceBackground: boolean;
+    defenseBackgroundCheck: boolean;
   }>({
     experienceYears: "",
     experienceMonths: "",
@@ -50,7 +50,7 @@ const CandidatesPage = () => {
     state: null,
     city: null,
     gender: "",
-    defenceBackground: false,
+    defenseBackgroundCheck: false,
   });
 
   const loadedIds = useRef(new Set<string>());
@@ -90,7 +90,7 @@ const CandidatesPage = () => {
       city:
         cities?.find((city) => city.name === searchParams.get("city")) || null,
       gender: searchParams.get("gender") || "",
-      defenceBackground: searchParams.get("defenceBackground") === "true",
+      defenseBackgroundCheck: searchParams.get("defenseBackgroundCheck") === "true",
     };
 
     setFilterOptions(updatedFilters);
@@ -111,6 +111,7 @@ const CandidatesPage = () => {
           gender: updatedFilters.gender as "Male" | "Female",
           state: updatedFilters.state?.id || "",
           city: updatedFilters.city?.id || "",
+          defenseBackgroundCheck: updatedFilters.defenseBackgroundCheck,
         });
 
         if (response.success) {
@@ -150,6 +151,7 @@ const CandidatesPage = () => {
         gender: filterOptions.gender as "Male" | "Female",
         state: filterOptions.state?.id || "",
         city: filterOptions.city?.id || "",
+        defenseBackgroundCheck: filterOptions.defenseBackgroundCheck,
       });
 
       if (response.success) {
@@ -198,8 +200,8 @@ const CandidatesPage = () => {
     if (filterOptions.state) params.set("state", filterOptions.state?.name);
     if (filterOptions.city) params.set("city", filterOptions.city?.name);
     if (filterOptions.gender) params.set("gender", filterOptions.gender);
-    if (filterOptions.defenceBackground)
-      params.set("defenceBackground", "true");
+    if (filterOptions.defenseBackgroundCheck)
+      params.set("defenseBackgroundCheck", "true");
 
     router.replace(`/candidates?${params.toString()}`, { scroll: false });
     setIsFilterOpen(false);
@@ -224,6 +226,20 @@ const CandidatesPage = () => {
     }
   }, [filterOptions.state, isFilterOpen]);
 
+  const hasActiveFilters = useMemo(() => {
+    const keys = [
+      "experienceYears",
+      "experienceMonths",
+      "age",
+      "state",
+      "city",
+      "gender",
+      "defenseBackgroundCheck",
+    ];
+
+    return keys.some((key) => searchParams.get(key));
+  }, [searchParams]);
+
   return (
     <div className="p-6 space-y-6">
       <Breadcrumb items={breadcrumbItems} />
@@ -240,11 +256,7 @@ const CandidatesPage = () => {
             Filter
           </Button>
 
-          {Object.entries(filterOptions).some(([_, value]) => {
-            if (Array.isArray(value)) return value.length > 0;
-            if (typeof value === "boolean") return value;
-            return value !== "";
-          }) && (
+          {hasActiveFilters && (
             <Button
               onClick={() => {
                 // Clear all filters
@@ -255,7 +267,7 @@ const CandidatesPage = () => {
                   state: null,
                   city: null,
                   gender: "",
-                  defenceBackground: false,
+                  defenseBackground: false,
                 });
 
                 // Remove filters from URL
@@ -273,7 +285,7 @@ const CandidatesPage = () => {
 
       {candidates.length === 0 && !loading && !error ? (
         <div className="text-gray-500 text-center col-span-full">
-          No candidates have been added yet
+          No candidates have been found.
         </div>
       ) : (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -321,38 +333,46 @@ const CandidatesPage = () => {
         cancelText="Cancel"
       >
         <div className="space-y-4">
-          <SelectDropdown
-            label="Experience (Years)"
-            placeholder="Select Years"
-            options={[...Array(40).keys()].map((num) => ({
-              label: (num + 1).toString(),
-              value: (num + 1).toString(),
-            }))}
-            value={filterOptions.experienceYears}
-            onChange={(val) =>
-              setFilterOptions({ ...filterOptions, experienceYears: val })
-            }
-          />
-
-          <SelectDropdown
-            label="Experience (Months)"
-            placeholder="Select Months"
-            options={[...Array(12).keys()].map((num) => ({
-              label: (num + 1).toString(),
-              value: (num + 1).toString(),
-            }))}
-            value={filterOptions.experienceMonths}
-            onChange={(val) =>
-              setFilterOptions({ ...filterOptions, experienceMonths: val })
-            }
-          />
-
-          <NumberInput
+          <RangeSlider
             label="Age"
-            cssClasses="py-2"
-            placeholder="Enter Age"
-            value={filterOptions.age}
-            onChange={(val) => setFilterOptions({ ...filterOptions, age: val })}
+            value={
+              filterOptions.age
+                ? [
+                    Number(filterOptions.age.split("-")[0]),
+                    Number(filterOptions.age.split("-")[1]),
+                  ]
+                : undefined // <-- do not use [0,0]
+            }
+            min={18}
+            max={65}
+            step={1}
+            onChange={(val) =>
+              setFilterOptions({
+                ...filterOptions,
+                age: val ? `${val[0]}-${val[1]}` : "", // optional
+              })
+            }
+          />
+
+          <RangeSlider
+            label="Experience (Years)"
+            value={
+              filterOptions.experienceYears
+                ? [
+                    Number(filterOptions.experienceYears.split("-")[0]),
+                    Number(filterOptions.experienceYears.split("-")[1]),
+                  ]
+                : undefined
+            }
+            min={0}
+            max={40}
+            step={1}
+            onChange={(val) =>
+              setFilterOptions({
+                ...filterOptions,
+                experienceYears: val ? `${val[0]}-${val[1]}` : "",
+              })
+            }
           />
 
           <SelectDropdown
@@ -415,15 +435,15 @@ const CandidatesPage = () => {
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
-              checked={filterOptions.defenceBackground}
+              checked={filterOptions.defenseBackgroundCheck}
               onChange={(e) =>
                 setFilterOptions({
                   ...filterOptions,
-                  defenceBackground: e.target.checked,
+                  defenseBackgroundCheck: e.target.checked,
                 })
               }
             />
-            Defence Background
+            Defense Background
           </label>
         </div>
       </Dialog>

@@ -7,4 +7,5 @@ export interface IGetCandidatesRequest {
   gender?: 'Male' | 'Female';
   state?: string;
   city?: string;
+  defenseBackgroundCheck?: boolean;
 }
