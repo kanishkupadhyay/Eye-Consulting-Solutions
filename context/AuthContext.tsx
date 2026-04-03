@@ -1,6 +1,7 @@
 "use client";
 
 import getCandidatesCount from "@/services/frontend/candidates-count";
+import getIndianStates from "@/services/frontend/get-indian-states";
 import {
   createContext,
   useContext,
@@ -28,6 +29,8 @@ interface AuthContextType {
   setCandidateCount: () => Promise<void>;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  indianStates: { id: string; name: string }[];
+  setIndianStates: (states: { id: string; name: string }[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [totalCandidateCount, setTotalCandidateCount] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [indianStates, setIndianStates] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -47,6 +51,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedToken) setToken(storedToken);
 
     setLoading(false); // 👈 done loading
+  }, []);
+
+  useEffect(() => {
+    // --- Fetch Indian states ---
+    const fetchStates = async () => {
+      try {
+        const states = await getIndianStates();
+        setIndianStates(states);
+      } catch (error) {
+        console.error("Error fetching states:", error);
+      }
+    };
+
+    fetchStates();
   }, []);
 
   const login = (userData: User, authToken: string) => {
@@ -87,6 +105,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         searchQuery,
         setSearchQuery,
+        indianStates,
+        setIndianStates,
       }}
     >
       {children}

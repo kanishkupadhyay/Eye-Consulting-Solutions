@@ -28,17 +28,54 @@ export class BaseRepository<T> {
     skip: number,
     limit: number,
     sortOptions?: any,
+    populateFields?: { path: string; select?: string }[]
   ) {
-    const query = this.model.find(filter).skip(skip).limit(limit);
+    let query = this.model
+      .find(filter)
+      .skip(skip)
+      .limit(limit)
+      .lean(); // 🔥 better performance
 
+    // sorting
     if (sortOptions) {
-      query.sort(sortOptions);
+      query = query.sort(sortOptions);
     } else {
-      query.sort({ createdAt: -1 });
+      query = query.sort({ createdAt: -1 });
     }
 
-    const results = await query;
+    // ✅ populate support
+    if (populateFields?.length) {
+      populateFields.forEach((field) => {
+        query = query.populate(field.path, field.select || "");
+      });
+    }
+
+    let results = await query;
+
+    // ✅ auto transform populated fields → { id, name }
+    if (populateFields?.length) {
+      results = this.mapIdNameFields(
+        results,
+        populateFields.map((f) => f.path)
+      );
+    }
+
     return results;
+  }
+
+  // 🔥 reusable transformer
+  private mapIdNameFields(data: any[], fields: string[]) {
+    return data.map((item) => {
+      fields.forEach((field) => {
+        if (item[field]) {
+          item[field] = {
+            id: item[field]._id,
+            name: item[field].name,
+          };
+        }
+      });
+      return item;
+    });
   }
 
   public async update(id: string, data: Partial<T>) {

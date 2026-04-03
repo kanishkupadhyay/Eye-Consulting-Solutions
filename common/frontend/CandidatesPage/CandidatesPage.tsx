@@ -10,10 +10,11 @@ import { CrossIcon, Sliders } from "lucide-react";
 import Dialog from "../Dialog/Dialog";
 import NumberInput from "../NumberInput/NumberInput";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
-import Input from "../Input/Input";
 import InputChips from "../InputChip/InputChip";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../Button/Button";
+import getCitiesByState from "@/services/frontend/get-cities-by-state";
+import { useAuth } from "@/context/AuthContext";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
@@ -30,6 +31,9 @@ const CandidatesPage = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
+
+  const {indianStates} = useAuth();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<{
@@ -37,7 +41,8 @@ const CandidatesPage = () => {
     experienceYears: string;
     experienceMonths: string;
     age: string;
-    currentLocation: string;
+    state: { id: string; name: string } | null;
+    city: { id: string; name: string } | null;
     gender: string;
     defenceBackground: boolean;
   }>({
@@ -45,7 +50,8 @@ const CandidatesPage = () => {
     experienceYears: "",
     experienceMonths: "",
     age: "",
-    currentLocation: "",
+    state: null,
+    city: null,
     gender: "",
     defenceBackground: false,
   });
@@ -81,7 +87,8 @@ const CandidatesPage = () => {
       experienceYears: searchParams.get("experienceYears") || "",
       experienceMonths: searchParams.get("experienceMonths") || "",
       age: searchParams.get("age") || "",
-      currentLocation: searchParams.get("currentLocation") || "",
+      state: searchParams.get("state") || "",
+      city: searchParams.get("city") || "",
       gender: searchParams.get("gender") || "",
       defenceBackground: searchParams.get("defenceBackground") === "true",
     };
@@ -186,8 +193,8 @@ const CandidatesPage = () => {
     if (filterOptions.experienceMonths)
       params.set("experienceMonths", filterOptions.experienceMonths);
     if (filterOptions.age) params.set("age", filterOptions.age);
-    if (filterOptions.currentLocation)
-      params.set("currentLocation", filterOptions.currentLocation);
+    if (filterOptions.state) params.set("state", filterOptions.state?.name);
+    if (filterOptions.city) params.set("city", filterOptions.city?.name);
     if (filterOptions.gender) params.set("gender", filterOptions.gender);
     if (filterOptions.defenceBackground)
       params.set("defenceBackground", "true");
@@ -195,6 +202,25 @@ const CandidatesPage = () => {
     router.replace(`/candidates?${params.toString()}`, { scroll: false });
     setIsFilterOpen(false);
   };
+
+  useEffect(() => {
+    if (isFilterOpen) {
+      const fetchCities = async () => {
+        if (!filterOptions.state) {
+          setCities([]);
+          return;
+        }
+        try {
+          const res = await getCitiesByState(filterOptions.state?.id);
+          setCities(res);
+        } catch (error) {
+          console.error("Error fetching cities:", error);
+        }
+      };
+
+      fetchCities();
+    }
+  }, [filterOptions.state, isFilterOpen]);
 
   return (
     <div className="p-6 space-y-6">
@@ -225,7 +251,8 @@ const CandidatesPage = () => {
                   experienceYears: "",
                   experienceMonths: "",
                   age: "",
-                  currentLocation: "",
+                  state: "",
+                  city: "",
                   gender: "",
                   defenceBackground: false,
                 });
@@ -337,18 +364,41 @@ const CandidatesPage = () => {
             onChange={(val) => setFilterOptions({ ...filterOptions, age: val })}
           />
 
-          <Input
-            type="text"
-            label="Current Location"
-            placeholder="Enter Current Location"
-            className="w-full border px-3 py-2 rounded-md"
-            value={filterOptions.currentLocation}
-            onChange={(e) =>
+          <SelectDropdown
+            label="State"
+            searchable={true}
+            options={indianStates?.map((state) => ({
+              label: state.name,
+              value: state.id,
+            }))}
+            value={filterOptions.state?.id || ""}
+            onChange={(val) => {
               setFilterOptions({
                 ...filterOptions,
-                currentLocation: e.target.value,
+                state: indianStates.find((state) => state.id === val) || null,
+                city: null, // Reset city when state changes
+              }); // reset city
+            }}
+            placeholder="Select State"
+          />
+          <SelectDropdown
+            label="City"
+            searchable={true}
+            options={cities?.map((city) => ({
+              label: city.name,
+              value: city.id,
+            }))}
+            value={filterOptions.city?.id || ""}
+            onChange={(val) =>
+              setFilterOptions({
+                ...filterOptions,
+                city: cities.find((city) => city.id === val) || null,
               })
             }
+            placeholder={
+              filterOptions.state ? "Select City" : "Select State first"
+            }
+            disabled={!filterOptions.state}
           />
 
           <SelectDropdown

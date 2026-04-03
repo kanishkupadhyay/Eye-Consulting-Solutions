@@ -179,30 +179,25 @@ export default class CandidateService {
         throw new Error(ResultErrorMessage.PhoneNumberIsInvalid);
       }
 
-      const state = (formData.get("state") as string)?.trim();
-      if (!state) {
-        throw new Error(ResultErrorMessage.StateIsRequired);
-      }
+      const stateId = (formData.get("state") as string)?.trim();
+      if (!stateId) throw new Error(ResultErrorMessage.StateIsRequired);
 
-      const isValidState = await this.stateRepository.checkIfFieldAlreadyExists(
-        "name",
-        state,
-      );
-
+      // Check if state exists by ID
+      const isValidState = await this.stateRepository.model.findById(stateId);
       if (!isValidState) {
         throw new Error(ResultErrorMessage.InvalidState);
       }
 
-      const city = (formData.get("city") as string)?.trim();
-      if (!city) {
+      const cityId = (formData.get("city") as string)?.trim();
+      if (!cityId) {
         throw new Error(ResultErrorMessage.CityIsRequired);
       }
 
+      // Check if city exists by ID and belongs to the given state
       const isValidCity = await this.cityRepository.model.findOne({
-        name: city,
-        state: new Types.ObjectId(state),
+        _id: cityId,
+        state: stateId,
       });
-
       if (!isValidCity) {
         throw new Error(ResultErrorMessage.InvalidCity);
       }
@@ -381,8 +376,8 @@ export default class CandidateService {
         phone,
         age,
         gender,
-        state: new Types.ObjectId(state),
-        city: new Types.ObjectId(city),
+        state: new Types.ObjectId(stateId),
+        city: new Types.ObjectId(cityId),
         experienceInMonths,
         education,
         experience,
@@ -731,16 +726,21 @@ export default class CandidateService {
 
       // Sorting - map sortOrder to 1 or -1
       const sortDirection = sortOrder.toLowerCase() === "asc" ? 1 : -1;
-      const sortOptions: Record<string, number> = {};
-      sortOptions[sortBy] = sortDirection;
+      const sortOptions: Record<string, number> = {
+        [sortBy]: sortDirection,
+      };
 
-      // Query candidates with pagination and sorting
+      // 🔥 Updated query with populate
       const [candidates, total] = await Promise.all([
         this.candidateRepository.findWithPagination(
           filter,
           skip,
           limit,
           sortOptions,
+          [
+            { path: "state", select: "_id name" },
+            { path: "city", select: "_id name" },
+          ],
         ),
         this.candidateRepository.count(filter),
       ]);
@@ -760,7 +760,10 @@ export default class CandidateService {
       );
     } catch (error: any) {
       return new Response(
-        JSON.stringify({ success: false, message: error.message }),
+        JSON.stringify({
+          success: false,
+          message: error.message,
+        }),
         {
           status: StatusCodes.BAD_REQUEST,
           headers: { "Content-Type": "application/json" },

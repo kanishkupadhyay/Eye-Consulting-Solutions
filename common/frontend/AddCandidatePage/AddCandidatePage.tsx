@@ -19,7 +19,6 @@ import verifyCandidate from "@/services/frontend/verify-candidate";
 import Dialog from "../Dialog/Dialog";
 import { useAuth } from "@/context/AuthContext";
 import { IStateListResponse } from "@/common/backend/state.interfaces";
-import getIndianStates from "@/services/frontend/get-indian-states";
 import getCitiesByState from "@/services/frontend/get-cities-by-state";
 import mammoth from "mammoth";
 
@@ -40,7 +39,6 @@ const AddCandidatePage = () => {
     experienceMonths: "0",
     skills: [] as string[],
   });
-  const [indianStates, setIndianStates] = useState<IStateListResponse[]>([]);
   const [cities, setCities] = useState<IStateListResponse[]>([]);
 
   const [education, setEducation] = useState<IEducation[]>([]);
@@ -61,7 +59,7 @@ const AddCandidatePage = () => {
   const [resumeContent, setResumeContent] = useState("");
   const [enableErrors, setEnableErrors] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { setCandidateCount } = useAuth();
+  const { setCandidateCount, indianStates } = useAuth();
 
   // --- Dialog states ---
   const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
@@ -85,20 +83,6 @@ const AddCandidatePage = () => {
 
     if (resume) loadDocx(resume);
   }, [resume]);
-
-  useEffect(() => {
-    // --- Fetch Indian states ---
-    const fetchStates = async () => {
-      try {
-        const states = await getIndianStates();
-        setIndianStates(states);
-      } catch (error) {
-        console.error("Error fetching states:", error);
-      }
-    };
-
-    fetchStates();
-  }, []);
 
   useEffect(() => {
     const fetchCities = async () => {
