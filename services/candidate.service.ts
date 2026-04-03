@@ -694,6 +694,8 @@ export default class CandidateService {
         limit = 10,
         search,
         gender,
+        state,
+        city,
         sortBy = "createdAt",
         sortOrder = "desc",
       } = body;
@@ -722,6 +724,22 @@ export default class CandidateService {
         } else {
           throw new Error(ResultErrorMessage.GenderIsInvalid);
         }
+      }
+
+      if (state) {
+        const isValidState = await this.stateRepository.model.findById(state);
+        if (!isValidState) {
+          throw new Error(ResultErrorMessage.InvalidState);
+        }
+        filter.state = new Types.ObjectId(state);
+      }
+
+      if (city) {
+        const isValidCity = await this.cityRepository.model.findById(city);
+        if (!isValidCity) {
+          throw new Error(ResultErrorMessage.InvalidCity);
+        }
+        filter.city = new Types.ObjectId(city);
       }
 
       // Sorting - map sortOrder to 1 or -1

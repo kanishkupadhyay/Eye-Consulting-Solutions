@@ -325,12 +325,15 @@ const AddCandidatePage = () => {
                     : ""
               }
             />
-            <NumberInput
+            <SelectDropdown
               label="Age"
-              placeholder="Enter age"
-              cssClasses="py-2"
+              options={Array.from({ length: 48 }, (_, i) => {
+                const age = i + 18;
+                return { label: age.toString(), value: age.toString() };
+              })}
               value={formData.age}
               onChange={(val) => setFormData({ ...formData, age: val })}
+              placeholder="Select Age"
               errorMessage={
                 enableErrors &&
                 formData.age !== "" &&
@@ -386,22 +389,56 @@ const AddCandidatePage = () => {
                 disabled={!formData.state} // disable until state selected
               />
             )}
-            <NumberInput
+
+            {/* Experience (Years) */}
+
+            <SelectDropdown
               label="Experience (Years)"
-              placeholder="0"
-              cssClasses="py-2"
+              options={Array.from({ length: 48 }, (_, i) => {
+                const experience = i + 0;
+                return {
+                  label: experience.toString(),
+                  value: experience.toString(),
+                };
+              })}
               value={formData.experienceYears}
               onChange={(val) =>
                 setFormData({ ...formData, experienceYears: val })
               }
+              placeholder="Select Experience (Years)"
+              errorMessage={
+                enableErrors &&
+                formData.experienceYears !== "" &&
+                (Number(formData.experienceYears) < 0 ||
+                  Number(formData.experienceYears) > 47)
+                  ? "Experience must be between 0 and 47 years"
+                  : ""
+              }
             />
-            <NumberInput
+
+            {/* Experience (Months) */}
+
+            <SelectDropdown
               label="Experience (Months)"
-              placeholder="0"
-              cssClasses="py-2"
+              options={Array.from({ length: 12 }, (_, i) => {
+                const experience = i + 0;
+                return {
+                  label: experience.toString(),
+                  value: experience.toString(),
+                };
+              })}
               value={formData.experienceMonths}
               onChange={(val) =>
                 setFormData({ ...formData, experienceMonths: val })
+              }
+              placeholder="Select Experience (Months)"
+              errorMessage={
+                enableErrors &&
+                formData.experienceMonths !== "" &&
+                (Number(formData.experienceMonths) < 0 ||
+                  Number(formData.experienceMonths) > 11)
+                  ? "Experience must be between 0 and 11 months"
+                  : ""
               }
             />
           </div>

@@ -19,6 +19,7 @@ interface SelectDropdownProps {
   searchable?: boolean;
   required?: boolean;
   errorMessage?: string;
+  containerClasses?: string;
 }
 
 const SelectDropdown = ({
@@ -28,6 +29,7 @@ const SelectDropdown = ({
   onChange,
   placeholder,
   cssClasses = "",
+  containerClasses = "",
   disabled = false,
   searchable = false,
   required = false,
@@ -65,7 +67,7 @@ const SelectDropdown = ({
       : options;
 
   return (
-    <div className="flex flex-col relative" ref={dropdownRef}>
+    <div className={`flex flex-col relative ${containerClasses}`} ref={dropdownRef}>
       {label && (
         <label className="mb-1 text-sm font-medium text-gray-500">
           {label}
