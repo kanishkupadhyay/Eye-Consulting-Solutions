@@ -267,7 +267,7 @@ const CandidatesPage = () => {
                   state: null,
                   city: null,
                   gender: "",
-                  defenseBackground: false,
+                  defenseBackgroundCheck: false,
                 });
 
                 // Remove filters from URL
