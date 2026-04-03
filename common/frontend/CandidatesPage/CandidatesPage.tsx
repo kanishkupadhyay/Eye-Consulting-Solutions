@@ -10,7 +10,6 @@ import { CrossIcon, Sliders } from "lucide-react";
 import Dialog from "../Dialog/Dialog";
 import NumberInput from "../NumberInput/NumberInput";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
-import InputChips from "../InputChip/InputChip";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "../Button/Button";
 import getCitiesByState from "@/services/frontend/get-cities-by-state";
@@ -33,11 +32,10 @@ const CandidatesPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
 
-  const {indianStates} = useAuth();
+  const { indianStates } = useAuth();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<{
-    skills: string[];
     experienceYears: string;
     experienceMonths: string;
     age: string;
@@ -46,7 +44,6 @@ const CandidatesPage = () => {
     gender: string;
     defenceBackground: boolean;
   }>({
-    skills: [],
     experienceYears: "",
     experienceMonths: "",
     age: "",
@@ -83,14 +80,15 @@ const CandidatesPage = () => {
   // Update filterOptions from URL whenever searchParams changes
   useEffect(() => {
     const updatedFilters = {
-      skills: searchParams.get("skills")?.split(",") || [],
       experienceYears: searchParams.get("experienceYears") || "",
       experienceMonths: searchParams.get("experienceMonths") || "",
       age: searchParams.get("age") || "",
-      state: indianStates?.find(
-        (state) => state.name === searchParams.get("state"),
-      ) || null,
-      city: cities?.find((city) => city.name === searchParams.get("city")) || null,
+      state:
+        indianStates?.find(
+          (state) => state.name === searchParams.get("state"),
+        ) || null,
+      city:
+        cities?.find((city) => city.name === searchParams.get("city")) || null,
       gender: searchParams.get("gender") || "",
       defenceBackground: searchParams.get("defenceBackground") === "true",
     };
@@ -111,6 +109,8 @@ const CandidatesPage = () => {
           page: 1,
           limit: LIMIT,
           gender: updatedFilters.gender as "Male" | "Female",
+          state: updatedFilters.state?.id || "",
+          city: updatedFilters.city?.id || "",
         });
 
         if (response.success) {
@@ -148,6 +148,8 @@ const CandidatesPage = () => {
         page,
         limit: LIMIT,
         gender: filterOptions.gender as "Male" | "Female",
+        state: filterOptions.state?.id || "",
+        city: filterOptions.city?.id || "",
       });
 
       if (response.success) {
@@ -188,8 +190,6 @@ const CandidatesPage = () => {
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
 
-    if (filterOptions.skills.length > 0)
-      params.set("skills", filterOptions.skills.join(","));
     if (filterOptions.experienceYears)
       params.set("experienceYears", filterOptions.experienceYears);
     if (filterOptions.experienceMonths)
@@ -249,7 +249,6 @@ const CandidatesPage = () => {
               onClick={() => {
                 // Clear all filters
                 setFilterOptions({
-                  skills: [],
                   experienceYears: "",
                   experienceMonths: "",
                   age: "",
@@ -322,16 +321,6 @@ const CandidatesPage = () => {
         cancelText="Cancel"
       >
         <div className="space-y-4">
-          <InputChips
-            label="Skills"
-            cssClasses="py-2"
-            placeholder="Add a skill and press Enter"
-            value={filterOptions.skills}
-            onChange={(val) =>
-              setFilterOptions({ ...filterOptions, skills: [...val] })
-            }
-          />
-
           <SelectDropdown
             label="Experience (Years)"
             placeholder="Select Years"
@@ -383,8 +372,10 @@ const CandidatesPage = () => {
             }}
             placeholder="Select State"
           />
+
           <SelectDropdown
             label="City"
+            containerClasses="!mb-0"
             searchable={true}
             options={cities?.map((city) => ({
               label: city.name,
@@ -402,6 +393,11 @@ const CandidatesPage = () => {
             }
             disabled={!filterOptions.state}
           />
+          {!filterOptions.state && (
+            <p className="text-orange-500 text-xs mt-1">
+              Please select state first{" "}
+            </p>
+          )}
 
           <SelectDropdown
             label="Gender"

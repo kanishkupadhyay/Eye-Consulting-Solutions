@@ -21,13 +21,12 @@ import { Notification } from "../notification";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ArrowLeft } from "lucide-react";
-import getIndianStates from "@/services/frontend/get-indian-states";
 import getCitiesByState from "@/services/frontend/get-cities-by-state";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [parsedCandidates, setParsedCandidates] = useState<any[]>([]);
-  const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<any | null>();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cities, setCities] = useState<{ name: string; id: string }[]>([]);
@@ -248,6 +247,15 @@ const CandidatesUploadPage = () => {
       fErrors.email = "Email is required";
       hasError = true;
     }
+    if (!selectedCandidate?.experienceYears) {
+      fErrors.experienceYears = "Experience (Years) is required";
+      hasError = true;
+    }
+    if (!selectedCandidate?.experienceMonths) {
+      fErrors.experienceMonths = "Experience (Months) is required";
+      hasError = true;
+    }
+
     if (selectedCandidate?.phone) {
       selectedCandidate.phone =
         selectedCandidate.phone.trim().replace(/\D/g, "").slice(0, 10) || "";
@@ -476,19 +484,76 @@ const CandidatesUploadPage = () => {
                 }
                 placeholder="Select Gender"
               />
-              <Input
+
+              {/* Age Dropdown */}
+
+              <SelectDropdown
                 label="Age"
-                cssClasses="py-2"
-                type="number"
-                placeholder="Enter age"
+                options={Array.from({ length: 48 }, (_, i) => {
+                  const age = i + 18;
+                  return { label: age.toString(), value: age.toString() };
+                })}
                 value={selectedCandidate.age || ""}
-                onChange={(e) =>
-                  setSelectedCandidate({
-                    ...selectedCandidate,
-                    age: e.target.value ? Number(e.target.value) : undefined,
-                  })
+                onChange={(val) =>
+                  setSelectedCandidate({ ...selectedCandidate, age: val })
+                }
+                placeholder="Select Age"
+                errorMessage={
+                  enableErrors &&
+                  selectedCandidate.age !== "" &&
+                  (Number(selectedCandidate.age) < 18 ||
+                    Number(selectedCandidate.age) > 65)
+                    ? "Age must be between 18 and 65"
+                    : ""
                 }
               />
+
+              {/* Experience (Years) */}
+
+              <SelectDropdown
+                label="Experience (Years)"
+                options={Array.from({ length: 48 }, (_, i) => {
+                  const experience = i + 0;
+                  return {
+                    label: experience.toString(),
+                    value: experience.toString(),
+                  };
+                })}
+                required={true}
+                value={selectedCandidate.experienceYears}
+                onChange={(val) =>
+                  setSelectedCandidate({
+                    ...selectedCandidate,
+                    experienceYears: val,
+                  })
+                }
+                placeholder="Select Experience (Years)"
+                errorMessage={enableErrors ? fieldErrors.experienceYears : ""}
+              />
+
+              {/* Experience (Months) */}
+
+              <SelectDropdown
+                label="Experience (Months)"
+                options={Array.from({ length: 12 }, (_, i) => {
+                  const experience = i + 0;
+                  return {
+                    label: experience.toString(),
+                    value: experience.toString(),
+                  };
+                })}
+                value={selectedCandidate.experienceMonths}
+                onChange={(val) =>
+                  setSelectedCandidate({
+                    ...selectedCandidate,
+                    experienceMonths: val,
+                  })
+                }
+                placeholder="Select Experience (Months)"
+                required={true}
+                errorMessage={enableErrors ? fieldErrors.experienceMonths : ""}
+              />
+
               {/* --- State Dropdown --- */}
               <SelectDropdown
                 label="State"
