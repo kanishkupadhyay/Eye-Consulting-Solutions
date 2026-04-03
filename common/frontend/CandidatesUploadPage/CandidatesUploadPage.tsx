@@ -30,9 +30,6 @@ const CandidatesUploadPage = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [indianStates, setIndianStates] = useState<
-    { name: string; id: string }[]
-  >([]);
   const [cities, setCities] = useState<{ name: string; id: string }[]>([]);
 
   const [education, setEducation] = useState<IEducation[]>([]);
@@ -42,7 +39,7 @@ const CandidatesUploadPage = () => {
   const [experienceErrors, setExperienceErrors] = useState<any[]>([]);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const router = useRouter();
-  const { setCandidateCount } = useAuth();
+  const { setCandidateCount, indianStates } = useAuth();
 
   const [docxHtml, setDocxHtml] = useState<string>("");
 
@@ -214,20 +211,6 @@ const CandidatesUploadPage = () => {
       }
     };
   }, [selectedCandidate?.file]);
-
-  useEffect(() => {
-    // --- Fetch Indian states ---
-    const fetchStates = async () => {
-      try {
-        const states = await getIndianStates();
-        setIndianStates(states);
-      } catch (error) {
-        console.error("Error fetching states:", error);
-      }
-    };
-
-    fetchStates();
-  }, []);
 
   useEffect(() => {
     const fetchCities = async () => {
