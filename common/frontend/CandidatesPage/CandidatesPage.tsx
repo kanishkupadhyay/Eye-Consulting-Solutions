@@ -87,8 +87,10 @@ const CandidatesPage = () => {
       experienceYears: searchParams.get("experienceYears") || "",
       experienceMonths: searchParams.get("experienceMonths") || "",
       age: searchParams.get("age") || "",
-      state: searchParams.get("state") || "",
-      city: searchParams.get("city") || "",
+      state: indianStates?.find(
+        (state) => state.name === searchParams.get("state"),
+      ) || null,
+      city: cities?.find((city) => city.name === searchParams.get("city")) || null,
       gender: searchParams.get("gender") || "",
       defenceBackground: searchParams.get("defenceBackground") === "true",
     };
@@ -251,8 +253,8 @@ const CandidatesPage = () => {
                   experienceYears: "",
                   experienceMonths: "",
                   age: "",
-                  state: "",
-                  city: "",
+                  state: null,
+                  city: null,
                   gender: "",
                   defenceBackground: false,
                 });
