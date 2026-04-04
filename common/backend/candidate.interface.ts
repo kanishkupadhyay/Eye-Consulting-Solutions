@@ -4,8 +4,16 @@ export interface IGetCandidatesRequest {
   search?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
-  gender?: 'Male' | 'Female';
+  gender?: "Male" | "Female";
   state?: string;
   city?: string;
   defenseBackgroundCheck?: boolean;
+  experience?: {
+    min?: number;
+    max?: number;
+  };
+  age?: {
+    min?: number;
+    max?: number;
+  };
 }

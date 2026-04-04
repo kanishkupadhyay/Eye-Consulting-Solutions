@@ -697,6 +697,8 @@ export default class CandidateService {
         state,
         city,
         defenseBackgroundCheck,
+        experience,
+        age,
         sortBy = "createdAt",
         sortOrder = "desc",
       } = body;
@@ -745,6 +747,39 @@ export default class CandidateService {
 
       if (defenseBackgroundCheck !== undefined) {
         filter.defenseBackgroundCheck = defenseBackgroundCheck;
+      }
+
+      if (age) {
+        const ageFilter: any = {};
+        if (age.min !== undefined) {
+          ageFilter.$gte = age.min;
+        }
+        if (age.max !== undefined) {
+          ageFilter.$lte = age.max;
+        }
+        if (Object.keys(ageFilter).length > 0) {
+          filter.age = ageFilter;
+        }
+      }
+
+      if (experience) {
+        if (experience.min !== undefined && (experience.min < 0 || experience.min > 50)) {
+          throw new Error(ResultErrorMessage.ExperienceYearsCannotExceed50);
+        }
+        if (experience.max !== undefined && (experience.max < 0 || experience.max > 50)) {
+          throw new Error(ResultErrorMessage.ExperienceYearsCannotExceed50);
+        }
+
+        const expFilter: any = {};
+        if (experience.min !== undefined) {
+          expFilter.$gte = experience.min * 12;
+        }
+        if (experience.max !== undefined) {
+          expFilter.$lte = experience.max * 12;
+        }
+        if (Object.keys(expFilter).length > 0) {
+          filter.experienceInMonths = expFilter;
+        }
       }
 
       // Sorting - map sortOrder to 1 or -1

@@ -79,7 +79,7 @@ const CandidatesPage = () => {
   // Update filterOptions from URL whenever searchParams changes
   useEffect(() => {
     const updatedFilters = {
-      experience: searchParams.get("experience")
+      experience: searchParams.get("experienceMin")
         ? {
             min: Number(searchParams.get("experienceMin")),
             max: Number(searchParams.get("experienceMax")),
@@ -116,6 +116,18 @@ const CandidatesPage = () => {
           state: updatedFilters.state?.id || "",
           city: updatedFilters.city?.id || "",
           defenseBackgroundCheck: updatedFilters.defenseBackgroundCheck,
+          experience: updatedFilters.experience
+            ? {
+                min: updatedFilters.experience.min,
+                max: updatedFilters.experience.max,
+              }
+            : undefined,
+          age: updatedFilters.age
+            ? {
+                min: Number(updatedFilters.age.split("-")[0]),
+                max: Number(updatedFilters.age.split("-")[1]),
+              }
+            : undefined,
         });
 
         if (response.success) {
@@ -156,6 +168,18 @@ const CandidatesPage = () => {
         state: filterOptions.state?.id || "",
         city: filterOptions.city?.id || "",
         defenseBackgroundCheck: filterOptions.defenseBackgroundCheck,
+        experience: filterOptions.experience
+          ? {
+              min: filterOptions.experience.min,
+              max: filterOptions.experience.max,
+            }
+          : undefined,
+        age: filterOptions.age
+          ? {
+              min: Number(filterOptions.age.split("-")[0]),
+              max: Number(filterOptions.age.split("-")[1]),
+            }
+          : undefined,
       });
 
       if (response.success) {
@@ -201,9 +225,12 @@ const CandidatesPage = () => {
       params.set("experienceMax", draftFilterOptions.experience.max.toString());
     }
     if (draftFilterOptions.age) params.set("age", draftFilterOptions.age);
-    if (draftFilterOptions.state) params.set("state", draftFilterOptions.state?.name);
-    if (draftFilterOptions.city) params.set("city", draftFilterOptions.city?.name);
-    if (draftFilterOptions.gender) params.set("gender", draftFilterOptions.gender);
+    if (draftFilterOptions.state)
+      params.set("state", draftFilterOptions.state?.name);
+    if (draftFilterOptions.city)
+      params.set("city", draftFilterOptions.city?.name);
+    if (draftFilterOptions.gender)
+      params.set("gender", draftFilterOptions.gender);
     if (draftFilterOptions.defenseBackgroundCheck)
       params.set("defenseBackgroundCheck", "true");
 
@@ -232,8 +259,8 @@ const CandidatesPage = () => {
 
   const hasActiveFilters = useMemo(() => {
     const keys = [
-      "minExperience",
-      "maxExperience",
+      "experienceMin",
+      "experienceMax",
       "age",
       "state",
       "city",
