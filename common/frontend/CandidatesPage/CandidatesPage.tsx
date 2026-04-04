@@ -14,6 +14,7 @@ import Button from "../Button/Button";
 import getCitiesByState from "@/services/frontend/get-cities-by-state";
 import { useAuth } from "@/context/AuthContext";
 import RangeSlider from "../RangeSlider/RangeSlider";
+import Input from "../Input/Input";
 
 interface CandidateWithExtras extends ICandidate {
   status?: string;
@@ -34,8 +35,17 @@ const CandidatesPage = () => {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
+  const [isBulkEmailDialogOpen, setIsBulkEmailDialogOpen] = useState(false);
+  const [selectedJobOption, setSelectedJobOption] = useState<
+    "new" | "previous"
+  >("new");
+  const [previousJobs, setPreviousJobs] = useState<
+    { id: string; title: string }[]
+  >([]);
+  const [selectedPreviousJobId, setSelectedPreviousJobId] =
+    useState<string>("");
 
-  const { indianStates } = useAuth();
+  const { indianStates, setSearchQuery } = useAuth();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<{
@@ -45,6 +55,7 @@ const CandidatesPage = () => {
     city: { id: string; name: string } | null;
     gender: string;
     defenseBackgroundCheck: boolean;
+    search: string;
   }>({
     experience: null,
     age: "",
@@ -52,6 +63,7 @@ const CandidatesPage = () => {
     city: null,
     gender: "",
     defenseBackgroundCheck: false,
+    search: "",
   });
   const [draftFilterOptions, setDraftFilterOptions] = useState(filterOptions);
 
@@ -98,6 +110,7 @@ const CandidatesPage = () => {
       gender: searchParams.get("gender") || "",
       defenseBackgroundCheck:
         searchParams.get("defenseBackgroundCheck") === "true",
+      search: searchParams.get("search") || "",
     };
 
     setFilterOptions(updatedFilters);
@@ -131,6 +144,7 @@ const CandidatesPage = () => {
                 max: Number(updatedFilters.age.split("-")[1]),
               }
             : undefined,
+          search: updatedFilters.search || undefined,
         });
 
         if (response.success) {
@@ -183,6 +197,7 @@ const CandidatesPage = () => {
               max: Number(filterOptions.age.split("-")[1]),
             }
           : undefined,
+        search: filterOptions.search || undefined,
       });
 
       if (response.success) {
@@ -227,6 +242,9 @@ const CandidatesPage = () => {
       params.set("experienceMin", draftFilterOptions.experience.min.toString());
       params.set("experienceMax", draftFilterOptions.experience.max.toString());
     }
+    if (draftFilterOptions.search) {
+      params.set("search", draftFilterOptions.search);
+    }
     if (draftFilterOptions.age) params.set("age", draftFilterOptions.age);
     if (draftFilterOptions.state)
       params.set("state", draftFilterOptions.state?.name);
@@ -266,6 +284,7 @@ const CandidatesPage = () => {
       "experienceMax",
       "age",
       "state",
+      "search",
       "city",
       "gender",
       "defenseBackgroundCheck",
@@ -330,11 +349,13 @@ const CandidatesPage = () => {
                 setFilterOptions({
                   experience: null,
                   age: "",
+                  search: "",
                   state: null,
                   city: null,
                   gender: "",
                   defenseBackgroundCheck: false,
                 });
+                setSearchQuery(""); // Clear global search query if any
 
                 // Remove filters from URL
                 router.replace("/candidates", { scroll: false });
@@ -374,15 +395,13 @@ const CandidatesPage = () => {
               Select All
             </label>
 
-            {/* Right: Invite Button */}
+            {/* Right: Bulk Email Button */}
             {selectedCandidates.size > 0 && (
               <Button
-                onClick={() => {
-                  console.log("Inviting:", Array.from(selectedCandidates));
-                }}
+                onClick={() => setIsBulkEmailDialogOpen(true)}
                 className="bg-green-600 hover:bg-green-700 text-white !p-2 !w-auto"
               >
-                Invite ({selectedCandidates.size})
+                Bulk Email ({selectedCandidates.size})
               </Button>
             )}
           </div>
@@ -433,6 +452,7 @@ const CandidatesPage = () => {
         title="Filter Candidates"
         confirmText="Apply"
         cancelText="Cancel"
+        size="lg"
       >
         <div className="space-y-4">
           <RangeSlider
@@ -547,6 +567,132 @@ const CandidatesPage = () => {
             />
             Defense Background
           </label>
+        </div>
+      </Dialog>
+      <Dialog
+        isOpen={isBulkEmailDialogOpen}
+        size="xl"
+        onCancel={() => setIsBulkEmailDialogOpen(false)}
+        onConfirm={() => {}}
+        title="Bulk Email Candidates"
+        confirmText="Send Emails"
+        cancelText="Cancel"
+      >
+        <div className="space-y-4">
+          {/* Radio buttons */}
+          <div className="flex items-center gap-6">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="jobOption"
+                value="new"
+                checked={selectedJobOption === "new"}
+                onChange={() => setSelectedJobOption("new")}
+                className="w-4 h-4"
+              />
+              Create New
+            </label>
+
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="radio"
+                name="jobOption"
+                value="previous"
+                checked={selectedJobOption === "previous"}
+                onChange={() => setSelectedJobOption("previous")}
+                className="w-4 h-4"
+              />
+              Use a previous one
+            </label>
+          </div>
+
+          {/* Create New Job Form */}
+          {selectedJobOption === "new" && (
+            <div className="space-y-4">
+              <Input
+                label="Job Title"
+                placeholder="Enter job title"
+                cssClasses="py-2"
+              />
+              <Input
+                label="Job Description"
+                placeholder="Enter job description"
+                cssClasses="py-2"
+                multiline={true}
+              />
+              <div className="flex gap-4">
+                <div className="w-1/2">
+                  <SelectDropdown
+                    label="Minimum Experience"
+                    placeholder="Select Minimum Experience"
+                    options={Array.from({ length: 45 }, (_, i) => ({
+                      label: i.toString(),
+                      value: i.toString(),
+                    }))}
+                    value={""}
+                    onChange={() => {}}
+                  />
+                </div>
+
+                <div className="w-1/2">
+                  <SelectDropdown
+                    label="Maximum Experience"
+                    placeholder="Select Maximum Experience"
+                    options={Array.from({ length: 45 }, (_, i) => ({
+                      label: i.toString(),
+                      value: i.toString(),
+                    }))}
+                    value={""}
+                    onChange={() => {}}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                {/* Minimum Salary */}
+                <div className="w-1/2">
+                  <SelectDropdown
+                    label="Minimum Salary (Lakh)"
+                    placeholder="Select Minimum Salary"
+                    options={Array.from({ length: 51 }, (_, i) => ({
+                      label: `₹${i} L`,
+                      value: `${i}`,
+                    }))}
+                    value={""}
+                    onChange={() => {}}
+                  />
+                </div>
+
+                {/* Maximum Salary */}
+                <div className="w-1/2">
+                  <SelectDropdown
+                    label="Maximum Salary (Lakh)"
+                    placeholder="Select Maximum Salary"
+                    options={Array.from({ length: 51 }, (_, i) => ({
+                      label: `₹${i} L`,
+                      value: `${i}`,
+                    }))}
+                    value={""}
+                    onChange={() => {}}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Use Previous Job Dropdown */}
+          {selectedJobOption === "previous" && (
+            <SelectDropdown
+              label="Select Previous Job"
+              placeholder="Choose a previously posted job"
+              options={previousJobs.map((job) => ({
+                label: job.title,
+                value: job.id,
+              }))}
+              value={selectedPreviousJobId}
+              onChange={(val) => setSelectedPreviousJobId(val)}
+            />
+          )}
         </div>
       </Dialog>
     </div>
