@@ -26,6 +26,9 @@ const LIMIT = 20;
 
 const CandidatesPage = () => {
   const [candidates, setCandidates] = useState<CandidateWithExtras[]>([]);
+  const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(
+    new Set(),
+  );
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -271,6 +274,36 @@ const CandidatesPage = () => {
     return keys.some((key) => searchParams.get(key));
   }, [searchParams]);
 
+  const toggleCandidateSelection = (id: string) => {
+    setSelectedCandidates((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(id)) {
+        updated.delete(id);
+      } else {
+        updated.add(id);
+      }
+      return updated;
+    });
+  };
+
+  const allIds = useMemo(
+    () => candidates.map((c) => c._id.toString()),
+    [candidates],
+  );
+
+  const isAllSelected =
+    allIds.length > 0 && allIds.every((id) => selectedCandidates.has(id));
+
+  const isIndeterminate = selectedCandidates.size > 0 && !isAllSelected;
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedCandidates(new Set());
+    } else {
+      setSelectedCandidates(new Set(allIds));
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <Breadcrumb items={breadcrumbItems} />
@@ -326,6 +359,34 @@ const CandidatesPage = () => {
             Total <span className="text-orange-500">({candidates.length})</span>
           </h6>
 
+          <div className="flex justify-between items-center">
+            {/* Left: Select All */}
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = isIndeterminate;
+                }}
+                onChange={handleSelectAll}
+                className="w-4 h-4 cursor-pointer"
+              />
+              Select All
+            </label>
+
+            {/* Right: Invite Button */}
+            {selectedCandidates.size > 0 && (
+              <Button
+                onClick={() => {
+                  console.log("Inviting:", Array.from(selectedCandidates));
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white !p-2 !w-auto"
+              >
+                Invite ({selectedCandidates.size})
+              </Button>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {candidates.map((candidate, index) => {
               if (index === candidates.length - 1) {
@@ -334,7 +395,13 @@ const CandidatesPage = () => {
                     ref={lastCandidateRef}
                     key={`${candidate._id as unknown as string}-${index}`}
                   >
-                    <CandidateDetailCard candidate={candidate} />
+                    <CandidateDetailCard
+                      candidate={candidate}
+                      isSelected={selectedCandidates.has(
+                        candidate._id.toString(),
+                      )}
+                      onSelect={toggleCandidateSelection}
+                    />
                   </div>
                 );
               }
@@ -343,6 +410,8 @@ const CandidatesPage = () => {
                 <CandidateDetailCard
                   key={`${candidate._id as unknown as string}-${index}`}
                   candidate={candidate}
+                  isSelected={selectedCandidates.has(candidate._id.toString())}
+                  onSelect={toggleCandidateSelection}
                 />
               );
             })}

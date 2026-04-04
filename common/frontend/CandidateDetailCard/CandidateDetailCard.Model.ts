@@ -28,4 +28,6 @@ export const statusColors: Record<StatusType, string> = {
 
 export interface CandidateDetailCardProps {
   candidate: any;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }

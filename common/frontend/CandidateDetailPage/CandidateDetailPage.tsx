@@ -18,6 +18,8 @@ import {
 } from "react-icons/fa";
 import { MdEmail, MdContentCopy, MdCheck } from "react-icons/md";
 import { Notification } from "../notification";
+import Image from "next/image";
+import mammoth from "mammoth";
 
 interface CandidateDetailPageProps {
   candidateId: string;
@@ -128,6 +130,7 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"details" | "resume">("details");
   const [copied, setCopied] = useState(false);
+  const [docxHtml, setDocxHtml] = useState<string>("");
 
   useEffect(() => {
     const fetchCandidate = async () => {
@@ -148,6 +151,25 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
 
     fetchCandidate();
   }, [candidateId]);
+
+  useEffect(() => {
+    const fetchDocx = async () => {
+      if (candidate?.resumeUrl?.endsWith(".docx")) {
+        try {
+          const response = await fetch(candidate.resumeUrl);
+          const arrayBuffer = await response.arrayBuffer();
+
+          const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
+          setDocxHtml(html);
+        } catch (err) {
+          setDocxHtml("<p>Failed to load preview.</p>");
+          console.error(err);
+        }
+      }
+    };
+
+    fetchDocx();
+  }, [candidate]);
 
   if (loading) return <CandidateSkeleton />;
   if (!candidate) return <NotFound title={"Candidate"} />;
@@ -185,7 +207,17 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
             className="w-20 h-20 flex items-center justify-center rounded-full text-white text-2xl font-semibold"
             style={{ backgroundColor: getUniqueColor(candidate.name) }}
           >
-            {getInitials(candidate.name)}
+            {candidate?.profileImageUrl ? (
+              <Image
+                src={candidate.profileImageUrl}
+                alt={candidate.name}
+                width={80}
+                height={80}
+                className="rounded-full"
+              />
+            ) : (
+              getInitials(candidate.name)
+            )}
           </div>
 
           {/* Right Content */}
@@ -201,7 +233,8 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
               <span>•</span>
               <span>
                 📍{" "}
-                {`${(candidate as any).city?.name}, ${(candidate as any).state?.name}` || "N/A"}
+                {`${(candidate as any).city?.name}, ${(candidate as any).state?.name}` ||
+                  "N/A"}
               </span>
               <span>🎂 {candidate.age || "N/A"} yrs</span>
               <span>•</span>
@@ -445,16 +478,36 @@ const CandidateDetailPage = ({ candidateId }: CandidateDetailPageProps) => {
                 <h4 className="text-sm font-semibold text-[#156eb7] tracking-wide uppercase">
                   Resume
                 </h4>
+                {candidate.resumeUrl?.endsWith(".docx") ? (
+                  <div
+                    className="w-full h-[1000px] overflow-auto p-2 bg-gray-50"
+                    dangerouslySetInnerHTML={{
+                      __html: docxHtml || "<p>Loading preview...</p>",
+                    }}
+                  />
+                ) : (
+                  <iframe
+                    src={candidate.resumeUrl}
+                    className="w-full h-[1000px]"
+                  />
+                )}
+              </>
+            )}
+
+            {activeTab === "resume" &&
+              (candidate.resumeUrl?.endsWith(".docx") ? (
+                <div
+                  className="w-full h-[1000px] overflow-auto p-2 bg-gray-50"
+                  dangerouslySetInnerHTML={{
+                    __html: docxHtml || "<p>Loading preview...</p>",
+                  }}
+                />
+              ) : (
                 <iframe
                   src={candidate.resumeUrl}
                   className="w-full h-[1000px]"
                 />
-              </>
-            )}
-
-            {activeTab === "resume" && (
-              <iframe src={candidate.resumeUrl} className="w-full h-[1000px]" />
-            )}
+              ))}
           </div>
         </div>
       </div>
