@@ -26,6 +26,7 @@ class ResultErrorMessage {
   public static readonly NameIsRequired = "Name is required";
   public static readonly AgeIsInvalid = "Age must be between 18 and 65";
   public static readonly GenderIsInvalid = "Gender is invalid";
+  public static readonly GenderIsRequired = "Gender is required";
   public static readonly StateIsRequired = "State is required";
   public static readonly CityIsRequired = "City is required";
   public static readonly InvalidState = "Invalid state";

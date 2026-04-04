@@ -24,7 +24,7 @@ export interface ICandidate extends Document {
   email: string;
   phone: string;
   age?: number;
-  gender?: "Male" | "Female";
+  gender: "Male" | "Female";
   state: Types.ObjectId;
   city: Types.ObjectId;
   experienceInMonths?: number;
@@ -71,11 +71,13 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
       type: Number,
       min: 18,
       max: 65,
+      index: true,
     },
     gender: {
       type: String,
       enum: ["Male", "Female"],
       index: true,
+      required: true,
     },
     state: {
       type: Schema.Types.ObjectId,

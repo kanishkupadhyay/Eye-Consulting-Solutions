@@ -110,6 +110,7 @@ const AddCandidatePage = () => {
     if (!formData.phone.trim()) errors.push("Phone is required");
     if (!formData.state.trim()) errors.push("State is required");
     if (!formData.city.trim()) errors.push("City is required");
+    if (!formData.gender.trim()) errors.push("Gender is required");
     if (!resume) errors.push("Resume is required");
     if (formData.skills.length === 0)
       errors.push("At least one skill is required");
@@ -350,6 +351,9 @@ const AddCandidatePage = () => {
               value={formData.gender}
               onChange={(val) => setFormData({ ...formData, gender: val })}
               placeholder="Select Gender"
+              errorMessage={
+                enableErrors && !formData.gender ? "Gender is required" : ""
+              }
             />
             <SelectDropdown
               label="State"
