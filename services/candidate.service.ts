@@ -245,7 +245,7 @@ export default class CandidateService {
       const existingByEmail = await this.candidateRepository.model.find({
         email: { $in: emails },
       });
-      existingByEmail.forEach((existing) => {
+      existingByEmail.forEach((existing:any) => {
         const index = candidates.findIndex(
           (c) => c.email?.trim().toLowerCase() === existing.email.toLowerCase(),
         );
