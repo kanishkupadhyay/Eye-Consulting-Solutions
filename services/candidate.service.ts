@@ -31,34 +31,54 @@ export default class CandidateService {
         );
       }
 
-      const results = [];
-
-      for (const file of uploadedFiles) {
-        try {
-          const fileBuffer = Buffer.from(await file.arrayBuffer());
-          const text = await ResumeParser.parseText(fileBuffer, file.type);
-
-          results.push({
-            name: ResumeParser.extractName(text),
-            email: ResumeParser.extractEmail(text),
-            phone: ResumeParser.extractPhone(text),
-            gender: ResumeParser.extractGender(text),
-            skills: ResumeParser.extractSkills(text),
-            resumeUrl: file.name,
-          });
-        } catch (fileErr) {
-          console.warn(`Failed to parse file ${file.name}:`, fileErr);
-          // Push empty/default values instead of failing
-          results.push({
-            name: "",
-            email: "",
-            phone: "",
-            gender: "",
-            skills: [],
-            resumeUrl: file.name,
-          });
+      // Helper to detect MIME type from file extension if missing
+      const getMimeTypeFromExtension = (filename: string): string => {
+        const ext = filename.split(".").pop()?.toLowerCase();
+        switch (ext) {
+          case "pdf":
+            return "application/pdf";
+          case "doc":
+            return "application/msword";
+          case "docx":
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+          default:
+            return "";
         }
-      }
+      };
+
+      const results = await Promise.all(
+        uploadedFiles.map(async (file) => {
+          try {
+            const fileBuffer = Buffer.from(await file.arrayBuffer());
+            const mimeType = file.type || getMimeTypeFromExtension(file.name);
+
+            // Extract raw text and normalize it
+            let text = await ResumeParser.parseText(fileBuffer, mimeType);
+            text = text
+              .replace(/[\r\n]+/g, "\n")
+              .replace(/[^\x00-\x7F]/g, "")
+              .trim();
+            return {
+              name: ResumeParser.extractName(text),
+              email: ResumeParser.extractEmail(text),
+              phone: ResumeParser.extractPhone(text),
+              gender: ResumeParser.extractGender(text),
+              skills: ResumeParser.extractSkills(text),
+              resumeUrl: file.name,
+            };
+          } catch (fileErr) {
+            console.warn(`Failed to parse file ${file.name}:`, fileErr);
+            return {
+              name: "",
+              email: "",
+              phone: "",
+              gender: "",
+              skills: [],
+              resumeUrl: file.name,
+            };
+          }
+        }),
+      );
 
       return NextResponse.json({ success: true, data: results });
     } catch (err) {
@@ -245,7 +265,7 @@ export default class CandidateService {
       const existingByEmail = await this.candidateRepository.model.find({
         email: { $in: emails },
       });
-      existingByEmail.forEach((existing:any) => {
+      existingByEmail.forEach((existing: any) => {
         const index = candidates.findIndex(
           (c) => c.email?.trim().toLowerCase() === existing.email.toLowerCase(),
         );
