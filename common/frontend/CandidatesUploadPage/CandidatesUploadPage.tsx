@@ -158,7 +158,7 @@ const CandidatesUploadPage = () => {
         setParsedCandidates((prev) => {
           // Create a map of candidate index → list of fields with warnings
           const warningMap = new Map<number, string[]>();
-          errors.forEach((err) => {
+          errors.forEach((err: any) => {
             if (err.errorIndex !== undefined) {
               if (!warningMap.has(err.errorIndex)) {
                 warningMap.set(err.errorIndex, []);
