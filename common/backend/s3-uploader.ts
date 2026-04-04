@@ -13,10 +13,15 @@ export default class S3Uploader {
     });
   }
 
-  public async uploadFile(fileBuffer: Buffer, fileName: string, mimeType: string): Promise<string> {
+  public async uploadFile(
+    fileBuffer: Buffer,
+    fileName: string,
+    mimeType: string,
+    folder = "resumes",
+  ): Promise<string> {
     const params = {
       Bucket: process.env.AWS_S3_BUCKET!,
-      Key: `resumes/${Date.now()}-${fileName}`,
+      Key: `${folder}/${Date.now()}-${fileName}`,
       Body: fileBuffer,
       ContentType: mimeType,
     };

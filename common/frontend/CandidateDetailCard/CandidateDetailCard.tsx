@@ -7,13 +7,17 @@ import {
 import Link from "next/link";
 import {
   getComputedCandidateExperience,
+  getCreatedDate,
   getResumeStatus,
   getUniqueColor,
 } from "../utils";
 import { Download } from "lucide-react";
+import Image from "next/image";
 
 const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   candidate,
+  isSelected = false,
+  onSelect,
 }) => {
   const getInitials = (name: string) => {
     const names = name.split(" ");
@@ -22,31 +26,49 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow max-w-sm max-h-[280px] min-h-[280px] flex flex-col justify-between h-full transition-shadow duration-300 hover:shadow-xl">
+    <div className="relative bg-white rounded-lg p-6 shadow max-w-sm max-h-[280px] min-h-[280px] flex flex-col justify-between h-full transition-shadow duration-300 hover:shadow-xl">
+      {/* ✅ Checkbox (top-left, no layout impact) */}
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={() => onSelect?.(candidate._id as string)}
+        className="absolute top-3 left-3 w-4 h-4 cursor-pointer z-10 bg-white rounded shadow"
+      />
+
       {/* Top content */}
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-[10px]">
           <div className="flex items-center gap-4">
             <div
               className="rounded-lg w-12 h-12 flex items-center justify-center font-bold text-white text-lg"
               style={{ backgroundColor: getUniqueColor(candidate.name) }}
             >
-              {getInitials(candidate.name)}
+              {candidate.profileImageUrl ? (
+                <Image
+                  src={candidate.profileImageUrl}
+                  alt={candidate.name}
+                  width={48}
+                  height={48}
+                />
+              ) : (
+                getInitials(candidate.name)
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-lg">{candidate.name}</h3>
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 text-sm font-semibold">
                 {getComputedCandidateExperience(candidate.experienceInMonths)}
               </p>
             </div>
           </div>
+
           <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`inline-flex text-[12px] items-center rounded-full px-3 py-1 text-xs font-semibold ${
               statusColors[getResumeStatus(candidate.createdAt)]
             }`}
           >
-            {getResumeStatus(candidate.createdAt)}
+            {getCreatedDate(candidate.createdAt)}
           </span>
         </div>
 
@@ -68,7 +90,7 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
         </div>
       </div>
 
-      {/* Buttons at the bottom */}
+      {/* Bottom buttons */}
       <div className="flex justify-between mt-4">
         <Link href={`/candidates/${candidate._id}`}>
           <button className="border border-gray-300 rounded px-4 py-2 text-sm hover:bg-gray-100">

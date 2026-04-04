@@ -31,28 +31,13 @@ export default class CandidateService {
         );
       }
 
-      // Helper to detect MIME type from file extension if missing
-      const getMimeTypeFromExtension = (filename: string): string => {
-        const ext = filename.split(".").pop()?.toLowerCase();
-        switch (ext) {
-          case "pdf":
-            return "application/pdf";
-          case "doc":
-            return "application/msword";
-          case "docx":
-            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-          default:
-            return "";
-        }
-      };
-
       const results = await Promise.all(
         uploadedFiles.map(async (file) => {
           try {
             const fileBuffer = Buffer.from(await file.arrayBuffer());
-            const mimeType = file.type || getMimeTypeFromExtension(file.name);
+            const mimeType = file.type || this.getMimeTypeFromExtension(file.name);
 
-            // Extract raw text and normalize it
+            // ✅ Extract text
             let text = await ResumeParser.parseText(fileBuffer, mimeType);
             text = text
               .replace(/[\r\n]+/g, "\n")
@@ -769,6 +754,21 @@ export default class CandidateService {
 
           // ✅ Parse and upload resume
           const fileBuffer = Buffer.from(await file.arrayBuffer());
+          const mimeType =
+            file.type || this.getMimeTypeFromExtension(file.name);
+          const imageBuffer = await ResumeParser.extractImage(
+            fileBuffer,
+            mimeType,
+          );
+
+          const profileImageUrl = imageBuffer
+            ? await this.s3Uploader.uploadFile(
+                imageBuffer,
+                `${Date.now()}-${file.name}`,
+                "image/jpeg",
+              )
+            : "candidates";
+
           const resumeText = await ResumeParser.parseText(
             fileBuffer,
             file.type,
@@ -782,6 +782,7 @@ export default class CandidateService {
           return {
             name,
             email,
+            profileImageUrl,
             phone,
             ...(age && { age }),
             gender,
@@ -1037,6 +1038,21 @@ export default class CandidateService {
           headers: { "Content-Type": "application/json" },
         },
       );
+    }
+  };
+
+  // Helper to detect MIME type from file extension if missing
+  private getMimeTypeFromExtension = (filename: string): string => {
+    const ext = filename.split(".").pop()?.toLowerCase();
+    switch (ext) {
+      case "pdf":
+        return "application/pdf";
+      case "doc":
+        return "application/msword";
+      case "docx":
+        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      default:
+        return "";
     }
   };
 }

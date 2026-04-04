@@ -66,6 +66,45 @@ export default class ResumeParser {
     return "";
   }
 
+  public static async extractImage(
+    fileBuffer: Buffer,
+    mimeType: string,
+  ): Promise<Buffer | null> {
+    try {
+      // ✅ DOCX
+      if (
+        mimeType ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        let firstImage: Buffer | null = null;
+
+        await mammoth.convertToHtml(
+          { buffer: fileBuffer },
+          {
+            convertImage: mammoth.images.inline(async (element) => {
+              const base64 = await element.read("base64");
+              if (!firstImage && base64) {
+                firstImage = Buffer.from(base64, "base64");
+              }
+              return { src: "" };
+            }),
+          },
+        );
+
+        return firstImage;
+      }
+
+      // handle PDF image extraction (basic heuristic: extract first page as image)
+      if (mimeType === "application/pdf") {
+        return null; // PDF image extraction is complex; skipping for now
+      }
+    } catch (err) {
+      console.warn("Image extraction failed:", err);
+    }
+
+    return null;
+  }
+
   public static extractName(text: string): string {
     const lines = text
       .split(/[\r\n]+/)
@@ -90,10 +129,12 @@ export default class ResumeParser {
     const emailPattern = /\S+@\S+/;
     const phonePattern = /(\+?\d[\d\s.()\-]{6,})/;
     const urlPattern = /https?:\/\/|www\.|linkedin\.com|github\.com/i;
-    const labelledLinePattern = /^(father'?s?\s*name|mother'?s?\s*name|spouse|husband|wife|address|phone|email|mobile|date of birth|dob|marital status|nationality|gender|sex|designation|duration|department|work|qualification)\s*[:\-–]/i;
+    const labelledLinePattern =
+      /^(father'?s?\s*name|mother'?s?\s*name|spouse|husband|wife|address|phone|email|mobile|date of birth|dob|marital status|nationality|gender|sex|designation|duration|department|work|qualification)\s*[:\-–]/i;
 
     // Date patterns
-    const months = "january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec";
+    const months =
+      "january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec";
     const datePattern = new RegExp(
       `(\\b(${months})\\b|\\b\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4}\\b|\\b\\d{4}\\s*[-–—]\\s*(\\d{4}|present|current|till date)|currently working)`,
       "i",
@@ -106,16 +147,32 @@ export default class ResumeParser {
       if (skipPatterns.test(line)) continue;
       if (labelledLinePattern.test(line)) continue;
       if (emailPattern.test(line)) continue;
-      if (phonePattern.test(line) && line.replace(/[\d\s+.()\-]/g, "").length < 3) continue;
+      if (
+        phonePattern.test(line) &&
+        line.replace(/[\d\s+.()\-]/g, "").length < 3
+      )
+        continue;
       if (urlPattern.test(line)) continue;
-      if (/\b(s\/o|d\/o|w\/o|c\/o|vpo|tehsil|district|pin\s*code|colony|nagar|street|sector)\b/i.test(line)) continue;
+      if (
+        /\b(s\/o|d\/o|w\/o|c\/o|vpo|tehsil|district|pin\s*code|colony|nagar|street|sector)\b/i.test(
+          line,
+        )
+      )
+        continue;
 
       // Clean the line
       const cleaned = line.replace(/[^a-zA-Z\s.\-']/g, "").trim();
       const nameOnly = cleaned.replace(/^[\s.\-]+|[\s.\-]+$/g, "").trim();
 
-      const words = nameOnly.split(/\s+/).filter((w) => /^[a-zA-Z'.\-]+$/.test(w) && w.length > 0);
-      if (words.length >= 2 && words.length <= 5 && nameOnly.length >= 3 && nameOnly.length <= 60) {
+      const words = nameOnly
+        .split(/\s+/)
+        .filter((w) => /^[a-zA-Z'.\-]+$/.test(w) && w.length > 0);
+      if (
+        words.length >= 2 &&
+        words.length <= 5 &&
+        nameOnly.length >= 3 &&
+        nameOnly.length <= 60
+      ) {
         if (/^[A-Z]/i.test(words[0])) {
           return this.titleCase(nameOnly);
         }
@@ -192,9 +249,7 @@ export default class ResumeParser {
 
     // Fallback: colon-based skills line
     if (allSkills.length === 0) {
-      const colonMatch = text.match(
-        /(?:skills|technologies)\s*:\s*(.+)/i,
-      );
+      const colonMatch = text.match(/(?:skills|technologies)\s*:\s*(.+)/i);
       if (colonMatch) {
         allSkills.push(...this.splitSkills(colonMatch[1]));
       }
@@ -209,21 +264,23 @@ export default class ResumeParser {
 
     // Split by common delimiters: comma, pipe, bullet, semicolon, tabs, newlines
     const rawSkills = normalized.split(/[,•·|;\t\n●▪►◆–—]/);
-    return rawSkills
-      .map((s) => s.trim())
-      // Remove surrounding colons, dashes, dots
-      .map((s) => s.replace(/^[\s:.\-–—]+|[\s:.\-–—]+$/g, "").trim())
-      // Keep skills with reasonable length (2–60 chars)
-      .filter((s) => s.length >= 2 && s.length <= 60)
-      // Remove entries that are obviously not skills (full sentences)
-      .filter((s) => {
-        const wordCount = s.split(/\s+/).length;
-        return wordCount <= 6;
-      })
-      // Must contain at least one letter
-      .filter((s) => /[a-zA-Z]/.test(s))
-      // Remove lines that are just junk (%, numbers only, dates)
-      .filter((s) => !/^[\d%\s/\-.,]+$/.test(s));
+    return (
+      rawSkills
+        .map((s) => s.trim())
+        // Remove surrounding colons, dashes, dots
+        .map((s) => s.replace(/^[\s:.\-–—]+|[\s:.\-–—]+$/g, "").trim())
+        // Keep skills with reasonable length (2–60 chars)
+        .filter((s) => s.length >= 2 && s.length <= 60)
+        // Remove entries that are obviously not skills (full sentences)
+        .filter((s) => {
+          const wordCount = s.split(/\s+/).length;
+          return wordCount <= 6;
+        })
+        // Must contain at least one letter
+        .filter((s) => /[a-zA-Z]/.test(s))
+        // Remove lines that are just junk (%, numbers only, dates)
+        .filter((s) => !/^[\d%\s/\-.,]+$/.test(s))
+    );
   }
 
   public static extractGender(text: string): "Male" | "Female" | "" {
@@ -234,8 +291,14 @@ export default class ResumeParser {
     const explicitPatterns = [
       { regex: /\b(?:gender|sex)\s*[:\-–]\s*(male|female)\b/i, capture: true },
       { regex: /\b(male|female)\s*(?:gender|sex)\b/i, capture: true },
-      { regex: /\bgender\s*[:\-–]?\s*[(\[]?\s*(male|female|m|f)\s*[)\]]?\b/i, capture: true },
-      { regex: /\bsex\s*[:\-–]?\s*[(\[]?\s*(male|female|m|f)\s*[)\]]?\b/i, capture: true },
+      {
+        regex: /\bgender\s*[:\-–]?\s*[(\[]?\s*(male|female|m|f)\s*[)\]]?\b/i,
+        capture: true,
+      },
+      {
+        regex: /\bsex\s*[:\-–]?\s*[(\[]?\s*(male|female|m|f)\s*[)\]]?\b/i,
+        capture: true,
+      },
     ];
 
     for (const { regex } of explicitPatterns) {

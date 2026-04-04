@@ -16,6 +16,14 @@ export function formatDateNumeric(isoString: string) {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
+export const getCreatedDate = (isoString: string) => {
+  if (!isoString) {
+    return;
+  }
+  const date = new Date(isoString);
+  return date?.toLocaleDateString() ?? undefined;
+};
+
 export const getTokenFromLocalStorage = (): string => {
   const token = localStorage.getItem("token");
 

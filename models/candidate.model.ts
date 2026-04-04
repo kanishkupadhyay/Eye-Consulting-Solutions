@@ -22,6 +22,7 @@ export interface IExperience {
 export interface ICandidate extends Document {
   name: string;
   email: string;
+  profileImageUrl?: string;
   phone: string;
   age?: number;
   gender: "Male" | "Female";
@@ -66,6 +67,10 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
         /^(\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}$/,
         ResultErrorMessage.PhoneNumberIsInvalid,
       ],
+    },
+    profileImageUrl: {
+      type: String,
+      default: null,
     },
     age: {
       type: Number,
