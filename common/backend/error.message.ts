@@ -41,6 +41,9 @@ class ResultErrorMessage {
   public static readonly OnlyOneJobCanBeMarkedAsCurrentlyWorking = "Only one job can be marked as currently working";
   public static readonly CandidateAlreadyExistsWithThisEmail = "Candidate already exists with this email";
   public static readonly CandidateAlreadyExistsWithThisPhoneNumber = "Candidate already exists with this phone number";
+  public static readonly DuplicateEmailInBatch = "Duplicate email found among candidates";
+  public static readonly DuplicatePhoneInBatch = "Duplicate phone number found among candidates";
+  public static readonly NoCandidatesProvided = "No candidates provided";
 }
 
 export default ResultErrorMessage;

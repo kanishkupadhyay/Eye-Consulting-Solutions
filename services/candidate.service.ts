@@ -149,6 +149,147 @@ export default class CandidateService {
     }
   };
 
+  public verifyCandidates = async (req: Request) => {
+    try {
+      const { candidates } = await req.json();
+
+      if (!Array.isArray(candidates) || !candidates.length) {
+        return NextResponse.json(
+          {
+            success: false,
+            errors: [{ message: ResultErrorMessage.NoCandidatesProvided }],
+          },
+          { status: StatusCodes.BAD_REQUEST },
+        );
+      }
+
+      const errors: Array<{
+        errorIndex?: number;
+        field?: string;
+        message: string;
+      }> = [];
+
+      // Validate each candidate's email and phone
+      for (let i = 0; i < candidates.length; i++) {
+        const { email, phone } = candidates[i];
+
+        if (!email) {
+          errors.push({
+            errorIndex: i,
+            field: "email",
+            message: ResultErrorMessage.EmailIsRequired,
+          });
+        } else if (!checkIsValidEmail(email)) {
+          errors.push({
+            errorIndex: i,
+            field: "email",
+            message: ResultErrorMessage.EmailIsNotValid,
+          });
+        }
+
+        if (!phone) {
+          errors.push({
+            errorIndex: i,
+            field: "phone",
+            message: ResultErrorMessage.PhoneNumberIsRequired,
+          });
+        } else if (phone.length !== 10) {
+          errors.push({
+            errorIndex: i,
+            field: "phone",
+            message: ResultErrorMessage.PhoneNumberIsInvalid,
+          });
+        }
+      }
+
+      // Check for duplicate emails within the batch
+      const emailMap = new Map<string, number>();
+      candidates.forEach((c, i) => {
+        const email = c.email?.trim().toLowerCase();
+        if (!email) return;
+        if (emailMap.has(email)) {
+          errors.push({
+            errorIndex: i,
+            field: "email",
+            message: `${ResultErrorMessage.DuplicateEmailInBatch}: ${email}`,
+          });
+        } else {
+          emailMap.set(email, i);
+        }
+      });
+
+      // Check for duplicate phones within the batch
+      const phoneMap = new Map<string, number>();
+      candidates.forEach((c, i) => {
+        const phone = c.phone?.trim();
+        if (!phone) return;
+        if (phoneMap.has(phone)) {
+          errors.push({
+            errorIndex: i,
+            field: "phone",
+            message: `${ResultErrorMessage.DuplicatePhoneInBatch}: ${phone}`,
+          });
+        } else {
+          phoneMap.set(phone, i);
+        }
+      });
+
+      // Check against existing candidates in database
+      const emails = candidates
+        .map((c: any) => c.email?.trim().toLowerCase())
+        .filter(Boolean);
+      const phones = candidates
+        .map((c: any) => c.phone?.trim())
+        .filter(Boolean);
+
+      const existingByEmail = await this.candidateRepository.model.find({
+        email: { $in: emails },
+      });
+      existingByEmail.forEach((existing) => {
+        const index = candidates.findIndex(
+          (c) => c.email?.trim().toLowerCase() === existing.email.toLowerCase(),
+        );
+        errors.push({
+          errorIndex: index,
+          field: "email",
+          message: `${ResultErrorMessage.CandidateAlreadyExistsWithThisEmail}: ${existing.email}`,
+        });
+      });
+
+      const existingByPhone = await this.candidateRepository.model.find({
+        phone: { $in: phones },
+      });
+      existingByPhone.forEach((existing) => {
+        const index = candidates.findIndex(
+          (c) => c.phone?.trim() === existing.phone,
+        );
+        errors.push({
+          errorIndex: index,
+          field: "phone",
+          message: `${ResultErrorMessage.CandidateAlreadyExistsWithThisPhoneNumber}: ${existing.phone}`,
+        });
+      });
+
+      if (errors.length) {
+        return NextResponse.json(
+          { success: false, errors },
+          { status: StatusCodes.CONFLICT },
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: ResultSuccessMessages.CandidateVerifiedSuccessfully,
+      });
+    } catch (error: any) {
+      console.error("Verify Candidates Error:", error);
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: StatusCodes.INTERNAL_SERVER_ERROR },
+      );
+    }
+  };
+
   public uploadResume = async (req: Request) => {
     try {
       const authHeader = req.headers.get("Authorization");
@@ -763,10 +904,16 @@ export default class CandidateService {
       }
 
       if (experience) {
-        if (experience.min !== undefined && (experience.min < 0 || experience.min > 50)) {
+        if (
+          experience.min !== undefined &&
+          (experience.min < 0 || experience.min > 50)
+        ) {
           throw new Error(ResultErrorMessage.ExperienceYearsCannotExceed50);
         }
-        if (experience.max !== undefined && (experience.max < 0 || experience.max > 50)) {
+        if (
+          experience.max !== undefined &&
+          (experience.max < 0 || experience.max > 50)
+        ) {
           throw new Error(ResultErrorMessage.ExperienceYearsCannotExceed50);
         }
 

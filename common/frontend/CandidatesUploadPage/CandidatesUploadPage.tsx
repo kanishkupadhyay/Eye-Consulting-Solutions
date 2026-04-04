@@ -22,6 +22,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ArrowLeft } from "lucide-react";
 import getCitiesByState from "@/services/frontend/get-cities-by-state";
+import verifyCandidates from "@/services/frontend/verify-candidates";
+import Dialog from "../Dialog/Dialog";
 
 const CandidatesUploadPage = () => {
   const [files, setFiles] = useState<File[]>([]);
@@ -30,6 +32,9 @@ const CandidatesUploadPage = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cities, setCities] = useState<{ name: string; id: string }[]>([]);
+  const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
+  const [verifyMessage, setVerifyMessage] = useState("");
+  const [pendingCandidateData, setPendingCandidateData] = useState<any[]>([]);
 
   const [education, setEducation] = useState<IEducation[]>([]);
   const [experience, setExperience] = useState<IExperience[]>([]);
@@ -121,7 +126,7 @@ const CandidatesUploadPage = () => {
 
     try {
       setUploading(true);
-
+      // --- Verify candidates ---
       const candidatesToUpload = parsedCandidates.map((c) => ({
         name: c.name,
         email: c.email,
@@ -137,15 +142,44 @@ const CandidatesUploadPage = () => {
         education: c.education,
         ...(c.gender && { gender: c.gender }),
       }));
+      const verifyResult = await verifyCandidates({
+        candidates: candidatesToUpload,
+      });
 
-      const response = await addCandidatesBulk(candidatesToUpload);
+      if (verifyResult.exists) {
+        setVerifyMessage(verifyResult.message);
+        setPendingCandidateData(candidatesToUpload);
+        setIsOverrideDialogOpen(true);
+        setUploading(false);
 
-      console.log("Bulk upload response:", response);
-      if (response.success) {
+        // Mark all conflicting candidates with warnings
+        const errors = verifyResult.data.errors || [];
+
+        setParsedCandidates((prev) => {
+          // Create a map of candidate index → list of fields with warnings
+          const warningMap = new Map<number, string[]>();
+          errors.forEach((err) => {
+            if (err.errorIndex !== undefined) {
+              if (!warningMap.has(err.errorIndex)) {
+                warningMap.set(err.errorIndex, []);
+              }
+              warningMap.get(err.errorIndex)?.push(err.field);
+            }
+          });
+
+          return prev.map((c, i) => ({
+            ...c,
+            hasWarning: warningMap.has(i), // true if this candidate has any error
+            warningField: warningMap.get(i)?.join(" | "), // combine all fields for display
+          }));
+        });
+        console.log(parsedCandidates);
+      } else {
+        await addCandidatesBulk(candidatesToUpload);
         setCandidateCount();
-        router.push("/candidates");
         setParsedCandidates([]);
         setFiles([]);
+        router.push("/candidates");
       }
     } catch (error) {
       console.error("Error uploading candidates:", error);
@@ -323,6 +357,22 @@ const CandidatesUploadPage = () => {
     return !hasError;
   }, [selectedCandidate, education, experience]);
 
+  const handleOverrideConfirm = async () => {
+    if (!pendingCandidateData.length) return;
+
+    setUploading(true);
+    try {
+      await addCandidatesBulk(pendingCandidateData);
+      setIsOverrideDialogOpen(false);
+      setCandidateCount();
+      router.push("/candidates");
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSaveCandidate = () => {
     if (!selectedCandidate) return;
     if (!validateCandidate()) {
@@ -452,6 +502,12 @@ const CandidatesUploadPage = () => {
               <EmailInput
                 cssClasses="py-2"
                 required
+                hasWarning={
+                  !!(
+                    selectedCandidate.hasWarning &&
+                    selectedCandidate.warningField.includes("email")
+                  )
+                }
                 placeholder="Enter email"
                 value={selectedCandidate.email || ""}
                 onChange={(e) =>
@@ -466,6 +522,12 @@ const CandidatesUploadPage = () => {
                 cssClasses="py-2"
                 value={selectedCandidate.phone || ""}
                 required
+                hasWarning={
+                  !!(
+                    selectedCandidate.hasWarning &&
+                    selectedCandidate.warningField.includes("phone")
+                  )
+                }
                 onChange={(val) =>
                   setSelectedCandidate({ ...selectedCandidate, phone: val })
                 }
@@ -640,6 +702,22 @@ const CandidatesUploadPage = () => {
           )}
         </SidePanel>
       </div>
+
+      {/* --- Override Dialog --- */}
+      <Dialog
+        isOpen={isOverrideDialogOpen}
+        onCancel={() => setIsOverrideDialogOpen(false)}
+        onConfirm={handleOverrideConfirm}
+        title="Candidates Already Exist"
+        confirmText="Upload Anyway"
+        cancelText="Cancel"
+        loading={uploading}
+      >
+        <p>{verifyMessage}</p>
+        <p className="mt-2 text-gray-500">
+          Do you want to override and upload all candidates anyway?
+        </p>
+      </Dialog>
     </section>
   );
 };

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React from "react";
 import { IInputProps } from "./Input.Model";
 
@@ -7,6 +7,7 @@ const Input = ({
   cssClasses = "",
   value,
   required = false,
+  hasWarning = false,
   onChange,
   onBlur,
   ...props
@@ -46,7 +47,11 @@ const Input = ({
         onChange={handleChange}
         onBlur={handleBlur}
         className={`${cssClasses} ${
-          props.errorMessage ? "border-red-500" : ""
+          props.errorMessage
+            ? "border-red-500"
+            : hasWarning
+              ? "border-yellow-500"
+              : ""
         } w-full bg-white border border-gray-200 rounded-lg p-4 text-sm
         focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm ${
           props.className || ""

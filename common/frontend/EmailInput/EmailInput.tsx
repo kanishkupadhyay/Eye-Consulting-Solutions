@@ -10,6 +10,7 @@ export default function EmailInput({
   cssClasses = "",
   required = false,
   placeholder = "Enter your email",
+  hasWarning = false,
 }: IEmailInputProps) {
   const [error, setError] = useState("");
 
@@ -36,6 +37,7 @@ export default function EmailInput({
         type="email"
         placeholder={placeholder}
         value={value}
+        hasWarning={hasWarning}
         cssClasses={cssClasses}
         errorMessage={error}
         onChange={(e) => {

@@ -13,8 +13,12 @@ const ParsedCandidateCard = ({ candidate, onClick, onDelete, index }: any) => {
   return (
     <div
       onClick={onClick}
-      className={`group cursor-pointer relative bg-white/70 backdrop-blur-md border ${
-        candidate.hasError ? "border-red-500" : "border-gray-200"
+      className={`group cursor-pointer relative bg-white/70 backdrop-blur-md border-2 ${
+        candidate?.hasError
+          ? "border-red-500"
+          : candidate?.hasWarning
+            ? "border-orange-500"
+            : "border-gray-200"
       } rounded-2xl p-5 flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]`}
     >
       {/* Index Badge */}

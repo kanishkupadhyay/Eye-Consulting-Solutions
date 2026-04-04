@@ -3,4 +3,5 @@ export interface IInputProps extends React.InputHTMLAttributes<HTMLInputElement>
   errorMessage?: string;
   cssClasses?: string;
   required?: boolean;
+  hasWarning?: boolean;
 }

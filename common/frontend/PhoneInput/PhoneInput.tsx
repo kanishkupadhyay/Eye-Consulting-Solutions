@@ -11,6 +11,7 @@ export default function PhoneInput({
   maxLength = 10,
   cssClasses = "",
   required = false,
+  hasWarning = false,
 }: IPhoneInputProps) {
   const [internalValue, setInternalValue] = useState("");
 
@@ -36,6 +37,7 @@ export default function PhoneInput({
       required={required}
       errorMessage={error}
       cssClasses={cssClasses}
+      hasWarning={hasWarning}
       onChange={handleChange}
       className={error ? "border-red-500 focus:ring-red-300" : ""}
     />

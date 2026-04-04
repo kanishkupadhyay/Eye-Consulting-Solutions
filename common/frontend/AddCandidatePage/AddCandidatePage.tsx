@@ -5,7 +5,6 @@ import Input from "../Input/Input";
 import PhoneInput from "../PhoneInput/PhoneInput";
 import EmailInput from "../EmailInput/EmailInput";
 import Button from "../Button/Button";
-import NumberInput from "../NumberInput/NumberInput";
 import { useRouter } from "next/navigation";
 import SelectDropdown from "../SelectDropdown/SelectDropdown";
 import FileUploader from "../FileUploader/FileUploader";

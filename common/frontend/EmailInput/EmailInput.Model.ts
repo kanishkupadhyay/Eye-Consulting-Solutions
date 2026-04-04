@@ -4,4 +4,5 @@ export interface IEmailInputProps {
   required?: boolean;
   cssClasses?: string;
   placeholder?: string;
+  hasWarning?: boolean;
 }
