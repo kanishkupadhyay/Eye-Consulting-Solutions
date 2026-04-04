@@ -259,7 +259,7 @@ export default class CandidateService {
       const existingByPhone = await this.candidateRepository.model.find({
         phone: { $in: phones },
       });
-      existingByPhone.forEach((existing) => {
+      existingByPhone.forEach((existing: any) => {
         const index = candidates.findIndex(
           (c) => c.phone?.trim() === existing.phone,
         );
