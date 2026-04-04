@@ -304,6 +304,10 @@ const CandidatesUploadPage = () => {
       fErrors.phone = "Phone number should be 10 digits";
       hasError = true;
     }
+    if (!selectedCandidate?.gender) {
+      fErrors.gender = "Gender is required";
+      hasError = true;
+    }
     if (!selectedCandidate?.skills?.length) {
       fErrors.skills = "At least one skill is required";
       hasError = true;
@@ -545,6 +549,7 @@ const CandidatesUploadPage = () => {
                   setSelectedCandidate({ ...selectedCandidate, gender: val })
                 }
                 placeholder="Select Gender"
+                errorMessage={enableErrors ? fieldErrors.gender : ""}
               />
 
               {/* Age Dropdown */}

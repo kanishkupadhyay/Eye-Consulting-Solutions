@@ -383,7 +383,10 @@ export default class CandidateService {
       }
 
       const gender = formData.get("gender") as "Male" | "Female";
-      if (gender && !["Male", "Female"].includes(gender)) {
+      if (!gender) {
+        throw new Error(ResultErrorMessage.GenderIsRequired);
+      }
+      if (!["Male", "Female"].includes(gender)) {
         throw new Error(ResultErrorMessage.GenderIsInvalid);
       }
 
@@ -662,7 +665,10 @@ export default class CandidateService {
             throw new Error(`Candidate[${index + 1}] age is invalid`);
 
           const gender = c.gender;
-          if (gender && !["Male", "Female"].includes(gender))
+          if (!gender) {
+            throw new Error(ResultErrorMessage.GenderIsRequired);
+          }
+          if (!["Male", "Female"].includes(gender))
             throw new Error(`Candidate[${index + 1}] gender is invalid`);
 
           const experienceYears = Number(c.experienceYears || 0);
