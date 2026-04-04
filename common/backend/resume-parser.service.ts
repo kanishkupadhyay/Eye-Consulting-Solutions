@@ -81,7 +81,7 @@ export default class ResumeParser {
         await mammoth.convertToHtml(
           { buffer: fileBuffer },
           {
-            convertImage: mammoth.images.inline(async (element) => {
+            convertImage: (mammoth.images as any).inline(async (element: any) => {
               const base64 = await element.read("base64");
               if (!firstImage && base64) {
                 firstImage = Buffer.from(base64, "base64");
