@@ -618,7 +618,6 @@ const CandidatesPage = () => {
                 label="Job Description"
                 placeholder="Enter job description"
                 cssClasses="py-2"
-                multiline={true}
               />
               <div className="flex gap-4">
                 <div className="w-1/2">
