@@ -133,12 +133,14 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
       {
         type: String,
         trim: true,
+        index: true,
         lowercase: true,
       },
     ],
     defenseBackgroundCheck: {
       type: Boolean,
       default: false,
+      index: true,
     },
     resumeUrl: {
       type: String,
@@ -147,6 +149,7 @@ const CandidateSchema: Schema<ICandidate> = new mongoose.Schema(
     resumeText: {
       type: String,
       default: "",
+      index: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

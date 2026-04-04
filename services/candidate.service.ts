@@ -35,7 +35,8 @@ export default class CandidateService {
         uploadedFiles.map(async (file) => {
           try {
             const fileBuffer = Buffer.from(await file.arrayBuffer());
-            const mimeType = file.type || this.getMimeTypeFromExtension(file.name);
+            const mimeType =
+              file.type || this.getMimeTypeFromExtension(file.name);
 
             // ✅ Extract text
             let text = await ResumeParser.parseText(fileBuffer, mimeType);
@@ -877,13 +878,45 @@ export default class CandidateService {
       const filter: any = {};
 
       if (search) {
-        filter.$or = [
-          { name: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
-          { phone: { $regex: search, $options: "i" } },
-          { currentLocation: { $regex: search, $options: "i" } },
-          { skills: { $regex: search, $options: "i" } },
-        ];
+        const trimmedSearch = search.trim();
+
+        // Handle comma-separated → OR
+        if (trimmedSearch.includes(",")) {
+          const terms = trimmedSearch.split(",").map((t) => t.trim());
+          filter.$or = terms.flatMap((term) => [
+            { skills: { $regex: term, $options: "i" } },
+            { resumetext: { $regex: term, $options: "i" } },
+          ]);
+        }
+        // Handle quoted phrases or space-separated → AND
+        else {
+          const terms: string[] = [];
+
+          // Match quoted phrases like "Software Engineer"
+          const regex = /"([^"]+)"|(\S+)/g;
+          let match;
+          while ((match = regex.exec(trimmedSearch)) !== null) {
+            if (match[1])
+              terms.push(match[1]); // quoted phrase
+            else if (match[2]) terms.push(match[2]); // single word
+          }
+
+          if (terms.length === 1) {
+            // Single term → simple OR
+            filter.$or = [
+              { skills: { $regex: terms[0], $options: "i" } },
+              { resumeText: { $regex: terms[0], $options: "i" } },
+            ];
+          } else {
+            // Multiple terms → AND
+            filter.$and = terms.map((term) => ({
+              $or: [
+                { skills: { $regex: term, $options: "i" } },
+                { resumeText: { $regex: term, $options: "i" } },
+              ],
+            }));
+          }
+        }
       }
 
       if (gender) {

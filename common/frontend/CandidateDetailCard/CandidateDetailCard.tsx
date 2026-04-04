@@ -42,7 +42,11 @@ const CandidateDetailCard: React.FC<CandidateDetailCardProps> = ({
           <div className="flex items-center gap-4">
             <div
               className="rounded-lg w-12 h-12 flex items-center justify-center font-bold text-white text-lg"
-              style={{ backgroundColor: getUniqueColor(candidate.name) }}
+              style={{
+                backgroundColor: candidate.profileImageUrl
+                  ? "transparent"
+                  : getUniqueColor(candidate.name),
+              }}
             >
               {candidate.profileImageUrl ? (
                 <Image
