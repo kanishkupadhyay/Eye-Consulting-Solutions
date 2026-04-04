@@ -36,22 +36,21 @@ const CandidatesPage = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterOptions, setFilterOptions] = useState<{
-    experienceYears: string;
-    experienceMonths: string;
+    experience: { min: number; max: number } | null;
     age: string;
     state: { id: string; name: string } | null;
     city: { id: string; name: string } | null;
     gender: string;
     defenseBackgroundCheck: boolean;
   }>({
-    experienceYears: "",
-    experienceMonths: "",
+    experience: null,
     age: "",
     state: null,
     city: null,
     gender: "",
     defenseBackgroundCheck: false,
   });
+  const [draftFilterOptions, setDraftFilterOptions] = useState(filterOptions);
 
   const loadedIds = useRef(new Set<string>());
   const observer = useRef<IntersectionObserver | null>(null);
@@ -80,8 +79,12 @@ const CandidatesPage = () => {
   // Update filterOptions from URL whenever searchParams changes
   useEffect(() => {
     const updatedFilters = {
-      experienceYears: searchParams.get("experienceYears") || "",
-      experienceMonths: searchParams.get("experienceMonths") || "",
+      experience: searchParams.get("experience")
+        ? {
+            min: Number(searchParams.get("experienceMin")),
+            max: Number(searchParams.get("experienceMax")),
+          }
+        : null,
       age: searchParams.get("age") || "",
       state:
         indianStates?.find(
@@ -90,7 +93,8 @@ const CandidatesPage = () => {
       city:
         cities?.find((city) => city.name === searchParams.get("city")) || null,
       gender: searchParams.get("gender") || "",
-      defenseBackgroundCheck: searchParams.get("defenseBackgroundCheck") === "true",
+      defenseBackgroundCheck:
+        searchParams.get("defenseBackgroundCheck") === "true",
     };
 
     setFilterOptions(updatedFilters);
@@ -192,15 +196,15 @@ const CandidatesPage = () => {
   const handleApplyFilters = () => {
     const params = new URLSearchParams();
 
-    if (filterOptions.experienceYears)
-      params.set("experienceYears", filterOptions.experienceYears);
-    if (filterOptions.experienceMonths)
-      params.set("experienceMonths", filterOptions.experienceMonths);
-    if (filterOptions.age) params.set("age", filterOptions.age);
-    if (filterOptions.state) params.set("state", filterOptions.state?.name);
-    if (filterOptions.city) params.set("city", filterOptions.city?.name);
-    if (filterOptions.gender) params.set("gender", filterOptions.gender);
-    if (filterOptions.defenseBackgroundCheck)
+    if (draftFilterOptions.experience) {
+      params.set("experienceMin", draftFilterOptions.experience.min.toString());
+      params.set("experienceMax", draftFilterOptions.experience.max.toString());
+    }
+    if (draftFilterOptions.age) params.set("age", draftFilterOptions.age);
+    if (draftFilterOptions.state) params.set("state", draftFilterOptions.state?.name);
+    if (draftFilterOptions.city) params.set("city", draftFilterOptions.city?.name);
+    if (draftFilterOptions.gender) params.set("gender", draftFilterOptions.gender);
+    if (draftFilterOptions.defenseBackgroundCheck)
       params.set("defenseBackgroundCheck", "true");
 
     router.replace(`/candidates?${params.toString()}`, { scroll: false });
@@ -210,12 +214,12 @@ const CandidatesPage = () => {
   useEffect(() => {
     if (isFilterOpen) {
       const fetchCities = async () => {
-        if (!filterOptions.state) {
+        if (!draftFilterOptions.state) {
           setCities([]);
           return;
         }
         try {
-          const res = await getCitiesByState(filterOptions.state?.id);
+          const res = await getCitiesByState(draftFilterOptions.state?.id);
           setCities(res);
         } catch (error) {
           console.error("Error fetching cities:", error);
@@ -224,12 +228,12 @@ const CandidatesPage = () => {
 
       fetchCities();
     }
-  }, [filterOptions.state, isFilterOpen]);
+  }, [draftFilterOptions.state, isFilterOpen]);
 
   const hasActiveFilters = useMemo(() => {
     const keys = [
-      "experienceYears",
-      "experienceMonths",
+      "minExperience",
+      "maxExperience",
       "age",
       "state",
       "city",
@@ -248,7 +252,10 @@ const CandidatesPage = () => {
         <h2 className="text-2xl font-semibold">Candidates</h2>
         <div className="flex w-full justify-end gap-[20px]">
           <Button
-            onClick={() => setIsFilterOpen(true)}
+            onClick={() => {
+              setDraftFilterOptions(filterOptions);
+              setIsFilterOpen(true);
+            }}
             className="max-w-[120px] !py-2"
             title="Filter Candidates"
           >
@@ -261,8 +268,7 @@ const CandidatesPage = () => {
               onClick={() => {
                 // Clear all filters
                 setFilterOptions({
-                  experienceYears: "",
-                  experienceMonths: "",
+                  experience: null,
                   age: "",
                   state: null,
                   city: null,
@@ -336,10 +342,10 @@ const CandidatesPage = () => {
           <RangeSlider
             label="Age"
             value={
-              filterOptions.age
+              draftFilterOptions.age
                 ? [
-                    Number(filterOptions.age.split("-")[0]),
-                    Number(filterOptions.age.split("-")[1]),
+                    Number(draftFilterOptions.age.split("-")[0]),
+                    Number(draftFilterOptions.age.split("-")[1]),
                   ]
                 : undefined // <-- do not use [0,0]
             }
@@ -347,8 +353,8 @@ const CandidatesPage = () => {
             max={65}
             step={1}
             onChange={(val) =>
-              setFilterOptions({
-                ...filterOptions,
+              setDraftFilterOptions({
+                ...draftFilterOptions,
                 age: val ? `${val[0]}-${val[1]}` : "", // optional
               })
             }
@@ -357,10 +363,10 @@ const CandidatesPage = () => {
           <RangeSlider
             label="Experience (Years)"
             value={
-              filterOptions.experienceYears
+              draftFilterOptions.experience
                 ? [
-                    Number(filterOptions.experienceYears.split("-")[0]),
-                    Number(filterOptions.experienceYears.split("-")[1]),
+                    Number(draftFilterOptions.experience.min),
+                    Number(draftFilterOptions.experience.max),
                   ]
                 : undefined
             }
@@ -368,9 +374,9 @@ const CandidatesPage = () => {
             max={40}
             step={1}
             onChange={(val) =>
-              setFilterOptions({
-                ...filterOptions,
-                experienceYears: val ? `${val[0]}-${val[1]}` : "",
+              setDraftFilterOptions({
+                ...draftFilterOptions,
+                experience: val ? { min: val[0], max: val[1] } : null,
               })
             }
           />
@@ -382,10 +388,10 @@ const CandidatesPage = () => {
               label: state.name,
               value: state.id,
             }))}
-            value={filterOptions.state?.id || ""}
+            value={draftFilterOptions.state?.id || ""}
             onChange={(val) => {
-              setFilterOptions({
-                ...filterOptions,
+              setDraftFilterOptions({
+                ...draftFilterOptions,
                 state: indianStates.find((state) => state.id === val) || null,
                 city: null, // Reset city when state changes
               }); // reset city
@@ -401,19 +407,19 @@ const CandidatesPage = () => {
               label: city.name,
               value: city.id,
             }))}
-            value={filterOptions.city?.id || ""}
+            value={draftFilterOptions.city?.id || ""}
             onChange={(val) =>
-              setFilterOptions({
-                ...filterOptions,
+              setDraftFilterOptions({
+                ...draftFilterOptions,
                 city: cities.find((city) => city.id === val) || null,
               })
             }
             placeholder={
-              filterOptions.state ? "Select City" : "Select State first"
+              draftFilterOptions.state ? "Select City" : "Select State first"
             }
-            disabled={!filterOptions.state}
+            disabled={!draftFilterOptions.state}
           />
-          {!filterOptions.state && (
+          {!draftFilterOptions.state && (
             <p className="text-orange-500 text-xs mt-1">
               Please select state first{" "}
             </p>
@@ -426,19 +432,19 @@ const CandidatesPage = () => {
               { label: "Male", value: "Male" },
               { label: "Female", value: "Female" },
             ]}
-            value={filterOptions.gender}
+            value={draftFilterOptions.gender}
             onChange={(val) =>
-              setFilterOptions({ ...filterOptions, gender: val })
+              setDraftFilterOptions({ ...draftFilterOptions, gender: val })
             }
           />
 
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
-              checked={filterOptions.defenseBackgroundCheck}
+              checked={draftFilterOptions.defenseBackgroundCheck}
               onChange={(e) =>
-                setFilterOptions({
-                  ...filterOptions,
+                setDraftFilterOptions({
+                  ...draftFilterOptions,
                   defenseBackgroundCheck: e.target.checked,
                 })
               }
